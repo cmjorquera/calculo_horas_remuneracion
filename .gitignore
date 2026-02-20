@@ -1,0 +1,12 @@
+# Dependencias
+/vendor/
+
+# Logs
+*.log
+error_log
+
+# VS Code
+.vscode/
+
+# Archivos temporales
+*.tmp

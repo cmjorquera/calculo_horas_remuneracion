@@ -1,0 +1,136 @@
+  :root{
+    --ml-blue:#006FAD;
+    --ml-blue2:#0A5F92;
+    --ml-line:rgba(15,23,42,.12);
+    --ml-shadow:0 14px 34px rgba(15,23,42,.16);
+  }
+
+  .side-mini{
+    position: fixed;
+    left: 18px;
+    top: 160px;              /* ajusta según tu header */
+    z-index: 80;
+    display:flex;
+    flex-direction:column;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 18px;
+    border: 1px solid var(--ml-line);
+    background: rgba(255,255,255,.88);
+    box-shadow: var(--ml-shadow);
+    backdrop-filter: blur(6px);
+  }
+
+  .side-btn{
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    border: 1px solid rgba(15,23,42,.10);
+    background: #fff;
+    color: rgba(15,23,42,.75);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: 18px;
+    transition: transform .06s ease, background .15s ease, color .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+
+  .side-btn:hover{
+    background: rgba(0,111,173,.08);
+    color: rgba(0,111,173,.95);
+    border-color: rgba(0,111,173,.18);
+    box-shadow: 0 10px 24px rgba(0,111,173,.12);
+  }
+
+  .side-btn:active{ transform: translateY(1px); }
+
+  .side-btn.active{
+    background: linear-gradient(135deg, var(--ml-blue), var(--ml-blue2));
+    color: #fff;
+    border-color: rgba(0,111,173,.30);
+    box-shadow: 0 16px 34px rgba(0,111,173,.20);
+  }
+
+  /* puntito notificación */
+  .side-badge{
+    position:absolute;
+    top: 8px;
+    right: 8px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(255,210,74,.95);
+    color: #0b1220;
+    font-size: 11px;
+    font-weight: 900;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border: 1px solid rgba(15,23,42,.10);
+  }
+
+  .side-btn-wrap{
+    position: relative;
+  }
+
+  /* Responsive: esconder si la pantalla es angosta (evita tapar) */
+  @media (max-width: 1000px){
+    .side-mini{ display:none; }
+  }.acciones-empleado{
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.btn-mini{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,.12);
+  background: #fff;
+  cursor: pointer;
+  transition: all .15s ease;
+  box-shadow: 0 6px 18px rgba(15,23,42,.06);
+}
+
+.btn-mini i{
+  font-size: 14px;
+}
+
+/* Excel */
+.btn-excel{
+  color: #1D6F42;
+}
+.btn-excel:hover{
+  background: rgba(29,111,66,.08);
+  border-color: rgba(29,111,66,.25);
+  transform: translateY(-1px);
+}
+
+/* PDF */
+.btn-pdf{
+  color: #B42318;
+}
+.btn-pdf:hover{
+  background: rgba(180,35,24,.08);
+  border-color: rgba(180,35,24,.25);
+  transform: translateY(-1px);
+}
+
+/* Copiar */
+.btn-copy{
+  color: #006FAD;
+}
+.btn-copy:hover{
+  background: rgba(0,111,173,.08);
+  border-color: rgba(0,111,173,.25);
+  transform: translateY(-1px);
+}
+
