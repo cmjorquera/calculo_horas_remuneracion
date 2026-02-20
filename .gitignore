@@ -10,3 +10,11 @@ error_log
 
 # Archivos temporales
 *.tmp
+
+
+
+
+/vendor/
+.env
+.DS_Store
+node_modules/
