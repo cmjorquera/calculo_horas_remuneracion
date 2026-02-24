@@ -326,7 +326,7 @@ function minutosAHHMM($totalMin){
                             <th colspan="2">Tarde</th>
                         </tr>
                         <tr>
-                            <th>Inic3333333io</th>
+                            <th>Inicio</th>
                             <th>Término</th>
                             <th>Inicio</th>
                             <th>Término</th>
@@ -352,6 +352,9 @@ function minutosAHHMM($totalMin){
             <div class="card-head">
                 <h2>Resumen</h2>
                 <small>Horas pedagógicas y cronológicas</small>
+                <div id="empleadoSeleccionadoInfo" class="empleado-seleccionado-info">
+                    Sin empleado seleccionado
+                </div>
             </div>
 
             <div class="summary">
@@ -603,7 +606,13 @@ function minutosAHHMM($totalMin){
           <td class="cell-opciones" data-col="Opciones" data-value="opciones">
             <div class="cell-actions">
               <button type="button" class="btn-table-icon" title="Cargar horario"
-                onclick="seleccionarEmpleado(<?= $idEmpleado ?>, <?= $idContrato ?>)">
+                data-empleado-nombre="<?= htmlspecialchars($nombre, ENT_QUOTES) ?>"
+                data-empleado-run="<?= htmlspecialchars($run, ENT_QUOTES) ?>"
+                data-jornada-cro="<?= htmlspecialchars($jornadaTxt, ENT_QUOTES) ?>"
+                data-colacion-min="<?= (int)$colacionMin ?>"
+                data-lectivas-cro="<?= htmlspecialchars($lectivasTxt, ENT_QUOTES) ?>"
+                data-nolectivas-cro="<?= htmlspecialchars($noLectivasTxt, ENT_QUOTES) ?>"
+                onclick="seleccionarEmpleado(this, <?= $idEmpleado ?>, <?= $idContrato ?>)">
                 <i class="bi bi-upload"></i>
               </button>
 
@@ -630,6 +639,138 @@ function minutosAHHMM($totalMin){
 
 </div>
 <script>
+function normalizarDiaCodigo(codigo) {
+    const txt = String(codigo || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+
+    if (txt.startsWith("lun")) return "lun";
+    if (txt.startsWith("mar")) return "mar";
+    if (txt.startsWith("mie")) return "mie";
+    if (txt.startsWith("jue")) return "jue";
+    if (txt.startsWith("vie")) return "vie";
+    return "";
+}
+
+function parseHHMMtoPedHours(hhmm) {
+    const m = String(hhmm || "00:00").match(/^(\d{1,3}):(\d{2})$/);
+    if (!m) return "0";
+    const totalMin = (parseInt(m[1], 10) || 0) * 60 + (parseInt(m[2], 10) || 0);
+    const ped = totalMin / 40;
+    return Number.isInteger(ped) ? String(ped) : ped.toFixed(2).replace(/\.?0+$/, "");
+}
+
+function seleccionarEmpleado(triggerBtn, idEmpleado, idContrato) {
+    const empleadoId = Number(idEmpleado) || 0;
+    const contratoId = Number(idContrato) || 0;
+    if (empleadoId <= 0 && contratoId <= 0) {
+        Swal.fire("Error", "No se pudo identificar al empleado/contrato.", "error");
+        return;
+    }
+
+    const nombre = triggerBtn?.dataset?.empleadoNombre || "Empleado";
+    const run = triggerBtn?.dataset?.empleadoRun || "-";
+    const jornadaCro = triggerBtn?.dataset?.jornadaCro || "00:00";
+    const lectivasCro = triggerBtn?.dataset?.lectivasCro || "00:00";
+    const noLectivasCro = triggerBtn?.dataset?.nolectivasCro || "00:00";
+    const colacionMin = parseInt(triggerBtn?.dataset?.colacionMin || "0", 10) || 0;
+
+    const infoEl = document.getElementById("empleadoSeleccionadoInfo");
+    if (infoEl) {
+        infoEl.textContent = `${nombre} | RUN: ${run}`;
+        infoEl.title = `${nombre} | RUN: ${run}`;
+    }
+
+    const selectColacion = document.getElementById("sumColacionSelect");
+    if (selectColacion) {
+        const option = Array.from(selectColacion.options).find(opt => {
+            const min = parseInt(opt.getAttribute("data-minutos") || "0", 10) || 0;
+            return min === colacionMin;
+        });
+        if (option) {
+            selectColacion.value = option.value;
+        } else {
+            selectColacion.value = "";
+        }
+        selectColacion.dispatchEvent(new Event("change", {
+            bubbles: true
+        }));
+    }
+
+    const elJornadaCro = document.getElementById("sumJornadaCro");
+    const elLectivasCro = document.getElementById("sumLectivasCro");
+    const elNoLectivasCro = document.getElementById("sumNoLectivasCro");
+    const elLectivasPed = document.getElementById("sumLectivasPed");
+    const elNoLectivasPed = document.getElementById("sumNoLectivasPed");
+
+    if (elJornadaCro) elJornadaCro.textContent = jornadaCro;
+    if (elLectivasCro) elLectivasCro.value = lectivasCro;
+    if (elNoLectivasCro) elNoLectivasCro.value = noLectivasCro;
+    if (elLectivasPed) elLectivasPed.value = parseHHMMtoPedHours(lectivasCro);
+    if (elNoLectivasPed) elNoLectivasPed.value = parseHHMMtoPedHours(noLectivasCro);
+
+    const tbody = document.getElementById("tbodyHorario");
+    if (!tbody) return;
+
+    document.querySelectorAll(".day-lock-check").forEach(check => {
+        if (!check.checked) return;
+        check.checked = false;
+        check.dispatchEvent(new Event("change", {
+            bubbles: true
+        }));
+    });
+
+    tbody.querySelectorAll("select").forEach(sel => {
+        sel.disabled = false;
+        sel.value = "00";
+    });
+    tbody.querySelectorAll("tr").forEach(tr => tr.classList.remove("day-blocked"));
+
+    const setTime = (prefix, bloque, tipo, value) => {
+        const safe = String(value || "").substring(0, 5);
+        const m = safe.match(/^(\d{2}):(\d{2})$/);
+        const h = m ? m[1] : "00";
+        const min = m ? m[2] : "00";
+        const hSel = tbody.querySelector(`select[name="${prefix}_${bloque}_${tipo}_h"]`);
+        const mSel = tbody.querySelector(`select[name="${prefix}_${bloque}_${tipo}_m"]`);
+        if (hSel) hSel.value = h;
+        if (mSel) mSel.value = min;
+    };
+
+    const fd = new FormData();
+    fd.append("id_contrato", String(contratoId));
+    fd.append("id_empleado", String(empleadoId));
+
+    fetch("modelos/rescatar/horarios.php", {
+            method: "POST",
+            body: fd
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.ok || !Array.isArray(data.dias)) {
+                throw new Error(data.msg || "No se pudieron cargar horarios.");
+            }
+
+            data.dias.forEach(d => {
+                const prefix = normalizarDiaCodigo(d.dia_code || d.nombre || d.dia);
+                if (!prefix) return;
+                setTime(prefix, "man", "ini", d.man_ini);
+                setTime(prefix, "man", "fin", d.man_fin);
+                setTime(prefix, "tar", "ini", d.tar_ini);
+                setTime(prefix, "tar", "fin", d.tar_fin);
+            });
+
+            tbody.dispatchEvent(new Event("change", {
+                bubbles: true
+            }));
+        })
+        .catch(() => {
+            Swal.fire("Error", "No se pudo cargar el horario del empleado seleccionado.", "error");
+        });
+}
+
 function verDetalleHorario(idEmpleado, idContrato) {
     const empleadoId = Number(idEmpleado) || 0;
     const contratoId = Number(idContrato) || 0;
@@ -675,14 +816,14 @@ function verDetalleHorario(idEmpleado, idContrato) {
       </div>
       <div id="swalHorarioDetalle"></div>
     `,
-        showCancelButton: true,
+        showDenyButton: true,
         confirmButtonText: 'Cerrar',
-        cancelButtonText: 'Descargar',
+        denyButtonText: 'Descargar PDF',
         width: '80%',
         customClass: {
             popup: 'swal-seduc',
             confirmButton: 'btn-seduc btn-seduc-primary',
-            cancelButton: 'btn-seduc btn-seduc-ghost'
+            denyButton: 'btn-seduc btn-seduc-ghost'
         },
         didOpen: () => {
             const fd = new FormData();
@@ -709,16 +850,20 @@ function verDetalleHorario(idEmpleado, idContrato) {
                 });
         }
     }).then((result) => {
-        // Si presiona "Descargar" (cancel)
-        if (result.dismiss === Swal.DismissReason.cancel) {
-            descargarHorario(idContrato);
+        // Si presiona "Descargar PDF"
+        if (result.isDenied) {
+            descargarHorario(contratoId);
         }
     });
 }
 
 function descargarHorario(idContrato) {
-    //  Excel por contrato
-    window.location.href = 'descarga/horario_empleado.php?id_contrato=' + idContrato;
+    const contrato = Number(idContrato) || 0;
+    if (contrato <= 0) {
+        Swal.fire('Error', 'No se pudo identificar el contrato para descargar el PDF.', 'error');
+        return;
+    }
+    window.location.assign('descarga/horario_empleado.php?id_contrato=' + encodeURIComponent(contrato));
 
 }
 

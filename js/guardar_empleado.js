@@ -443,12 +443,13 @@ preConfirm: () => {
     icon: "success",
     title: "OK",
     text: resp.msg,
+    timer: 3000,
+    showConfirmButton: false,
     customClass: {
-      popup: 'swal-seduc',
-      confirmButton: 'btn-seduc btn-seduc-primary'
+      popup: 'swal-seduc'
     }
   }).then(() => {
-    location.reload(); // 🔥 recarga la página
+    location.reload(); // recarga la página
   });
 } else {
         Swal.fire("Error", resp.msg, "error");
