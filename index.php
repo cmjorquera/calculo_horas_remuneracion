@@ -296,6 +296,13 @@ function minutosAHHMM($totalMin){
                     </tbody>
                 </table>
             </div>
+
+            <div id="jornadaLegalMsg" class="jornada-legal-msg is-low is-hidden" role="status" aria-live="polite">
+                Está bajo las 40 horas legales (Ley 21.561).
+            </div>
+            <div id="horarioIgualMsg" class="horario-equal-msg is-hidden" role="status" aria-live="polite">
+                Advertencia: hay bloques con hora de inicio y término iguales. Revisa posible error de tipeo.
+            </div>
         </section>
 
         <!-- RESUMEN -->
@@ -328,7 +335,7 @@ function minutosAHHMM($totalMin){
 
                         <div class="box">
                             <small>Pedagógicas</small>
-                            <input id="sumLectivasPed" class="sum-input" type="text" value="00:00" inputmode="numeric"
+                            <input id="sumLectivasPed" class="sum-input" type="text" value="0" inputmode="decimal"
                                 autocomplete="off">
                         </div>
 
@@ -354,8 +361,8 @@ function minutosAHHMM($totalMin){
                         <!-- Pedagógicas -->
                         <div class="box">
                             <small>Pedagógicas</small>
-                            <input id="sumNoLectivasPed" class="sum-input" type="text" value="00:00" inputmode="numeric"
-                                autocomplete="off" aria-label="Horas no lectivas pedagógicas" readonly>
+                            <input id="sumNoLectivasPed" class="sum-input" type="text" value="0" inputmode="decimal"
+                                autocomplete="off" aria-label="Horas no lectivas pedagógicas">
                         </div>
 
                         <!-- Cronológicas -->
@@ -434,7 +441,7 @@ function minutosAHHMM($totalMin){
 
         <button type="button" class="btn-mini btn-excel" onclick="descargarExcel()">
           <i class="bi bi-file-earmark-excel-fill"></i>
-          Excel
+          Excel333
         </button>
       </div>
     </div>
@@ -777,6 +784,31 @@ function createSelect({ //crea <select> de horas o minutos.
     return sel;
 }
 
+function toMinutesFromSelects(selH, selM) {
+    return ((parseInt(selH.value, 10) || 0) * 60) + (parseInt(selM.value, 10) || 0);
+}
+
+function isZeroTimeSelects(selH, selM) {
+    return (selH.value === "00" && selM.value === "00");
+}
+
+function showHorarioWarning(message) {
+    if (typeof Swal !== "undefined" && Swal.fire) {
+        Swal.fire({
+            icon: "warning",
+            title: "Horario inválido",
+            text: message,
+            customClass: {
+                popup: 'swal-seduc',
+                confirmButton: 'btn-seduc btn-seduc-primary'
+            }
+        });
+        return;
+    }
+
+    alert(message);
+}
+
 function timePicker(prefix, bloque, tipo) { //arma el “control” HH : MM
     // bloque: man | tar
     // tipo: ini | fin
@@ -838,6 +870,142 @@ function buildRow(dia) { // arma una fila completa del día (mañana ini/fin, ta
     const td4 = document.createElement("td");
     td4.appendChild(timePicker(dia.prefix, "tar", "fin"));
     tr.appendChild(td4);
+
+    function bindBloqueRules(bloque, bloqueLabel) {
+        const iniH = tr.querySelector(`select[name="${dia.prefix}_${bloque}_ini_h"]`);
+        const iniM = tr.querySelector(`select[name="${dia.prefix}_${bloque}_ini_m"]`);
+        const finH = tr.querySelector(`select[name="${dia.prefix}_${bloque}_fin_h"]`);
+        const finM = tr.querySelector(`select[name="${dia.prefix}_${bloque}_fin_m"]`);
+        if (!iniH || !iniM || !finH || !finM) return;
+
+        function refreshTerminoOptions() {
+            const iniZero = isZeroTimeSelects(iniH, iniM);
+            const iniHour = parseInt(iniH.value, 10) || 0;
+            const iniMin = parseInt(iniM.value, 10) || 0;
+            const finHour = parseInt(finH.value, 10) || 0;
+
+            Array.from(finH.options).forEach(opt => {
+                const h = parseInt(opt.value, 10) || 0;
+                opt.disabled = !iniZero && h < iniHour;
+            });
+
+            Array.from(finM.options).forEach(opt => {
+                const m = parseInt(opt.value, 10) || 0;
+                opt.disabled = !iniZero && (finHour < iniHour || (finHour === iniHour && m < iniMin));
+            });
+        }
+
+        function normalizeTerminoAndValidate(source) {
+            const iniZero = isZeroTimeSelects(iniH, iniM);
+            const finZero = isZeroTimeSelects(finH, finM);
+
+            if (iniZero && !finZero) {
+                finH.value = "00";
+                finM.value = "00";
+                refreshTerminoOptions();
+                if (source === "termino") {
+                    showHorarioWarning(`Primero debes indicar la hora de inicio de la jornada ${bloqueLabel}.`);
+                }
+                return;
+            }
+
+            const iniMinTotal = toMinutesFromSelects(iniH, iniM);
+            const finMinTotal = toMinutesFromSelects(finH, finM);
+            if (!iniZero && !finZero && finMinTotal < iniMinTotal) {
+                finH.value = iniH.value;
+                finM.value = iniM.value;
+                refreshTerminoOptions();
+                if (source === "termino") {
+                    showHorarioWarning(`La hora de término de la jornada ${bloqueLabel} no puede ser menor que la hora de inicio.`);
+                }
+                return;
+            }
+
+            refreshTerminoOptions();
+        }
+
+        [iniH, iniM].forEach(sel => {
+            sel.addEventListener("change", function() {
+                normalizeTerminoAndValidate("inicio");
+            });
+        });
+
+        [finH, finM].forEach(sel => {
+            sel.addEventListener("change", function() {
+                normalizeTerminoAndValidate("termino");
+            });
+        });
+
+        refreshTerminoOptions();
+    }
+
+    bindBloqueRules("man", "mañana");
+    bindBloqueRules("tar", "tarde");
+
+    function bindCruceMananaTardeRules() {
+        const manFinH = tr.querySelector(`select[name="${dia.prefix}_man_fin_h"]`);
+        const manFinM = tr.querySelector(`select[name="${dia.prefix}_man_fin_m"]`);
+        const tarIniH = tr.querySelector(`select[name="${dia.prefix}_tar_ini_h"]`);
+        const tarIniM = tr.querySelector(`select[name="${dia.prefix}_tar_ini_m"]`);
+        if (!manFinH || !manFinM || !tarIniH || !tarIniM) return;
+
+        function refreshTardeInicioOptions() {
+            const manFinZero = isZeroTimeSelects(manFinH, manFinM);
+            const manFinHour = parseInt(manFinH.value, 10) || 0;
+            const manFinMin = parseInt(manFinM.value, 10) || 0;
+            const tarHour = parseInt(tarIniH.value, 10) || 0;
+
+            Array.from(tarIniH.options).forEach(opt => {
+                const h = parseInt(opt.value, 10) || 0;
+                // Permitir 00:00 como bloque "sin tarde". Si se usa tarde, debe ser >= mañana término.
+                opt.disabled = !manFinZero && h !== 0 && h < manFinHour;
+            });
+
+            Array.from(tarIniM.options).forEach(opt => {
+                const m = parseInt(opt.value, 10) || 0;
+
+                // Si hora es 00, solo permitir 00:00 como valor vacío
+                if (tarHour === 0) {
+                    opt.disabled = (m !== 0);
+                    return;
+                }
+
+                opt.disabled = !manFinZero && (tarHour < manFinHour || (tarHour === manFinHour && m < manFinMin));
+            });
+        }
+
+        function normalizeTardeInicio() {
+            const manFinZero = isZeroTimeSelects(manFinH, manFinM);
+            if (manFinZero) {
+                refreshTardeInicioOptions();
+                return;
+            }
+
+            const tarIniZero = isZeroTimeSelects(tarIniH, tarIniM);
+            if (tarIniZero) {
+                refreshTardeInicioOptions();
+                return;
+            }
+
+            const manFinTotal = toMinutesFromSelects(manFinH, manFinM);
+            const tarIniTotal = toMinutesFromSelects(tarIniH, tarIniM);
+            if (tarIniTotal < manFinTotal) {
+                tarIniH.value = manFinH.value;
+                tarIniM.value = manFinM.value;
+                tarIniM.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+
+            refreshTardeInicioOptions();
+        }
+
+        [manFinH, manFinM, tarIniH, tarIniM].forEach(sel => {
+            sel.addEventListener("change", normalizeTardeInicio);
+        });
+
+        refreshTardeInicioOptions();
+    }
+
+    bindCruceMananaTardeRules();
 
     const lockCheck = th.querySelector(".day-lock-check");
     const lockLabel = th.querySelector(".day-lock");

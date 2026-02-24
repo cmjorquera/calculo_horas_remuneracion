@@ -21,12 +21,12 @@
     <!-- Panel Form -->
     <div class="panel form-panel">
       <div class="brand">
-        <div class="logo">CH</div>
-        <div>
+        <div class="logo">
+          <img src="imagenes/logo_1.jpg" alt="Logo Cálculo de Horas">
+        </div>
           <h1>Cálculo de Horas</h1>
           <p>Sistema de jornada, colación y resumen</p>
         </div>
-      </div>
 
       <div class="title">Iniciar sesión</div>
       <div class="subtitle">Ingresa tus credenciales para continuar.</div>
@@ -35,8 +35,9 @@
           $msg = isset($_GET["m"]) ? $_GET["m"] : "";
           $intentos = isset($_GET["i"]) ? (int)$_GET["i"] : 0;
 
-          function alerta($texto, $tipo="danger") {
-            echo '<div class="alert alert-'.$tipo.'" style="margin:12px 0; border-radius:14px;">'.$texto.'</div>';
+          function alerta($texto, $tipo="danger", $extraClass="") {
+            $class = trim("alert alert-$tipo $extraClass");
+            echo '<div class="'.$class.'" style="margin:12px 0; border-radius:14px;">'.$texto.'</div>';
           }
 
           if ($msg === "campos_vacios") {
@@ -48,7 +49,7 @@
           }
 
           if ($msg === "clave_incorrecta") {
-            alerta("Contraseña incorrecta. Intento $intentos de 3.");
+            alerta("Contraseña incorrecta. Intento $intentos de 3.", "danger", "alerta-intento");
           }
 
           if ($msg === "inactivo") {
@@ -80,14 +81,14 @@
             </button>
           </div>
         </div>
-<!-- 
+
         <div class="row">
           <label class="check">
             <input type="checkbox" name="remember" value="1">
             Mantener sesión
           </label>
           <a class="link" href="#" onclick="return false;">¿Olvidaste tu contraseña?</a>
-        </div> -->
+        </div>
 
         <button class="btn" type="submit">
           Entrar <i class="bi bi-arrow-right-short"></i>

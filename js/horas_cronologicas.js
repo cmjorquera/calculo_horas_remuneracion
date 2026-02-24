@@ -55,20 +55,70 @@
     return formatHHMM(min);
   }
 
+  function sanitizePedNumberInput(value) {
+    const raw = String(value || "");
+    let out = "";
+    let hasSep = false;
+
+    for (const ch of raw) {
+      if (/\d/.test(ch)) {
+        out += ch;
+        continue;
+      }
+      if ((ch === "." || ch === ",") && !hasSep) {
+        out += ".";
+        hasSep = true;
+      }
+    }
+
+    return out;
+  }
+
+  function parsePedHours(value) {
+    const s = sanitizePedNumberInput(value);
+    if (!s) return 0;
+    const n = Number(s);
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(0, n);
+  }
+
+  function normalizePedNumber(value) {
+    const n = parsePedHours(value);
+    if (n === 0) return "0";
+    return String(Math.round(n * 100) / 100);
+  }
+
+  function pedHoursToCronoHHMM(pedHours) {
+    const minCrono = Math.round(Math.max(0, Number(pedHours) || 0) * 40);
+    return formatHHMM(minCrono);
+  }
+
   function recalcularLectivas() {
     const pedEl = document.getElementById("sumLectivasPed");
     const croEl = document.getElementById("sumLectivasCro");
     if (!pedEl || !croEl) return;
 
-    croEl.value = pedToCronoHHMM(pedEl.value);
+    const pedHours = parsePedHours(pedEl.value);
+    croEl.value = pedHoursToCronoHHMM(pedHours);
+    recalcularNoLectivas();
   }
 
   function recalcularNoLectivas() {
-    const noLectivasPedEl = document.getElementById("sumNoLectivasPed");
+    const jornadaCroEl = document.getElementById("sumJornadaCro");
+    const lectivasCroEl = document.getElementById("sumLectivasCro");
     const noLectivasCroEl = document.getElementById("sumNoLectivasCro");
 
-    if (!noLectivasPedEl || !noLectivasCroEl) return;
-    noLectivasPedEl.value = cronoToPedHHMM(noLectivasCroEl.value);
+    if (!jornadaCroEl || !lectivasCroEl || !noLectivasCroEl) return;
+
+    const jornadaMin = parseHHMM(jornadaCroEl.textContent);
+    const lectivasMin = parseHHMM(lectivasCroEl.value);
+
+    // Regla pedida:
+    // - Si lectivas cronológicas está vacío o en 00:00, repetir jornada ordinaria cronológica.
+    // - Si tiene valor, calcular No lectivas = Jornada - Lectivas.
+    const noLectivasMin = lectivasMin <= 0 ? jornadaMin : Math.max(0, jornadaMin - lectivasMin);
+
+    noLectivasCroEl.value = formatHHMM(noLectivasMin);
   }
 
   function attachTimeValidation(inputEl) {
@@ -86,9 +136,25 @@
     });
   }
 
+  function attachPedNumberValidation(inputEl) {
+    if (!inputEl) return;
+
+    inputEl.addEventListener("input", function () {
+      const next = sanitizePedNumberInput(inputEl.value);
+      if (inputEl.value !== next) {
+        inputEl.value = next;
+      }
+    });
+
+    inputEl.addEventListener("blur", function () {
+      inputEl.value = normalizePedNumber(inputEl.value);
+    });
+  }
+
   function bindAutoCalc() {
     const lectivasPedEl = document.getElementById("sumLectivasPed");
     const lectivasCroEl = document.getElementById("sumLectivasCro");
+    const jornadaCroEl = document.getElementById("sumJornadaCro");
 
     if (!lectivasPedEl) return;
 
@@ -97,12 +163,16 @@
       attachTimeValidation(lectivasCroEl);
     }
 
-    attachTimeValidation(lectivasPedEl);
+    attachPedNumberValidation(lectivasPedEl);
     const noLectivasCroEl = document.getElementById("sumNoLectivasCro");
     if (noLectivasCroEl) {
+      noLectivasCroEl.setAttribute("readonly", "readonly");
       attachTimeValidation(noLectivasCroEl);
-      noLectivasCroEl.addEventListener("input", recalcularNoLectivas);
-      noLectivasCroEl.addEventListener("blur", recalcularNoLectivas);
+    }
+
+    const noLectivasPedEl = document.getElementById("sumNoLectivasPed");
+    if (noLectivasPedEl) {
+      attachPedNumberValidation(noLectivasPedEl);
     }
 
     lectivasPedEl.addEventListener("input", function () {
@@ -112,6 +182,11 @@
     lectivasPedEl.addEventListener("blur", function () {
       recalcularLectivas();
     });
+
+    if (jornadaCroEl && typeof MutationObserver !== "undefined") {
+      const observer = new MutationObserver(recalcularNoLectivas);
+      observer.observe(jornadaCroEl, { childList: true, characterData: true, subtree: true });
+    }
 
     recalcularLectivas();
     recalcularNoLectivas();

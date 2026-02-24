@@ -69,6 +69,15 @@
       color:white;
       font-weight:900;
       letter-spacing:.5px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .logo img{
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
     }
 
     .brand h1{
@@ -195,6 +204,14 @@
       color: rgba(15,23,42,.55);
       font-size: 12px;
       text-align:center;
+    }
+
+    .alerta-intento{
+      border: 1px solid rgba(172, 28, 44, .45) !important;
+      background: linear-gradient(90deg, rgba(172, 28, 44, .08), rgba(172, 28, 44, .03)) !important;
+      color: #8b1f2a !important;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(172, 28, 44, .10);
     }
 
     /* Panel derecho: branding / info */

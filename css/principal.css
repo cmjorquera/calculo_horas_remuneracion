@@ -171,6 +171,49 @@
     .table-wrap{
       overflow: visible; /* clave para no mostrar scroll */
     }
+
+    .jornada-legal-msg{
+      margin: 10px 12px 14px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      background: #fff;
+      color: var(--text);
+    }
+    .jornada-legal-msg.is-hidden{
+      display: none;
+    }
+    .jornada-legal-msg.is-low{
+      border-color: rgba(245, 158, 11, .45);
+      background: rgba(245, 158, 11, .08);
+      color: #92400e;
+    }
+    .jornada-legal-msg.is-ok{
+      border-color: rgba(34, 197, 94, .45);
+      background: rgba(34, 197, 94, .08);
+      color: #166534;
+    }
+    .jornada-legal-msg.is-over{
+      border-color: rgba(220, 38, 38, .45);
+      background: rgba(220, 38, 38, .08);
+      color: #991b1b;
+    }
+    .horario-equal-msg{
+      margin: 10px 12px 14px;
+      padding: 10px 12px;
+      border: 1px solid rgba(245, 158, 11, .45);
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      background: rgba(245, 158, 11, .08);
+      color: #92400e;
+    }
+    .horario-equal-msg.is-hidden{
+      display: none;
+    }
+
     table{
       width: 100%;
       border-collapse: collapse;
@@ -269,7 +312,7 @@
       padding: 10px;
       text-align:center;
       font-weight: 900;
-      font-size: 14px;
+      font-size: 31px;
     }
     .box small{
       display:block;

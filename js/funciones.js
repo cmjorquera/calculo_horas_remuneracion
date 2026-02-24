@@ -148,10 +148,74 @@
   }
 
   // ===== Pintar resumen =====
+  function setJornadaLegalMessage(msgEl, text) {
+    msgEl.textContent = text;
+  }
+
+  function updateHorarioEqualWarningUI(tbody, dayPrefixes) {
+    const msgEl = document.getElementById("horarioIgualMsg");
+    if (!msgEl) return;
+
+    let hasEqual = false;
+    for (const p of dayPrefixes) {
+      for (const bloque of ["man", "tar"]) {
+        const iniH = tbody.querySelector(`select[name="${p}_${bloque}_ini_h"]`);
+        const iniM = tbody.querySelector(`select[name="${p}_${bloque}_ini_m"]`);
+        const finH = tbody.querySelector(`select[name="${p}_${bloque}_fin_h"]`);
+        const finM = tbody.querySelector(`select[name="${p}_${bloque}_fin_m"]`);
+        if (!iniH || !iniM || !finH || !finM) continue;
+
+        const iniMin = hhmmToMinutes(iniH.value, iniM.value);
+        const finMin = hhmmToMinutes(finH.value, finM.value);
+        const iniZero = isZeroTime(iniH.value, iniM.value);
+        const finZero = isZeroTime(finH.value, finM.value);
+
+        if (!iniZero && !finZero && iniMin === finMin) {
+          hasEqual = true;
+          break;
+        }
+      }
+      if (hasEqual) break;
+    }
+
+    msgEl.classList.toggle("is-hidden", !hasEqual);
+  }
+
+  function updateJornadaLegalUI(jornadaTotalMin) {
+    const msgEl = document.getElementById("jornadaLegalMsg");
+    if (!msgEl) return;
+
+    const LIMITE_MIN = 40 * 60; // 40:00
+    msgEl.classList.remove("is-low", "is-ok", "is-over");
+
+    if (jornadaTotalMin <= 0) {
+      msgEl.classList.add("is-hidden");
+      return;
+    }
+
+    msgEl.classList.remove("is-hidden");
+
+    if (jornadaTotalMin < LIMITE_MIN) {
+      setJornadaLegalMessage(msgEl, "Está bajo las 40 horas legales (Ley 21.561).");
+      msgEl.classList.add("is-low");
+      return;
+    }
+
+    if (jornadaTotalMin === LIMITE_MIN) {
+      setJornadaLegalMessage(msgEl, "Cumple con las horas laborales legales.");
+      msgEl.classList.add("is-ok");
+      return;
+    }
+
+    setJornadaLegalMessage(msgEl, "No cumple con las 40:00 horas laborales.");
+    msgEl.classList.add("is-over");
+  }
+
   function updateResumenJornadaUI(jornadaTotalMin) {
     const elJorCro = document.getElementById("sumJornadaCro");
 
     if (elJorCro) elJorCro.textContent = minutesToHHMM(jornadaTotalMin);
+    updateJornadaLegalUI(jornadaTotalMin);
   }
 
   /**
@@ -169,6 +233,7 @@
     function recompute() {
       const jornadaTotal = calcWeekJornada(tbody, dayPrefixes);
       updateResumenJornadaUI(jornadaTotal);
+      updateHorarioEqualWarningUI(tbody, dayPrefixes);
     }
 
     // 1) Inicial
