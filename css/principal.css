@@ -33,9 +33,9 @@
     }
 
     .page{
-      max-width: 1200px;
+      max-width: 1500px;
       margin: 10px auto;
-      padding: var(--pagePad);
+      padding: 10px 12px;
     }
 
     /* ===== Header ===== */
@@ -122,9 +122,9 @@
     .content{
       margin-top: var(--gap);
       display:grid;
-      grid-template-columns: 1fr 360px;
-      gap: var(--gap);
-      align-items:stretch;
+      grid-template-columns: minmax(0, 1fr) 400px;
+      gap: 12px;
+      align-items:start;
     }
     @media (max-width: 980px){
       .content{ grid-template-columns: 1fr; }
@@ -930,8 +930,12 @@
 
 /* ===== TABLA DE EMPLEADOS ===== */
 .emp-table-wrap{
-  overflow: auto;
+  max-height: 62vh;
+  overflow-y: auto;
+  overflow-x: auto;
   margin-top: 12px;
+  border: 1px solid rgba(0, 0, 0, .08);
+  border-radius: 12px;
 }
 
 .emp-table{
@@ -1066,6 +1070,7 @@
 @media (max-width: 768px){
   .emp-table-wrap{
     font-size: 12px;
+    max-height: 55vh;
   }
   
   .emp-table th,

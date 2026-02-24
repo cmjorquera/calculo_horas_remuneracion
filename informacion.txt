@@ -1,18 +1,59 @@
-┌──────────────────────┐           ┌──────────────────────────┐           ┌──────────────────────────┐
-│      EMPLEADOS        │           │     CONTRATOS_EMPLEADO    │           │     HORARIOS_SEMANALES    │
-├──────────────────────┤           ├──────────────────────────┤           ├──────────────────────────┤
-│ PK id_empleado        │ 1     1   │ PK id_contrato            │ 1     N   │ PK id_horario             │
-│    codigo             │──────────▶│ FK id_empleado            │──────────▶│ FK id_contrato            │
-│    run                │           │    fecha_inicio           │           │    dia                    │
-│    id_colegio         │           │    fecha_fin              │           │    man_ini                │
-│    nombres            │           │    horas_semanales_cron    │           │    man_fin                │
-│    apellido_paterno   │           │    min_colacion_diaria     │           │    tar_ini                │
-│    apellido_materno   │           │    observacion             │           │    tar_fin                │
-│    email              │           │    created_at              │           │    activo                 │
-│    telefono           │           └──────────────────────────┘           │    created_at              │
-│    activo             │                                                  └──────────────────────────┘
-│    foto               │
-│    genero             │
-│    created_at         │
-│    updated_at         │
-└──────────────────────┘
+┌───────────────────────────────┐
+│            EMPLEADOS           │
+├───────────────────────────────┤
+│ PK  id_empleado                │
+│     codigo                     │
+│     run                        │
+│     id_colegio                 │
+│     nombres                    │
+│     apellido_paterno           │
+│     apellido_materno           │
+│     email                      │
+│     telefono                   │
+│     activo                     │
+│     foto                       │
+│     genero                     │
+│     created_at                 │
+│     updated_at                 │
+└───────────────────────────────┘
+              1
+              │
+              │
+              ▼
+┌───────────────────────────────┐
+│       CONTRATOS_EMPLEADO       │
+├───────────────────────────────┤
+│ PK  id_contrato                │
+│ FK  id_empleado  ──────────────┼──► EMPLEADOS.id_empleado
+│     fecha_inicio               │
+│     fecha_fin                  │
+│     horas_semanales_cron       │
+│     horas_lectivas             │
+│     horas_no_lectivas          │
+│     min_colacion_diaria        │
+│     observacion                │
+│     created_at                 │
+└───────────────────────────────┘
+              1
+              │
+              │
+              ▼
+┌───────────────────────────────┐
+│        HORARIOS_SEMANALES      │
+├───────────────────────────────┤
+│ PK  id_horario                 │
+│ FK  id_contrato  ──────────────┼──► CONTRATOS_EMPLEADO.id_contrato
+│ FK  id_empleado  ──────────────┼──► EMPLEADOS.id_empleado   (*) opcional
+│     dia                        │
+│     man_ini                    │
+│     man_fin                    │
+│     tar_ini                    │
+│     tar_fin                    │
+│     activo                     │
+│     created_at                 │
+└───────────────────────────────┘
+
+Relaciones:
+- EMPLEADOS (1) ─── (N) CONTRATOS_EMPLEADO
+- CONTRATOS_EMPLEADO (1) ─── (N) HORARIOS_SEMANALES
+- (*) id_empleado en HORARIOS_SEMANALES es redundante si ya existe id_contrato

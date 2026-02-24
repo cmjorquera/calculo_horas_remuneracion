@@ -75,6 +75,22 @@ function minutosAHHMM($totalMin){
     gap: 16px 18px;
 }
 
+.swal-layout-2col {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px 20px;
+    align-items: stretch;
+}
+
+.swal-col-left {
+    display: grid;
+    gap: 12px;
+}
+
+.swal-col-right {
+    display: flex;
+}
+
 /* CAMPOS */
 .swal-field {
     display: flex;
@@ -105,6 +121,21 @@ function minutosAHHMM($totalMin){
     background: #ffffff;
     outline: none;
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.swal-textarea-modern {
+    height: auto;
+    min-height: 292px;
+    padding: 10px 12px;
+    resize: vertical;
+}
+
+.swal-observacion-field {
+    flex: 1;
+}
+
+.swal-observacion-field .swal-textarea-modern {
+    width: 100%;
 }
 
 /* Día bloqueado en horario semanal */
@@ -221,7 +252,18 @@ function minutosAHHMM($totalMin){
     .swal-grid-2 {
         grid-template-columns: 1fr;
     }
+
+    .swal-layout-2col {
+        grid-template-columns: 1fr;
+    }
+
+    .swal-textarea-modern {
+        min-height: 150px;
+    }
 }
+
+
+
 </style>
 <div class="page">
     <?php include __DIR__ . "/menu_lateral.php"; ?>
@@ -284,7 +326,7 @@ function minutosAHHMM($totalMin){
                             <th colspan="2">Tarde</th>
                         </tr>
                         <tr>
-                            <th>Inicio</th>
+                            <th>Inic3333333io</th>
                             <th>Término</th>
                             <th>Inicio</th>
                             <th>Término</th>
@@ -441,7 +483,7 @@ function minutosAHHMM($totalMin){
 
         <button type="button" class="btn-mini btn-excel" onclick="descargarExcel()">
           <i class="bi bi-file-earmark-excel-fill"></i>
-          Excel333
+          Excel
         </button>
       </div>
     </div>
@@ -495,8 +537,8 @@ function minutosAHHMM($totalMin){
           $idEmpleado  = (int)$e['id_empleado'];
           $idContrato  = (int)($e['id_contrato'] ?? 0);
 
-          $jornada = (int)($e['horas_semanales_cron'] ?? 0);
-          $jornadaTxt = str_pad($jornada, 2, '0', STR_PAD_LEFT) . ':00';
+          $jornadaMin = (int)($e['horas_semanales_cron'] ?? 0);
+          $jornadaTxt = minutosAHHMM($jornadaMin);
 
           $lectivasTxt   = isset($e['horas_lectivas_hhmm']) ? $e['horas_lectivas_hhmm'] : '00:00';
           $noLectivasTxt = isset($e['horas_no_lectivas_hhmm']) ? $e['horas_no_lectivas_hhmm'] : '00:00';
@@ -589,7 +631,8 @@ function minutosAHHMM($totalMin){
 </div>
 <script>
 function verDetalleHorario(idEmpleado, idContrato) {
-
+    const empleadoId = Number(idEmpleado) || 0;
+    const contratoId = Number(idContrato) || 0;
     const hhmm = (t) => (!t || t === '00:00:00') ? '—' : t.substring(0, 5);
 
     const buildTable = (dias) => {
@@ -643,7 +686,8 @@ function verDetalleHorario(idEmpleado, idContrato) {
         },
         didOpen: () => {
             const fd = new FormData();
-            fd.append('id_contrato', idContrato);
+            fd.append('id_contrato', String(contratoId));
+            fd.append('id_empleado', String(empleadoId));
 
             fetch('modelos/rescatar/horarios.php', {
                     method: 'POST',
@@ -915,9 +959,6 @@ function buildRow(dia) { // arma una fila completa del día (mañana ini/fin, ta
                 finH.value = iniH.value;
                 finM.value = iniM.value;
                 refreshTerminoOptions();
-                if (source === "termino") {
-                    showHorarioWarning(`La hora de término de la jornada ${bloqueLabel} no puede ser menor que la hora de inicio.`);
-                }
                 return;
             }
 

@@ -120,7 +120,13 @@ SELECT d.nombre,
 FROM dias_semana d
 LEFT JOIN horarios_semanales hs
   ON hs.id_contrato = $id_contrato
- AND hs.dia = UPPER(d.prefijo)
+ AND (
+      UPPER(TRIM(hs.dia)) = UPPER(TRIM(d.prefijo))
+   OR UPPER(TRIM(hs.dia)) = UPPER(TRIM(d.clave))
+   OR UPPER(TRIM(hs.dia)) = UPPER(LEFT(TRIM(d.clave), 3))
+   OR UPPER(LEFT(TRIM(hs.dia), 3)) = UPPER(LEFT(TRIM(d.prefijo), 3))
+   OR UPPER(LEFT(TRIM(hs.dia), 3)) = UPPER(LEFT(TRIM(d.clave), 3))
+ )
 WHERE d.orden BETWEEN 1 AND 5
 ORDER BY d.orden
 ";

@@ -17,6 +17,10 @@ function jerr($msg) {
   exit;
 }
 function esc($db, $v) { return $db->escape_string($v); }
+function normalize_run($run) {
+  $run = strtoupper(trim((string)$run));
+  return preg_replace('/[^0-9K]/', '', $run);
+}
 
 // =====================
 // 1) POST
@@ -30,8 +34,10 @@ $telefono   = trim($_POST["telefono"] ?? "");
 $genero     = trim($_POST["genero"] ?? "");
 $horarioJson = $_POST["horario"] ?? "";
 $id_colacion = trim($_POST["id_colacion"] ?? "");
+$horas_semanales_cron = (int)($_POST["horas_semanales_cron"] ?? 0);
 $horas_lectivas = (int)($_POST["horas_lectivas"] ?? 0);
 $horas_no_lectivas = (int)($_POST["horas_no_lectivas"] ?? 0);
+$min_colacion_diaria  = (int)($_POST["min_colacion_diaria"] ?? 0);
 
 // =====================
 // 2) VALIDACIONES (vacíos + formato)
@@ -40,12 +46,9 @@ if ($nombres === "")    jerr("Nombres es obligatorio.");
 if ($ap_paterno === "") jerr("Apellido paterno es obligatorio.");
 if ($ap_materno === "") jerr("Apellido materno es obligatorio.");
 if ($run === "")        jerr("RUN es obligatorio.");
-if ($email === "")      jerr("Email es obligatorio.");
-if ($telefono === "")   jerr("Teléfono es obligatorio.");
-if ($genero === "" || !in_array($genero, ["1","2"], true)) jerr("Género inválido.");
-if ($id_colacion === "") jerr("Debe seleccionar una hora de colación.");
+if ($genero !== "" && !in_array($genero, ["1","2"], true)) jerr("Género inválido.");
 
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+if ($email !== "" && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
   jerr("Email inválido.");
 }
 
@@ -83,11 +86,12 @@ $codigo = "EMP" . date("ymdHis") . rand(100, 999);
 $db->consulta("START TRANSACTION");
 
 // 4.1) Verificar RUN duplicado en el colegio
+$runNorm = normalize_run($run);
 $sqlCheck = "
   SELECT id_empleado
   FROM empleados
-  WHERE run = '".esc($db,$run)."'
-    AND id_colegio = $id_colegio
+  WHERE id_colegio = $id_colegio
+    AND REPLACE(REPLACE(UPPER(run), '.', ''), '-', '') = '".esc($db,$runNorm)."'
   LIMIT 1
 ";
 $resCheck = $db->consulta($sqlCheck);
@@ -130,13 +134,13 @@ if ($id_empleado <= 0) {
 // 4.3) Insert CONTRATO (id_contrato = id_empleado por ahora)
 $id_contrato = $id_empleado;
 
-// Valores por defecto (ajústalos después desde UI)
+// Valores enviados desde UI
 $fecha_inicio = date("Y-m-d");
 $fecha_fin = null;                  // NULL
-$horas_semanales_cron = trim($_POST["horas_semanales_cron"] ?? "00:00");
-$min_colacion_diaria  = (int)($_POST["min_colacion_diaria"] ?? 0);
 $horas_lectivas = max(0, $horas_lectivas);
 $horas_no_lectivas = max(0, $horas_no_lectivas);
+$horas_semanales_cron = max(0, $horas_semanales_cron);
+$min_colacion_diaria = max(0, $min_colacion_diaria);
 
 $observacion = trim($_POST["observacion"] ?? "");
 
