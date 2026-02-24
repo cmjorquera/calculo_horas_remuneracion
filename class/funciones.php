@@ -33,14 +33,14 @@ class Funciones
 
         return $dias;
     }
- public function obtenerEmpleadosConContratoVigente($id_colegio)
+    public function obtenerEmpleadosConContratoVigente($id_colegio)
     {
         $id_colegio = (int)$id_colegio;
 
 $sql = "
   SELECT
     e.id_empleado, e.codigo, e.run, e.nombres, e.apellido_paterno, e.apellido_materno, e.genero, e.activo,
-    c.id_contrato, c.horas_semanales_cron, c.min_colacion_diaria, c.observacion,
+    c.id_contrato, c.horas_semanales_cron, c.horas_lectivas, c.horas_no_lectivas, c.min_colacion_diaria, c.observacion,
 
     COALESCE(SUM(
       (CASE
@@ -68,7 +68,7 @@ $sql = "
 
   GROUP BY
     e.id_empleado, e.codigo, e.run, e.nombres, e.apellido_paterno, e.apellido_materno, e.genero, e.activo,
-    c.id_contrato, c.horas_semanales_cron, c.min_colacion_diaria, c.observacion
+    c.id_contrato, c.horas_semanales_cron, c.horas_lectivas, c.horas_no_lectivas, c.min_colacion_diaria, c.observacion
 
   ORDER BY e.apellido_paterno, e.apellido_materno, e.nombres
 ";
@@ -82,6 +82,14 @@ $sql = "
             $empleados[] = $row;
         }
         return $empleados;
+    }
+
+    private function minutosAHHMM($totalMin)
+    {
+        $totalMin = max(0, (int)$totalMin);
+        $h = floor($totalMin / 60);
+        $m = $totalMin % 60;
+        return str_pad((string)$h, 2, '0', STR_PAD_LEFT) . ":" . str_pad((string)$m, 2, '0', STR_PAD_LEFT);
     }
 
     public function calcularHorasSemanales($id_contrato)
@@ -124,6 +132,8 @@ $sql = "
     foreach ($empleados as &$e) {
         $contrato = (int)($e['horas_semanales_cron'] ?? 0);
         $trab = $this->calcularHorasSemanales($e['id_contrato']);
+        $e['horas_lectivas_hhmm'] = $this->minutosAHHMM((int)($e['horas_lectivas'] ?? 0));
+        $e['horas_no_lectivas_hhmm'] = $this->minutosAHHMM((int)($e['horas_no_lectivas'] ?? 0));
 
         $pct = ($contrato > 0) ? min(100, round(($trab / $contrato) * 100)) : 0;
         $diff = round($trab - $contrato, 2);
@@ -137,5 +147,68 @@ $sql = "
 
     return $empleados;
 }
+
+    public function obtenerOpcionesColacion()
+    {
+        $this->db->consulta("
+            CREATE TABLE IF NOT EXISTS colacion (
+                id_colacion INT AUTO_INCREMENT PRIMARY KEY,
+                hora TIME NOT NULL,
+                minutos INT NOT NULL UNIQUE,
+                activo TINYINT(1) NOT NULL DEFAULT 1,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY uk_colacion_hora (hora)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+
+        $resHasHora = $this->db->consulta("
+            SELECT COUNT(*) AS t
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'colacion'
+              AND COLUMN_NAME = 'hora'
+        ");
+        $hasHora = (int)($this->db->fetch_assoc($resHasHora)['t'] ?? 0) > 0;
+
+        if ($hasHora) {
+            $this->db->consulta("
+                INSERT IGNORE INTO colacion (hora, minutos, activo) VALUES
+                ('00:00:00', 0, 1),
+                ('00:30:00', 30, 1),
+                ('00:40:00', 40, 1),
+                ('01:00:00', 60, 1)
+            ");
+
+            $res = $this->db->consulta("
+                SELECT id_colacion, TIME_FORMAT(hora, '%H:%i') AS hora_hhmm, minutos
+                FROM colacion
+                WHERE activo = 1
+                ORDER BY hora ASC
+            ");
+        } else {
+            $this->db->consulta("
+                INSERT IGNORE INTO colacion (minutos, activo) VALUES
+                (0, 1), (30, 1), (40, 1), (60, 1)
+            ");
+
+            $res = $this->db->consulta("
+                SELECT id_colacion, DATE_FORMAT(SEC_TO_TIME(minutos * 60), '%H:%i') AS hora_hhmm, minutos
+                FROM colacion
+                WHERE activo = 1
+                ORDER BY minutos ASC
+            ");
+        }
+
+        $opciones = [];
+        while ($row = $this->db->fetch_assoc($res)) {
+            $opciones[] = [
+                "id_colacion" => (int)$row["id_colacion"],
+                "hora" => $row["hora_hhmm"],
+                "minutos" => (int)$row["minutos"]
+            ];
+        }
+
+        return $opciones;
+    }
 
 }

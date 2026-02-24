@@ -29,6 +29,9 @@ $email      = trim($_POST["email"] ?? "");
 $telefono   = trim($_POST["telefono"] ?? "");
 $genero     = trim($_POST["genero"] ?? "");
 $horarioJson = $_POST["horario"] ?? "";
+$id_colacion = trim($_POST["id_colacion"] ?? "");
+$horas_lectivas = (int)($_POST["horas_lectivas"] ?? 0);
+$horas_no_lectivas = (int)($_POST["horas_no_lectivas"] ?? 0);
 
 // =====================
 // 2) VALIDACIONES (vacíos + formato)
@@ -40,6 +43,7 @@ if ($run === "")        jerr("RUN es obligatorio.");
 if ($email === "")      jerr("Email es obligatorio.");
 if ($telefono === "")   jerr("Teléfono es obligatorio.");
 if ($genero === "" || !in_array($genero, ["1","2"], true)) jerr("Género inválido.");
+if ($id_colacion === "") jerr("Debe seleccionar una hora de colación.");
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
   jerr("Email inválido.");
@@ -49,18 +53,13 @@ if ($horarioJson === "") jerr("No se recibió horario.");
 $horario = json_decode($horarioJson, true);
 if (!is_array($horario)) jerr("Horario inválido.");
 
-// Validar: debe existir al menos 1 hora marcada y coherencia inicio/fin
-$tieneAlgo = false;
+// Validar coherencia inicio/fin por bloque (puede venir todo vacío)
 
 foreach ($horario as $d) {
   $manIni = trim($d["manana"]["inicio"] ?? "");
   $manFin = trim($d["manana"]["termino"] ?? "");
   $tarIni = trim($d["tarde"]["inicio"] ?? "");
   $tarFin = trim($d["tarde"]["termino"] ?? "");
-
-  if ($manIni !== "" || $manFin !== "" || $tarIni !== "" || $tarFin !== "") {
-    $tieneAlgo = true;
-  }
 
   if (($manIni !== "" && $manFin === "") || ($manIni === "" && $manFin !== "")) {
     jerr("Bloque mañana incompleto: selecciona inicio y término.");
@@ -69,8 +68,6 @@ foreach ($horario as $d) {
     jerr("Bloque tarde incompleto: selecciona inicio y término.");
   }
 }
-
-if (!$tieneAlgo) jerr("Debe asignar un horario primero.");
 
 // =====================
 // 3) DATOS EXTRA
@@ -138,6 +135,8 @@ $fecha_inicio = date("Y-m-d");
 $fecha_fin = null;                  // NULL
 $horas_semanales_cron = trim($_POST["horas_semanales_cron"] ?? "00:00");
 $min_colacion_diaria  = (int)($_POST["min_colacion_diaria"] ?? 0);
+$horas_lectivas = max(0, $horas_lectivas);
+$horas_no_lectivas = max(0, $horas_no_lectivas);
 
 $observacion = trim($_POST["observacion"] ?? "");
 
@@ -145,13 +144,15 @@ $observacion = trim($_POST["observacion"] ?? "");
 // Según tu pedido, lo insertamos explícito.
 $sqlCon = "
   INSERT INTO contratos_empleado
-(id_empleado, fecha_inicio, fecha_fin, horas_semanales_cron, min_colacion_diaria, observacion, created_at)
+(id_empleado, fecha_inicio, fecha_fin, horas_semanales_cron, horas_lectivas, horas_no_lectivas, min_colacion_diaria, observacion, created_at)
 VALUES
 (
   $id_empleado,
   '".esc($db,$fecha_inicio)."',
   NULL,
   $horas_semanales_cron,
+  $horas_lectivas,
+  $horas_no_lectivas,
   $min_colacion_diaria,
   '".esc($db,$observacion)."',
   NOW()

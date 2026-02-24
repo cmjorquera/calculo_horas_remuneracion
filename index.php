@@ -13,6 +13,7 @@ $db = new MySQL("qaseduc_calculo_horario", "qaseduc_ucomun", "jorquera86;");
 
 $funciones = new Funciones($db);
 $dias = $funciones->obtenerDiasSemana(true); // lunes a viernes
+$colaciones = $funciones->obtenerOpcionesColacion();
 $empleados = $funciones->obtenerEmpleadosConResumen($_SESSION["id_colegio"]);
 
 
@@ -21,6 +22,13 @@ function hhmm($hoursFloat){
   $h = floor($totalMin/60);
   $m = $totalMin % 60;
   return str_pad($h,2,'0',STR_PAD_LEFT).":".str_pad($m,2,'0',STR_PAD_LEFT);
+}
+
+function minutosAHHMM($totalMin){
+  $totalMin = max(0, (int)$totalMin);
+  $h = floor($totalMin / 60);
+  $m = $totalMin % 60;
+  return str_pad($h, 2, '0', STR_PAD_LEFT).":".str_pad($m, 2, '0', STR_PAD_LEFT);
 }
 ?>
 
@@ -50,6 +58,7 @@ function hhmm($hoursFloat){
 <script src="js/button.js"></script>
 <script src="js/guardar_empleado.js"></script>
 <script src="js/tabla_dinamicas.js"></script>
+<script src="js/horas_cronologicas.js"></script>
 
 <style>
 /* input| */
@@ -96,6 +105,105 @@ function hhmm($hoursFloat){
     background: #ffffff;
     outline: none;
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+/* Día bloqueado en horario semanal */
+#tbodyHorario tr.day-blocked {
+    opacity: 0.55;
+}
+
+#tbodyHorario tr.day-blocked th {
+    text-decoration: line-through;
+}
+
+.day-head {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+}
+
+.day-lock {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 10px;
+    border: 1px solid #d7dde7;
+    border-radius: 999px;
+    background: #fff;
+    cursor: pointer;
+    color: #1f2937;
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.day-lock:hover {
+    border-color: #93a9c8;
+    box-shadow: 0 0 0 2px rgba(31, 79, 143, 0.12);
+}
+
+.day-lock-check {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+}
+
+.lock-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #edf2f8;
+    color: #4b5563;
+    font-size: 11px;
+}
+
+.day-lock.active {
+    border-color: #e8b4b4;
+    background: #fff6f6;
+}
+
+#tbodyHorario tr.day-blocked .lock-icon {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.day-name {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.horario-tools {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.horario-repeat {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.horario-help {
+    border: 0;
+    background: transparent;
+    color: #6b7280;
+    padding: 0;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.horario-help i {
+    font-size: 16px;
 }
 
 /* SELECT */
@@ -155,6 +263,16 @@ function hhmm($hoursFloat){
             <div class="card-head">
                 <h2>Horario semanal</h2>
                 <small>Selecciona hora de inicio y término por jornada</small>
+                <div class="horario-tools">
+                    <label class="horario-repeat">
+                        <input type="checkbox" id="chkAutoRepeatDown">
+                        Repetir hacia abajo
+                    </label>
+                    <button type="button" class="horario-help" id="btnAutoRepeatHelp"
+                        aria-label="Ayuda repetir hacia abajo" title="Cómo funciona">
+                        <i class="bi bi-info-circle"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="table-wrap">
@@ -227,7 +345,7 @@ function hhmm($hoursFloat){
                     <div class="sum-row editable-row">
                         <div>
                             <div class="name d-flex align-items-center gap-2">
-                                Horas lectivas
+                                Horas No lectivas
                                 <i class="bi bi-pencil-fill edit-row-icon" title="Editar horas lectivas"></i>
                             </div>
                             <div class="hint">Clases / aula</div>
@@ -236,15 +354,15 @@ function hhmm($hoursFloat){
                         <!-- Pedagógicas -->
                         <div class="box">
                             <small>Pedagógicas</small>
-                            <input id="sumLectivasPed" class="sum-input" type="text" value="00:00" inputmode="numeric"
-                                autocomplete="off" aria-label="Horas lectivas pedagógicas">
+                            <input id="sumNoLectivasPed" class="sum-input" type="text" value="00:00" inputmode="numeric"
+                                autocomplete="off" aria-label="Horas no lectivas pedagógicas" readonly>
                         </div>
 
                         <!-- Cronológicas -->
                         <div class="box">
                             <small>Cronológicas</small>
-                            <input id="sumLectivasCro" class="sum-input" type="text" value="00:00" inputmode="numeric"
-                                autocomplete="off" aria-label="Horas lectivas cronológicas">
+                            <input id="sumNoLectivasCro" class="sum-input" type="text" value="00:00" inputmode="numeric"
+                                autocomplete="off" aria-label="Horas no lectivas cronológicas">
                         </div>
                     </div>
 
@@ -254,10 +372,27 @@ function hhmm($hoursFloat){
                     <div class="sum-row">
                         <div>
                             <div class="name">Colación</div>
-                            <div class="hint">Descuento diario</div>
+                            <!-- <div class="hint">Descuento diario</div> -->
                         </div>
                         <div class="box"><small>Minutos</small><span id="sumColacionMin">00</span></div>
-                        <div class="box"><small>hh:mm</small><span id="sumColacionHHMM">00:00</span></div>
+                        <div class="box">
+                            <small>Horas</small>
+                            <select id="sumColacionSelect" class="sum-input" aria-label="Colación diaria en horas">
+                                <option value="" selected disabled>Selecciona...</option>
+                                <?php foreach ($colaciones as $col): ?>
+                                    <?php
+                                        $idCol = (int)($col['id_colacion'] ?? 0);
+                                        $min = (int)($col['minutos'] ?? 0);
+                                        $hora = (string)($col['hora'] ?? minutosAHHMM($min));
+                                    ?>
+                                    <option
+                                        value="<?= $idCol ?>"
+                                        data-minutos="<?= $min ?>">
+                                        <?= htmlspecialchars($hora, ENT_QUOTES) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="actions">
@@ -356,7 +491,7 @@ function hhmm($hoursFloat){
           $jornada = (int)($e['horas_semanales_cron'] ?? 0);
           $jornadaTxt = str_pad($jornada, 2, '0', STR_PAD_LEFT) . ':00';
 
-          $lectivasTxt   = isset($e['horas_pedagogicas_lectivas_hhmm']) ? $e['horas_pedagogicas_lectivas_hhmm'] : '00:00';
+          $lectivasTxt   = isset($e['horas_lectivas_hhmm']) ? $e['horas_lectivas_hhmm'] : '00:00';
           $noLectivasTxt = isset($e['horas_no_lectivas_hhmm']) ? $e['horas_no_lectivas_hhmm'] : '00:00';
 
           $colacionMin = (int)($e['min_colacion_diaria'] ?? 0);
@@ -674,9 +809,18 @@ function timePicker(prefix, bloque, tipo) { //arma el “control” HH : MM
 
 function buildRow(dia) { // arma una fila completa del día (mañana ini/fin, tarde ini/fin).
     const tr = document.createElement("tr");
+    tr.dataset.dayPrefix = dia.prefix;
 
     const th = document.createElement("th");
-    th.textContent = dia.label;
+    th.innerHTML = `
+      <div class="day-head">
+        <label class="day-lock">
+          <input type="checkbox" class="day-lock-check" aria-label="Bloquear ${dia.label}">
+          <span class="lock-icon" aria-hidden="true"><i class="bi bi-lock-fill"></i></span>
+          <span class="day-name">${dia.label}</span>
+        </label>
+      </div>
+    `;
     tr.appendChild(th);
 
     const td1 = document.createElement("td");
@@ -694,6 +838,38 @@ function buildRow(dia) { // arma una fila completa del día (mañana ini/fin, ta
     const td4 = document.createElement("td");
     td4.appendChild(timePicker(dia.prefix, "tar", "fin"));
     tr.appendChild(td4);
+
+    const lockCheck = th.querySelector(".day-lock-check");
+    const lockLabel = th.querySelector(".day-lock");
+    const lockIcon = th.querySelector(".lock-icon i");
+
+    const refreshLockUi = (isBlocked) => {
+        if (lockLabel) lockLabel.classList.toggle("active", isBlocked);
+        if (lockIcon) {
+            lockIcon.classList.toggle("bi-lock-fill", isBlocked);
+            lockIcon.classList.toggle("bi-unlock-fill", !isBlocked);
+        }
+    };
+
+    if (lockCheck) {
+        refreshLockUi(false);
+        lockCheck.addEventListener("change", function() {
+            const allSelects = tr.querySelectorAll("select");
+            if (this.checked) {
+                allSelects.forEach(s => {
+                    s.value = "00";
+                    s.disabled = true;
+                });
+                tr.classList.add("day-blocked");
+            } else {
+                allSelects.forEach(s => s.disabled = false);
+                tr.classList.remove("day-blocked");
+            }
+            refreshLockUi(this.checked);
+            // dispara recálculo general
+            tr.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+    }
 
     return tr;
 }
@@ -745,6 +921,14 @@ function init() {
     // botones (solo demo)
     document.getElementById("btnLimpiar").addEventListener("click", () => {
         document.querySelectorAll("#tbodyHorario select").forEach(s => s.value = "00");
+        document.querySelectorAll(".day-lock-check").forEach(c => c.checked = false);
+        document.querySelectorAll("#tbodyHorario tr").forEach(tr => {
+            tr.classList.remove("day-blocked");
+            tr.querySelectorAll("select").forEach(s => s.disabled = false);
+        });
+        document.getElementById("tbodyHorario").dispatchEvent(new Event("change", {
+            bubbles: true
+        }));
     });
 
 
@@ -762,36 +946,44 @@ init();
 <!-- se activan con el archivo funciones.js -->
 <!-- ***************************************************************** -->
 
-<!--  para que se marquen las hora inferiores automaticamente  -->
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    bindAutoFillHorario({
-        tbodySelector: "#tbodyHorario",
-        dayPrefixes: ["lun", "mar", "mie", "jue", "vie"],
-        onlyIfEmpty: false // true si NO quieres pisar valores ya puestos
-    });
-});
-</script>
-
-<!--calculo de horas de colacion -->
 <!--calculo de horas Cronologicas-->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    const chkAutoRepeat = document.getElementById("chkAutoRepeatDown");
+    const btnAutoRepeatHelp = document.getElementById("btnAutoRepeatHelp");
 
     // 1) Auto-fill (si ya lo estás usando)
     if (window.bindAutoFillHorario) {
         bindAutoFillHorario({
             tbodySelector: "#tbodyHorario",
             dayPrefixes: ["lun", "mar", "mie", "jue", "vie"],
-            onlyIfEmpty: false
+            onlyIfEmpty: false,
+            isEnabled: () => !!(chkAutoRepeat && chkAutoRepeat.checked)
         });
     }
 
-    // 2) Re-cálculo jornada + colación + resumen
+    // 2) Re-cálculo jornada + resumen
     bindRecalculoHorario({
         tbodySelector: "#tbodyHorario",
         dayPrefixes: ["lun", "mar", "mie", "jue", "vie"]
     });
+
+    // 3) Colación fija seleccionada desde BD
+    bindColacionFija();
+
+    if (btnAutoRepeatHelp) {
+        btnAutoRepeatHelp.addEventListener("click", function() {
+            Swal.fire({
+                icon: "info",
+                title: "Repetir hacia abajo",
+                text: "Si activas este check, al cambiar una hora en un día se copia a los días siguientes en la misma columna. Si está desactivado, no se repite nada.",
+                customClass: {
+                    popup: 'swal-seduc',
+                    confirmButton: 'btn-seduc btn-seduc-primary'
+                }
+            });
+        });
+    }
 
 });
 </script>
@@ -1003,3 +1195,4 @@ document.addEventListener("click", function(e) {
 </body>
 
 </html>
+

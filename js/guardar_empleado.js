@@ -1,7 +1,6 @@
 /**
  * guardar_empleado.js
  * - Recolecta selects del horario (generados por JS en la tabla)
- * - Valida: "Debe asignar un horario primero" si todo está 00:00
  * - Muestra SweetAlert2 para registrar empleado
  * - Envía (empleado + horario) por AJAX a modelos/guardar/empleado.php
  *
@@ -102,12 +101,18 @@ function hhmmToMinutes(hhmm) {
 }
 
 function recolectarResumen() {
+  const colacionSelect = document.getElementById("sumColacionSelect");
   const jornadaCroHHMM = (document.getElementById("sumJornadaCro")?.textContent || "00:00").trim();
   const colacionMinTxt = (document.getElementById("sumColacionMin")?.textContent || "0").trim();
+  const lectivasCroHHMM = (document.getElementById("sumLectivasCro")?.value || "00:00").trim();
+  const noLectivasCroHHMM = (document.getElementById("sumNoLectivasCro")?.value || "00:00").trim();
 
   return {
+    colacionId: colacionSelect?.value || "",
     jornadaCroMinSemanal: hhmmToMinutes(jornadaCroHHMM),
-    colacionMinSemanal: parseInt(colacionMinTxt, 10) || 0
+    colacionMinDiaria: parseInt(colacionMinTxt, 10) || 0,
+    horasLectivasMin: hhmmToMinutes(lectivasCroHHMM),
+    horasNoLectivasMin: hhmmToMinutes(noLectivasCroHHMM)
   };
 }
 
@@ -134,24 +139,23 @@ function contarDiasConHorario(horario) {
    ========================= */
 
 function guardarEmpleado() {
-  const { horario, tieneAlgo } = recolectarHorario();
+  const { horario } = recolectarHorario();
+  const colacionSelect = document.getElementById("sumColacionSelect");
 
-  // 1) Validación: debe asignar al menos algo distinto de 00:00
-  if (!tieneAlgo) {
+  if (!colacionSelect || !colacionSelect.value) {
     Swal.fire({
       icon: "warning",
-      title: "Falta horario",
-      text: "Debe asignar un horario primero (selecciona al menos una hora distinta de 00:00).",
-                  customClass: {
-            popup: 'swal-seduc',
-            confirmButton: 'btn-seduc btn-seduc-primary',
-            cancelButton: 'btn-seduc btn-seduc-ghost'
-        },
+      title: "Falta colación",
+      text: "Debes seleccionar una hora de colación antes de guardar.",
+      customClass: {
+        popup: "swal-seduc",
+        confirmButton: "btn-seduc btn-seduc-primary"
+      }
     });
     return;
   }
 
-  // 2) Validación opcional de consistencia (inicio/fin por bloque)
+  // 1) Validación opcional de consistencia (inicio/fin por bloque)
   const errConsistencia = validarHorarioConsistencia(horario);
   if (errConsistencia) {
     Swal.fire({
@@ -162,7 +166,7 @@ function guardarEmpleado() {
     return;
   }
 
-  // 3) Modal para datos del empleado
+  // 2) Modal para datos del empleado
   Swal.fire({
     title: "Registrar empleado + horario",
 html: `
@@ -262,27 +266,23 @@ preConfirm: () => {
 
     const empleado = result.value;
 
-    // 4) Payload final: empleado + horario
+    // 3) Payload final: empleado + horario + resumen
     const resumen = recolectarResumen();
-    const diasConHorario = contarDiasConHorario(horario);
-
-    // colación diaria aproximada (si el total es semanal)
-    const colacionDiariaMin = (diasConHorario > 0)
-      ? Math.round(resumen.colacionMinSemanal / diasConHorario)
-      : 0;
 
     const payload = {
       ...empleado,
       horario: JSON.stringify(horario),
 
-      // ✅ nuevos datos
-    horas_semanales_cron: String(resumen.jornadaCroMinSemanal),
-    min_colacion_diaria: String(colacionDiariaMin)
+      id_colacion: String(resumen.colacionId),
+      horas_semanales_cron: String(resumen.jornadaCroMinSemanal),
+      min_colacion_diaria: String(resumen.colacionMinDiaria),
+      horas_lectivas: String(resumen.horasLectivasMin),
+      horas_no_lectivas: String(resumen.horasNoLectivasMin)
 
     };
 
 
-    // 5) Enviar por AJAX
+    // 4) Enviar por AJAX
     fetch("modelos/guardar/empleado.php", {
       method: "POST",
       headers: {

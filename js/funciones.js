@@ -21,10 +21,13 @@
     const tbody = document.querySelector(opts.tbodySelector || "#tbodyHorario");
     const dayPrefixes = Array.isArray(opts.dayPrefixes) ? opts.dayPrefixes : [];
     const onlyIfEmpty = !!opts.onlyIfEmpty;
+    const isEnabled = (typeof opts.isEnabled === "function") ? opts.isEnabled : () => true;
 
     if (!tbody || dayPrefixes.length === 0) return;
 
     tbody.addEventListener("change", function (ev) {
+      if (!isEnabled()) return;
+
       const sel = ev.target.closest("select");
       if (!sel || !sel.name) return;
 
@@ -46,6 +49,7 @@
         const toName = `${dayPrefixes[i]}_${bloque}_${tipo}_${hm}`;
         const target = tbody.querySelector(`select[name="${toName}"]`);
         if (!target) continue;
+        if (target.disabled) continue;
 
         if (onlyIfEmpty && String(target.value) !== "00") continue;
 
@@ -68,11 +72,10 @@
 
 
 /* ==========================================================
-   CÁLCULOS: Jornada ordinaria + Colación (Lun a Vie)
-   - Colación diaria = (tarde_inicio - mañana_termino) en minutos
+   CÁLCULOS: Jornada ordinaria (Lun a Vie)
    - Jornada diaria  = (mañana_fin - mañana_ini) + (tarde_fin - tarde_ini)
    - Totales semanales: suma de Lun..Vie
-   - Pedagógicas: conversión desde cronológicas (45 min = 1 hora pedagógica)
+   - Colación se define por selección fija (no por diferencia horaria)
    ========================================================== */
 
 (function (global) {
@@ -97,11 +100,6 @@
     return (String(hh) === "00" && String(mm) === "00");
   }
 
-  // 45 cronológicos = 60 pedagógicos
-  function cronToPedMinutes(cronMin) {
-    return Math.round(cronMin * (60 / 45));
-  }
-
   // Lee un tiempo desde los <select> por name:  lun_man_ini_h / lun_man_ini_m ...
   function getTimeFromSelects(tbody, prefix, bloque, tipo) {
     const selH = tbody.querySelector(`select[name="${prefix}_${bloque}_${tipo}_h"]`);
@@ -124,7 +122,7 @@
   }
 
   // ===== Cálculo por día =====
-  function calcDay(tbody, prefix) {
+  function calcDayJornada(tbody, prefix) {
     const manIni = getTimeFromSelects(tbody, prefix, "man", "ini");
     const manFin = getTimeFromSelects(tbody, prefix, "man", "fin");
     const tarIni = getTimeFromSelects(tbody, prefix, "tar", "ini");
@@ -133,44 +131,27 @@
     const durMan = diffMinutes(manIni, manFin);
     const durTar = diffMinutes(tarIni, tarFin);
 
-    // Colación solo si existe término mañana y existe inicio tarde
-    const colacion = (manFin && tarIni) ? Math.max(0, tarIni.min - manFin.min) : 0;
-
     // Jornada = suma de bloques trabajados (NO incluye colación)
     const jornada = durMan + durTar;
-
-    return { jornadaMin: jornada, colacionMin: colacion };
+    return jornada;
   }
 
   // ===== Cálculo semana =====
-  function calcWeek(tbody, dayPrefixes) {
+  function calcWeekJornada(tbody, dayPrefixes) {
     let jornadaTotal = 0;
-    let colacionTotal = 0;
 
     for (const p of dayPrefixes) {
-      const d = calcDay(tbody, p);
-      jornadaTotal += d.jornadaMin;
-      colacionTotal += d.colacionMin;
+      jornadaTotal += calcDayJornada(tbody, p);
     }
 
-    return { jornadaTotalMin: jornadaTotal, colacionTotalMin: colacionTotal };
+    return jornadaTotal;
   }
 
   // ===== Pintar resumen =====
-  function updateResumenUI(res) {
+  function updateResumenJornadaUI(jornadaTotalMin) {
     const elJorCro = document.getElementById("sumJornadaCro");
-    // const elJorPed = document.getElementById("sumJornadaPed");
 
-    const elColMin = document.getElementById("sumColacionMin");
-    const elColHH  = document.getElementById("sumColacionHHMM");
-
-    // Jornada (cronológicas y pedagógicas)
-    if (elJorCro) elJorCro.textContent = minutesToHHMM(res.jornadaTotalMin);
-    // if (elJorPed) elJorPed.textContent = minutesToHHMM(cronToPedMinutes(res.jornadaTotalMin));
-
-    // Colación total
-    if (elColMin) elColMin.textContent = String(Math.round(res.colacionTotalMin)).padStart(2, "0");
-    if (elColHH)  elColHH.textContent  = minutesToHHMM(res.colacionTotalMin);
+    if (elJorCro) elJorCro.textContent = minutesToHHMM(jornadaTotalMin);
   }
 
   /**
@@ -186,8 +167,8 @@
 
     // recalcula y pinta
     function recompute() {
-      const res = calcWeek(tbody, dayPrefixes);
-      updateResumenUI(res);
+      const jornadaTotal = calcWeekJornada(tbody, dayPrefixes);
+      updateResumenJornadaUI(jornadaTotal);
     }
 
     // 1) Inicial
@@ -199,8 +180,37 @@
     });
   }
 
+  function bindColacionFija() {
+    const select = document.getElementById("sumColacionSelect");
+    const elColMin = document.getElementById("sumColacionMin");
+    const elColHH = document.getElementById("sumColacionHHMM");
+    if (!select || !elColMin) return;
+
+    function updateFromSelect() {
+      if (!select.value) {
+        elColMin.textContent = "0";
+        if (elColHH) {
+          elColHH.textContent = minutesToHHMM(0);
+        }
+        return;
+      }
+
+      const selected = select.options[select.selectedIndex];
+      const minutosAttr = selected ? selected.getAttribute("data-minutos") : null;
+      const minutos = parseInt(minutosAttr, 10) || 0;
+      elColMin.textContent = String(Math.max(0, minutos));
+      if (elColHH) {
+        elColHH.textContent = minutesToHHMM(minutos);
+      }
+    }
+
+    updateFromSelect();
+    select.addEventListener("change", updateFromSelect);
+  }
+
   // Exponer
   global.bindRecalculoHorario = bindRecalculoHorario;
+  global.bindColacionFija = bindColacionFija;
 
 })(window);
 
