@@ -176,11 +176,13 @@ function guardarEmpleado() {
   const colacionSelect = document.getElementById("sumColacionSelect");
   const prefill = window.empleadoSeleccionadoPrefill || null;
   const normalizeRun = (v) => String(v || "").toUpperCase().replace(/[^0-9K]/g, "");
+  const prefillRunNorm = normalizeRun(prefill?.run || "");
   const runLookupState = {
     checking: false,
     exists: false,
     runNorm: "",
-    fullName: ""
+    fullName: "",
+    ignorePrefilledExisting: !!prefillRunNorm
   };
 
   if (!tieneAlgo) {
@@ -373,16 +375,37 @@ didOpen: () => {
 
   runInput.addEventListener("input", () => {
     formatearRun(runInput);
+    const currentNorm = normalizeRun(runInput.value.trim());
+    runLookupState.ignorePrefilledExisting = !!prefillRunNorm && currentNorm === prefillRunNorm;
+    if (runLookupState.ignorePrefilledExisting) {
+      runLookupState.checking = false;
+      runLookupState.exists = false;
+      runLookupState.runNorm = currentNorm;
+      runLookupState.fullName = "";
+      setMsg("");
+      if (timer) clearTimeout(timer);
+      return;
+    }
     if (timer) clearTimeout(timer);
     timer = setTimeout(buscarRun, 350);
   });
 
   runInput.addEventListener("blur", () => {
     formatearRun(runInput);
+    const currentNorm = normalizeRun(runInput.value.trim());
+    runLookupState.ignorePrefilledExisting = !!prefillRunNorm && currentNorm === prefillRunNorm;
+    if (runLookupState.ignorePrefilledExisting) {
+      runLookupState.checking = false;
+      runLookupState.exists = false;
+      runLookupState.runNorm = currentNorm;
+      runLookupState.fullName = "";
+      setMsg("");
+      return;
+    }
     buscarRun();
   });
 
-  if (runInput.value.trim()) {
+  if (runInput.value.trim() && !runLookupState.ignorePrefilledExisting) {
     buscarRun();
   }
 },
@@ -409,7 +432,9 @@ preConfirm: () => {
     return false;
   }
 
-  if (runLookupState.exists && normalizeRun(data.run) === runLookupState.runNorm) {
+  if (!runLookupState.ignorePrefilledExisting &&
+      runLookupState.exists &&
+      normalizeRun(data.run) === runLookupState.runNorm) {
     const nombre = runLookupState.fullName || "otro usuario";
     Swal.showValidationMessage(`El RUN ${data.run} ya existe y está asociado a ${nombre}.`);
     return false;
@@ -449,6 +474,15 @@ preConfirm: () => {
       horas_no_lectivas: String(resumen.horasNoLectivasMin)
 
     };
+
+    const prefillEmpleadoId = Number(prefill?.id_empleado || 0);
+    if (prefillEmpleadoId > 0) {
+      payload.id_empleado = String(prefillEmpleadoId);
+    }
+    const prefillContratoId = Number(prefill?.id_contrato || 0);
+    if (prefillContratoId > 0) {
+      payload.id_contrato = String(prefillContratoId);
+    }
 
 
     // 4) Enviar por AJAX

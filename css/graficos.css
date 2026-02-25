@@ -1,54 +1,102 @@
- .graficos-container {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 20px;
-        }
+.graficos-main {
+    display: grid;
+    gap: 22px;
+}
 
-        .grafico-box {
-            background: #ffffff;
-            border-radius: 14px;
-            box-shadow: 0 6px 18px rgba(0,0,0,.08);
-            padding: 20px;
-            margin-bottom: 30px;
-            border-left: 6px solid #004E8C;
-        }
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 22px;
+}
 
-        .grafico-titulo {
-            font-size: 18px;
-            font-weight: 600;
-            color: #111827;
-            margin-bottom: 20px;
-        }
+.kpi-card {
+    background: #ffffff;
+    border: 4px solid #0f172a;
+    border-radius: 0;
+    min-height: 96px;
+    padding: 10px 14px;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 8px;
+}
 
-        .canvas-wrapper {
-            position: relative;
-            height: 400px;
-            margin-bottom: 20px;
-        }
+.kpi-label {
+    font-size: 16px;
+    color: #374151;
+    font-weight: 600;
+    text-align: center;
+}
 
-        .estadisticas {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
+.kpi-value {
+    font-size: 34px;
+    line-height: 1;
+    color: #0f172a;
+    font-weight: 700;
+}
 
-        .estadistica-item {
-            background: #f3f4f6;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            border-left: 4px solid #30DB55;
-        }
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+        "g1 g2"
+        "g3 g4";
+    gap: 22px;
+}
 
-        .estadistica-valor {
-            font-size: 24px;
-            font-weight: 700;
-            color: #30DB55;
-        }
+.chart-card {
+    background: #ffffff;
+    border: 4px solid #0f172a;
+    border-radius: 0;
+    padding: 12px 14px;
+}
 
-        .estadistica-label {
-            font-size: 12px;
-            color: #6b7280;
-            margin-top: 5px;
-        }
+.chart-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    color: #111827;
+    font-weight: 700;
+}
+
+.chart-wrap {
+    position: relative;
+    height: 300px;
+}
+
+.chart-g1 { grid-area: g1; }
+.chart-g2 { grid-area: g2; }
+.chart-g3 { grid-area: g3; }
+.chart-g4 { grid-area: g4; }
+
+.chart-g1 .chart-wrap,
+.chart-g2 .chart-wrap {
+    height: 340px;
+}
+
+.chart-g3 .chart-wrap,
+.chart-g4 .chart-wrap {
+    height: 260px;
+}
+
+@media (max-width: 1100px) {
+    .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "g1"
+            "g2"
+            "g3"
+            "g4";
+    }
+}
+
+@media (max-width: 640px) {
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+}

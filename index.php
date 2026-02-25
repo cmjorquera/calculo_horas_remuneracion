@@ -688,10 +688,16 @@ function parseHHMMtoPedHours(hhmm) {
     return Number.isInteger(ped) ? String(ped) : ped.toFixed(2).replace(/\.?0+$/, "");
 }
 
+function setAccionEmpleadoModo(isModificar) {
+    const btn = document.getElementById("btnGuardar");
+    if (!btn) return;
+    btn.textContent = isModificar ? "Modificar" : "Agregar";
+    btn.dataset.modo = isModificar ? "modificar" : "agregar";
+}
+
 function seleccionarEmpleado(ev, triggerBtn, idEmpleado, idContrato) {
     if (ev && typeof ev.preventDefault === "function") ev.preventDefault();
     if (ev && typeof ev.stopPropagation === "function") ev.stopPropagation();
-    const previousScrollY = window.scrollY || window.pageYOffset || 0;
 
     const empleadoId = Number(idEmpleado) || 0;
     const contratoId = Number(idContrato) || 0;
@@ -717,8 +723,11 @@ function seleccionarEmpleado(ev, triggerBtn, idEmpleado, idContrato) {
         infoEl.textContent = `${nombre} | RUN: ${run}`;
         infoEl.title = `${nombre} | RUN: ${run}`;
     }
+    setAccionEmpleadoModo(true);
 
     window.empleadoSeleccionadoPrefill = {
+        id_empleado: empleadoId,
+        id_contrato: contratoId,
         nombres,
         ap_paterno: apPaterno,
         ap_materno: apMaterno,
@@ -754,7 +763,10 @@ function seleccionarEmpleado(ev, triggerBtn, idEmpleado, idContrato) {
     if (elNoLectivasCro) elNoLectivasCro.value = noLectivasCro;
     if (elLectivasPed) elLectivasPed.value = parseHHMMtoPedHours(lectivasCro);
     if (elNoLectivasPed) elNoLectivasPed.value = parseHHMMtoPedHours(noLectivasCro);
-    requestAnimationFrame(() => window.scrollTo(0, previousScrollY));
+    requestAnimationFrame(() => window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    }));
 
     const tbody = document.getElementById("tbodyHorario");
     if (!tbody) return;
@@ -810,11 +822,9 @@ function seleccionarEmpleado(ev, triggerBtn, idEmpleado, idContrato) {
             tbody.dispatchEvent(new Event("change", {
                 bubbles: true
             }));
-            requestAnimationFrame(() => window.scrollTo(0, previousScrollY));
         })
         .catch(() => {
             Swal.fire("Error", "No se pudo cargar el horario del empleado seleccionado.", "error");
-            requestAnimationFrame(() => window.scrollTo(0, previousScrollY));
         });
 }
 
@@ -1327,6 +1337,40 @@ function init() {
             tr.classList.remove("day-blocked");
             tr.querySelectorAll("select").forEach(s => s.disabled = false);
         });
+
+        const chkAutoRepeat = document.getElementById("chkAutoRepeatDown");
+        if (chkAutoRepeat) chkAutoRepeat.checked = false;
+
+        const sumJornadaPed = document.getElementById("sumJornadaPed");
+        const sumJornadaCro = document.getElementById("sumJornadaCro");
+        const sumLectivasPed = document.getElementById("sumLectivasPed");
+        const sumLectivasCro = document.getElementById("sumLectivasCro");
+        const sumNoLectivasPed = document.getElementById("sumNoLectivasPed");
+        const sumNoLectivasCro = document.getElementById("sumNoLectivasCro");
+        const sumColacionMin = document.getElementById("sumColacionMin");
+        const sumColacionSelect = document.getElementById("sumColacionSelect");
+
+        if (sumJornadaPed) sumJornadaPed.textContent = "--:--";
+        if (sumJornadaCro) sumJornadaCro.textContent = "00:00";
+        if (sumLectivasPed) sumLectivasPed.value = "0";
+        if (sumLectivasCro) sumLectivasCro.value = "00:00";
+        if (sumNoLectivasPed) sumNoLectivasPed.value = "0";
+        if (sumNoLectivasCro) sumNoLectivasCro.value = "00:00";
+        if (sumColacionMin) sumColacionMin.textContent = "00";
+        if (sumColacionSelect) sumColacionSelect.value = "";
+
+        window.empleadoSeleccionadoPrefill = null;
+        const infoEl = document.getElementById("empleadoSeleccionadoInfo");
+        if (infoEl) {
+            infoEl.textContent = "Sin empleado seleccionado";
+            infoEl.title = "Sin empleado seleccionado";
+        }
+        setAccionEmpleadoModo(false);
+        if (sumColacionSelect) {
+            sumColacionSelect.dispatchEvent(new Event("change", {
+                bubbles: true
+            }));
+        }
         document.getElementById("tbodyHorario").dispatchEvent(new Event("change", {
             bubbles: true
         }));

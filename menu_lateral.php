@@ -33,12 +33,12 @@ $totalEmpleados = $rowTotal['total'];
     </div>
 
     <!-- Horario -->
-    <div class="side-btn-wrap">
+    <!-- <div class="side-btn-wrap">
         <button class="side-btn" id="btnSideHorario" type="button" title="Horario (copiar / limpiar / guardar)"
             onclick="sideGo('horario')">
             <i class="bi bi-calendar2-week-fill"></i>
         </button>
-    </div>
+    </div> -->
 
     <!-- Reportes -->
     <div class="side-btn-wrap">
