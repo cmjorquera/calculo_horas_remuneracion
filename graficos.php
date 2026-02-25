@@ -99,10 +99,14 @@ $chartPayload = [
     <title>Gráficos | Calculadora de Horas</title>
     <link rel="stylesheet" type="text/css" href="css/principal.css">
     <link rel="stylesheet" type="text/css" href="css/menu_lateral.css">
+    <link rel="stylesheet" type="text/css" href="css/modales.css">
     <link rel="stylesheet" type="text/css" href="css/graficos.css">
     <link rel="icon" type="image/png" href="imagenes/logo_1.jpg" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script><!-- SweetAlert2 -->
+    <script src="js/button.js"></script>
+
 </head>
 
 <body>

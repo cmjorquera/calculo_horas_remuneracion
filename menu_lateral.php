@@ -102,29 +102,5 @@ function sideGo(key) {
     }
 }
 
-function confirmarSalir() {
-    Swal.fire({
-        title: '¿Salir del sistema?',
-        html: `
-      <div>
-        Se cerrará tu sesión por seguridad.<br>
-        ¿Deseas continuar?
-      </div>
-    `,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, salir',
-        cancelButtonText: 'Cancelar',
-        reverseButtons: true,
-        focusCancel: true,
-        backdrop: 'rgba(15, 23, 42, .35)',
-        customClass: {
-            popup: 'swal-seduc',
-            confirmButton: 'btn-seduc btn-seduc-primary',
-            cancelButton: 'btn-seduc btn-seduc-ghost'
-        }
-    }).then((r) => {
-        if (r.isConfirmed) window.location.href = 'logout.php';
-    });
-}
+
 </script>
