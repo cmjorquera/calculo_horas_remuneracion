@@ -82,7 +82,19 @@ function minutosAHHMM($totalMin){
     align-items: stretch;
 }
 
+.swal-layout-3col {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: 16px 20px;
+    align-items: stretch;
+}
+
 .swal-col-left {
+    display: grid;
+    gap: 12px;
+}
+
+.swal-col-mid {
     display: grid;
     gap: 12px;
 }
@@ -254,6 +266,10 @@ function minutosAHHMM($totalMin){
     }
 
     .swal-layout-2col {
+        grid-template-columns: 1fr;
+    }
+
+    .swal-layout-3col {
         grid-template-columns: 1fr;
     }
 
@@ -536,7 +552,12 @@ function minutosAHHMM($totalMin){
       <tbody>
         <?php $contador = 1; foreach($empleados as $e):
 
-          $nombre = trim($e['nombres'].' '.$e['apellido_paterno'].' '.$e['apellido_materno']);
+          $nombresEmp = trim((string)($e['nombres'] ?? ''));
+          $apPatEmp = trim((string)($e['apellido_paterno'] ?? ''));
+          $apMatEmp = trim((string)($e['apellido_materno'] ?? ''));
+          $runEmp = trim((string)($e['run'] ?? ''));
+          $generoEmp = trim((string)($e['genero'] ?? ''));
+          $nombre = trim($nombresEmp.' '.$apPatEmp.' '.$apMatEmp);
           $idEmpleado  = (int)$e['id_empleado'];
           $idContrato  = (int)($e['id_contrato'] ?? 0);
 
@@ -551,12 +572,12 @@ function minutosAHHMM($totalMin){
 
           $obs = trim((string)($e['observacion'] ?? ''));
         ?>
-        <tr data-filter="<?= htmlspecialchars(mb_strtolower($contador.' '.$e['run'].' '.$nombre.' '.$jornadaTxt.' '.$colacionTxt.' '.$noLectivasTxt.' '.$lectivasTxt), ENT_QUOTES) ?>">
+        <tr data-filter="<?= htmlspecialchars(mb_strtolower($contador.' '.$runEmp.' '.$nombre.' '.$jornadaTxt.' '.$colacionTxt.' '.$noLectivasTxt.' '.$lectivasTxt), ENT_QUOTES) ?>">
 
           <td class="cell-num" data-col="N°" data-value="<?= $contador ?>"><?= $contador ?></td>
 
-          <td class="cell-run" data-col="RUN" data-value="<?= htmlspecialchars($e['run'], ENT_QUOTES) ?>">
-            <?= htmlspecialchars($e['run']) ?>
+          <td class="cell-run" data-col="RUN" data-value="<?= htmlspecialchars($runEmp, ENT_QUOTES) ?>">
+            <?= htmlspecialchars($runEmp) ?>
           </td>
 
           <td class="cell-nombre" data-col="Nombre" data-value="<?= htmlspecialchars($nombre, ENT_QUOTES) ?>">
@@ -607,12 +628,17 @@ function minutosAHHMM($totalMin){
             <div class="cell-actions">
               <button type="button" class="btn-table-icon" title="Cargar horario"
                 data-empleado-nombre="<?= htmlspecialchars($nombre, ENT_QUOTES) ?>"
-                data-empleado-run="<?= htmlspecialchars($run, ENT_QUOTES) ?>"
+                data-empleado-nombres="<?= htmlspecialchars($nombresEmp, ENT_QUOTES) ?>"
+                data-empleado-ap-paterno="<?= htmlspecialchars($apPatEmp, ENT_QUOTES) ?>"
+                data-empleado-ap-materno="<?= htmlspecialchars($apMatEmp, ENT_QUOTES) ?>"
+                data-empleado-genero="<?= htmlspecialchars($generoEmp, ENT_QUOTES) ?>"
+                data-empleado-observacion="<?= htmlspecialchars($obs, ENT_QUOTES) ?>"
+                data-empleado-run="<?= htmlspecialchars($runEmp, ENT_QUOTES) ?>"
                 data-jornada-cro="<?= htmlspecialchars($jornadaTxt, ENT_QUOTES) ?>"
                 data-colacion-min="<?= (int)$colacionMin ?>"
                 data-lectivas-cro="<?= htmlspecialchars($lectivasTxt, ENT_QUOTES) ?>"
                 data-nolectivas-cro="<?= htmlspecialchars($noLectivasTxt, ENT_QUOTES) ?>"
-                onclick="seleccionarEmpleado(this, <?= $idEmpleado ?>, <?= $idContrato ?>)">
+                onclick="seleccionarEmpleado(event, this, <?= $idEmpleado ?>, <?= $idContrato ?>)">
                 <i class="bi bi-upload"></i>
               </button>
 
@@ -662,7 +688,11 @@ function parseHHMMtoPedHours(hhmm) {
     return Number.isInteger(ped) ? String(ped) : ped.toFixed(2).replace(/\.?0+$/, "");
 }
 
-function seleccionarEmpleado(triggerBtn, idEmpleado, idContrato) {
+function seleccionarEmpleado(ev, triggerBtn, idEmpleado, idContrato) {
+    if (ev && typeof ev.preventDefault === "function") ev.preventDefault();
+    if (ev && typeof ev.stopPropagation === "function") ev.stopPropagation();
+    const previousScrollY = window.scrollY || window.pageYOffset || 0;
+
     const empleadoId = Number(idEmpleado) || 0;
     const contratoId = Number(idContrato) || 0;
     if (empleadoId <= 0 && contratoId <= 0) {
@@ -671,6 +701,11 @@ function seleccionarEmpleado(triggerBtn, idEmpleado, idContrato) {
     }
 
     const nombre = triggerBtn?.dataset?.empleadoNombre || "Empleado";
+    const nombres = triggerBtn?.dataset?.empleadoNombres || "";
+    const apPaterno = triggerBtn?.dataset?.empleadoApPaterno || "";
+    const apMaterno = triggerBtn?.dataset?.empleadoApMaterno || "";
+    const genero = triggerBtn?.dataset?.empleadoGenero || "";
+    const observacion = triggerBtn?.dataset?.empleadoObservacion || "";
     const run = triggerBtn?.dataset?.empleadoRun || "-";
     const jornadaCro = triggerBtn?.dataset?.jornadaCro || "00:00";
     const lectivasCro = triggerBtn?.dataset?.lectivasCro || "00:00";
@@ -682,6 +717,15 @@ function seleccionarEmpleado(triggerBtn, idEmpleado, idContrato) {
         infoEl.textContent = `${nombre} | RUN: ${run}`;
         infoEl.title = `${nombre} | RUN: ${run}`;
     }
+
+    window.empleadoSeleccionadoPrefill = {
+        nombres,
+        ap_paterno: apPaterno,
+        ap_materno: apMaterno,
+        run,
+        genero,
+        observacion
+    };
 
     const selectColacion = document.getElementById("sumColacionSelect");
     if (selectColacion) {
@@ -710,6 +754,7 @@ function seleccionarEmpleado(triggerBtn, idEmpleado, idContrato) {
     if (elNoLectivasCro) elNoLectivasCro.value = noLectivasCro;
     if (elLectivasPed) elLectivasPed.value = parseHHMMtoPedHours(lectivasCro);
     if (elNoLectivasPed) elNoLectivasPed.value = parseHHMMtoPedHours(noLectivasCro);
+    requestAnimationFrame(() => window.scrollTo(0, previousScrollY));
 
     const tbody = document.getElementById("tbodyHorario");
     if (!tbody) return;
@@ -765,9 +810,11 @@ function seleccionarEmpleado(triggerBtn, idEmpleado, idContrato) {
             tbody.dispatchEvent(new Event("change", {
                 bubbles: true
             }));
+            requestAnimationFrame(() => window.scrollTo(0, previousScrollY));
         })
         .catch(() => {
             Swal.fire("Error", "No se pudo cargar el horario del empleado seleccionado.", "error");
+            requestAnimationFrame(() => window.scrollTo(0, previousScrollY));
         });
 }
 

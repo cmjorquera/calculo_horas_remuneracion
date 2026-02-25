@@ -174,6 +174,7 @@ function contarDiasConHorario(horario) {
 function guardarEmpleado() {
   const { horario, tieneAlgo } = recolectarHorario();
   const colacionSelect = document.getElementById("sumColacionSelect");
+  const prefill = window.empleadoSeleccionadoPrefill || null;
   const normalizeRun = (v) => String(v || "").toUpperCase().replace(/[^0-9K]/g, "");
   const runLookupState = {
     checking: false,
@@ -225,7 +226,7 @@ function guardarEmpleado() {
     title: "Registrar empleado + horario",
 html: `
   <div class="swal-form-modern">
-    <div class="swal-layout-2col">
+    <div class="swal-layout-3col">
       <div class="swal-col-left">
         <div class="swal-field">
           <label>Nombres</label>
@@ -243,6 +244,17 @@ html: `
         </div>
 
         <div class="swal-field">
+          <label>Género</label>
+          <select id="sw_genero" class="swal-input-modern">
+            <option value="">Selecciona...</option>
+            <option value="1">Hombre</option>
+            <option value="2">Profesora</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="swal-col-mid">
+        <div class="swal-field">
           <label>RUN</label>
           <input id="sw_run" class="swal-input-modern" placeholder="12.345.678-9">
           <small id="sw_run_exists_msg" style="display:block;margin-top:6px;color:#6b7280;"></small>
@@ -256,15 +268,6 @@ html: `
         <div class="swal-field">
           <label>Teléfono</label>
           <input id="sw_telefono" class="swal-input-modern" placeholder="+56 9 1234 5678">
-        </div>
-
-        <div class="swal-field">
-          <label>Género</label>
-          <select id="sw_genero" class="swal-input-modern">
-            <option value="">Selecciona...</option>
-            <option value="1">Hombre</option>
-            <option value="2">Profesora</option>
-          </select>
         </div>
       </div>
 
@@ -284,6 +287,7 @@ html: `
     showCancelButton: true,
     confirmButtonText: "Guardar",
     cancelButtonText: "Cancelar",
+    width: "1100px",
     focusConfirm: false,
             customClass: {
             popup: 'swal-seduc',
@@ -291,9 +295,24 @@ html: `
             cancelButton: 'btn-seduc btn-seduc-ghost'
         },
 didOpen: () => {
+  const nombresInput = document.getElementById("sw_nombres");
+  const apPatInput = document.getElementById("sw_ap_paterno");
+  const apMatInput = document.getElementById("sw_ap_materno");
   const runInput = document.getElementById("sw_run");
+  const generoInput = document.getElementById("sw_genero");
+  const observacionInput = document.getElementById("sw_observacion");
   const runMsg = document.getElementById("sw_run_exists_msg");
   if (!runInput || !runMsg) return;
+
+  if (prefill) {
+    if (nombresInput) nombresInput.value = String(prefill.nombres || "");
+    if (apPatInput) apPatInput.value = String(prefill.ap_paterno || "");
+    if (apMatInput) apMatInput.value = String(prefill.ap_materno || "");
+    if (observacionInput) observacionInput.value = String(prefill.observacion || "");
+    if (generoInput) generoInput.value = String(prefill.genero || "");
+    runInput.value = String(prefill.run || "");
+    formatearRun(runInput);
+  }
 
   let timer = null;
 
@@ -362,6 +381,10 @@ didOpen: () => {
     formatearRun(runInput);
     buscarRun();
   });
+
+  if (runInput.value.trim()) {
+    buscarRun();
+  }
 },
 
 preConfirm: () => {
