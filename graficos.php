@@ -138,20 +138,32 @@ $chartPayload = [
 
     <main class="content graficos-main">
         <section class="kpi-grid">
-            <article class="kpi-card">
-                <span class="kpi-label">Empleados</span>
+            <article class="kpi-card kpi-empleados">
+                <div class="kpi-top">
+                    <span class="kpi-label">Empleados</span>
+                    <span class="kpi-icon"><i class="bi bi-people"></i></span>
+                </div>
                 <span class="kpi-value"><?= (int)$kpiTotal ?></span>
             </article>
-            <article class="kpi-card">
-                <span class="kpi-label">Promedio jornada</span>
+            <article class="kpi-card kpi-promedio">
+                <div class="kpi-top">
+                    <span class="kpi-label">Promedio jornada</span>
+                    <span class="kpi-icon"><i class="bi bi-clock-history"></i></span>
+                </div>
                 <span class="kpi-value"><?= htmlspecialchars(minToHHMM($kpiPromJornada)) ?></span>
             </article>
-            <article class="kpi-card">
-                <span class="kpi-label">Cumplen 40h+</span>
+            <article class="kpi-card kpi-cumplen">
+                <div class="kpi-top">
+                    <span class="kpi-label">Cumplen 40h+</span>
+                    <span class="kpi-icon"><i class="bi bi-check-circle"></i></span>
+                </div>
                 <span class="kpi-value"><?= (int)$cumpleLegal ?></span>
             </article>
-            <article class="kpi-card">
-                <span class="kpi-label">Bajo 40h</span>
+            <article class="kpi-card kpi-bajo">
+                <div class="kpi-top">
+                    <span class="kpi-label">Bajo 40h</span>
+                    <span class="kpi-icon"><i class="bi bi-exclamation-circle"></i></span>
+                </div>
                 <span class="kpi-value"><?= (int)$bajoLegal ?></span>
             </article>
         </section>
