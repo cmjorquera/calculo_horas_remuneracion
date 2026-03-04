@@ -70,15 +70,26 @@ $visibleEmployees = 10;
 $employeeRowHeight = 36;
 $chartViewportHeight = $visibleEmployees * $employeeRowHeight;
 $chartTopHeight = max($chartViewportHeight, $kpiTotal * $employeeRowHeight);
+$employeeColumnWidth = 120;
+$chartComposicionViewportWidth = $visibleEmployees * $employeeColumnWidth;
+$chartComposicionWidth = max($chartComposicionViewportWidth, $kpiTotal * $employeeColumnWidth);
 $rankingIndices = array_keys($jornadaData);
 usort($rankingIndices, function ($a, $b) use ($jornadaData) {
     return $jornadaData[$b] <=> $jornadaData[$a];
 });
 $rankingLabels = [];
 $rankingJornada = [];
+$rankingColors = [];
 foreach ($rankingIndices as $idx) {
     $rankingLabels[] = $labels[$idx];
     $rankingJornada[] = $jornadaData[$idx];
+    if ($jornadaData[$idx] > 2400) {
+        $rankingColors[] = "#E8DCA3";
+    } elseif ($jornadaData[$idx] === 2400) {
+        $rankingColors[] = "#B9DEC4";
+    } else {
+        $rankingColors[] = "#E8B5B5";
+    }
 }
 
 $chartPayload = [
@@ -86,10 +97,13 @@ $chartPayload = [
     "jornada" => $jornadaData,
     "rankingLabels" => $rankingLabels,
     "rankingJornada" => $rankingJornada,
+    "rankingColors" => $rankingColors,
     "lectivas" => $lectivasData,
     "noLectivas" => $noLectivasData,
     "chartViewportHeight" => $chartViewportHeight,
     "chartTopHeight" => $chartTopHeight,
+    "chartComposicionViewportWidth" => $chartComposicionViewportWidth,
+    "chartComposicionWidth" => $chartComposicionWidth,
     "colacionLabels" => array_map(function ($k) {
         return $k . " min";
     }, array_keys($colacionMap)),
@@ -181,9 +195,9 @@ $chartPayload = [
         <section class="charts-grid">
             <article class="chart-card chart-g1">
                 <h3>Jornada cronológica por empleado</h3>
-                <div class="chart-wrap chart-wrap-scroll">
-                    <div class="chart-scroll-body">
-                        <div class="chart-scroll-inner" id="chartTopJornadaInner">
+                <div class="chart-wrap chart-wrap-scroll" style="height: <?= (int)$chartViewportHeight ?>px; overflow: hidden;">
+                    <div class="chart-scroll-body" style="height: <?= (int)$chartViewportHeight ?>px; max-height: <?= (int)$chartViewportHeight ?>px; overflow-y: scroll; overflow-x: hidden; scrollbar-gutter: stable;">
+                        <div class="chart-scroll-inner" id="chartTopJornadaInner" style="height: <?= (int)$chartTopHeight ?>px; min-height: <?= (int)$chartTopHeight ?>px;">
                             <canvas id="chartTopJornada"></canvas>
                         </div>
                     </div>
@@ -191,7 +205,13 @@ $chartPayload = [
             </article>
             <article class="chart-card chart-g2">
                 <h3>Horas lectivas vs no lectivas</h3>
-                <div class="chart-wrap"><canvas id="chartComposicion"></canvas></div>
+                <div class="chart-wrap chart-wrap-scroll-x" style="height: 360px; overflow: hidden;">
+                    <div class="chart-scroll-body-x" style="width: 100%; height: 360px; overflow-x: scroll; overflow-y: hidden; scrollbar-gutter: stable;">
+                        <div class="chart-scroll-inner-x" style="width: <?= (int)$chartComposicionWidth ?>px; min-width: <?= (int)$chartComposicionWidth ?>px; height: 326px;">
+                            <canvas id="chartComposicion" width="<?= (int)$chartComposicionWidth ?>" style="width: <?= (int)$chartComposicionWidth ?>px !important; min-width: <?= (int)$chartComposicionWidth ?>px; height: 326px !important;"></canvas>
+                        </div>
+                    </div>
+                </div>
             </article>
             <article class="chart-card chart-g3">
                 <h3>Distribución colación diaria</h3>
@@ -215,6 +235,7 @@ function updateHeaderDateTime() {
         year: "numeric",
         month: "2-digit",
         day: "2-digit"
+        
     }).format(now);
     const hora = new Intl.DateTimeFormat("es-CL", {
         hour: "2-digit",
@@ -233,11 +254,6 @@ function minutesToHHMM(v) {
 }
 
 function createCharts() {
-    const topChartInner = document.getElementById("chartTopJornadaInner");
-    const topChartViewport = document.querySelector(".chart-wrap-scroll");
-    topChartViewport.style.height = `${CHART_DATA.chartViewportHeight}px`;
-    topChartInner.style.height = `${CHART_DATA.chartTopHeight}px`;
-
     new Chart(document.getElementById("chartTopJornada"), {
         type: "bar",
         data: {
@@ -245,7 +261,9 @@ function createCharts() {
             datasets: [{
                 label: "Jornada",
                 data: CHART_DATA.rankingJornada,
-                backgroundColor: "#0E7490"
+                backgroundColor: CHART_DATA.rankingColors,
+                borderColor: CHART_DATA.rankingColors,
+                borderWidth: 1
             }]
         },
         options: {
