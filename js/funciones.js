@@ -66,9 +66,6 @@
         }
 
         target.value = valueToApply;
-
-        // Si quieres disparar "change" para recalcular totales automáticamente:
-        // target.dispatchEvent(new Event("change", { bubbles: true }));
       }
 
       if (typeof opts.onAfterApply === "function") {
@@ -295,6 +292,7 @@
   global.bindColacionFija = bindColacionFija;
 
 })(window);
+
 
 
 

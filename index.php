@@ -318,10 +318,13 @@ function minutosAHHMM($totalMin){
     <main class="content">
         <!-- TABLA -->
         <section class="card">
-            <div class="card-head">
-                <h2>Horario semanal</h2>
-                <small>Selecciona hora de inicio y término por jornada</small>
-                <div class="horario-tools">
+            <div class="card-head card-head-balanced">
+                <div class="card-head-main">
+                    <h2>Horario semanal</h2>
+                    <small>Selecciona hora de inicio y término por jornada</small>
+                </div>
+                <div class="card-head-side">
+                    <div class="horario-tools">
                     <label class="horario-repeat">
                         <input type="checkbox" id="chkAutoRepeatDown">
                         Repetir hacia abajo
@@ -330,6 +333,7 @@ function minutosAHHMM($totalMin){
                         aria-label="Ayuda repetir hacia abajo" title="Cómo funciona">
                         <i class="bi bi-info-circle"></i>
                     </button>
+                    </div>
                 </div>
             </div>
 
@@ -361,15 +365,21 @@ function minutosAHHMM($totalMin){
             <div id="horarioIgualMsg" class="horario-equal-msg is-hidden" role="status" aria-live="polite">
                 Advertencia: hay bloques con hora de inicio y término iguales. Revisa posible error de tipeo.
             </div>
+            <div id="horarioDiasBloqueadosMsg" class="horario-equal-msg is-hidden" role="status" aria-live="polite"></div>
+            <div id="horasLectivasMsg" class="horas-lectivas-msg is-hidden" role="status" aria-live="polite"></div>
         </section>
 
         <!-- RESUMEN -->
         <aside class="card">
-            <div class="card-head">
-                <h2>Resumen</h2>
-                <small>Horas pedagógicas y cronológicas</small>
-                <div id="empleadoSeleccionadoInfo" class="empleado-seleccionado-info">
-                    Sin empleado seleccionado
+            <div class="card-head card-head-balanced">
+                <div class="card-head-main">
+                    <h2>Resumen</h2>
+                    <!-- <small>Horas pedagógicas y cronológicas</small> -->
+                </div>
+                <div class="card-head-side">
+                    <div id="empleadoSeleccionadoInfo" class="empleado-seleccionado-info">
+                        Sin empleado seleccionado
+                    </div>
                 </div>
             </div>
 
@@ -479,7 +489,7 @@ function minutosAHHMM($totalMin){
     <div class="panel-head-top">
       <div class="panel-title">
         <span class="dot"></span>
-        Empleados
+        Funcioanrios
       </div>
 
       <div class="panel-head-right">
@@ -688,6 +698,24 @@ function parseHHMMtoPedHours(hhmm) {
     return Number.isInteger(ped) ? String(ped) : ped.toFixed(2).replace(/\.?0+$/, "");
 }
 
+function updateHorarioDiasBloqueadosMsg(dayLabels) {
+    const msgEl = document.getElementById("horarioDiasBloqueadosMsg");
+    if (!msgEl) return;
+
+    const dias = Array.isArray(dayLabels) ? dayLabels.filter(Boolean) : [];
+    if (!dias.length) {
+        msgEl.classList.add("is-hidden");
+        msgEl.textContent = "";
+        return;
+    }
+
+    const plural = dias.length > 1;
+    msgEl.textContent = plural
+        ? `Advertencia: los días ${dias.join(", ")} no tienen horario asignado y fueron marcados como bloqueados.`
+        : `Advertencia: el día ${dias[0]} no tiene horario asignado y fue marcado como bloqueado.`;
+    msgEl.classList.remove("is-hidden");
+}
+
 function setAccionEmpleadoModo(isModificar) {
     const btn = document.getElementById("btnGuardar");
     if (!btn) return;
@@ -763,6 +791,9 @@ function seleccionarEmpleado(ev, triggerBtn, idEmpleado, idContrato) {
     if (elNoLectivasCro) elNoLectivasCro.value = noLectivasCro;
     if (elLectivasPed) elLectivasPed.value = parseHHMMtoPedHours(lectivasCro);
     if (elNoLectivasPed) elNoLectivasPed.value = parseHHMMtoPedHours(noLectivasCro);
+    if (typeof window.recalcularLectivas === "function") window.recalcularLectivas();
+    if (typeof window.recalcularNoLectivas === "function") window.recalcularNoLectivas();
+    if (typeof window.updateHorasLectivasUI === "function") window.updateHorasLectivasUI();
     requestAnimationFrame(() => window.scrollTo({
         top: 0,
         behavior: "smooth"
@@ -770,6 +801,7 @@ function seleccionarEmpleado(ev, triggerBtn, idEmpleado, idContrato) {
 
     const tbody = document.getElementById("tbodyHorario");
     if (!tbody) return;
+    updateHorarioDiasBloqueadosMsg([]);
 
     document.querySelectorAll(".day-lock-check").forEach(check => {
         if (!check.checked) return;
@@ -818,6 +850,36 @@ function seleccionarEmpleado(ev, triggerBtn, idEmpleado, idContrato) {
                 setTime(prefix, "tar", "ini", d.tar_ini);
                 setTime(prefix, "tar", "fin", d.tar_fin);
             });
+
+            const diasBloqueados = [];
+            tbody.querySelectorAll("tr").forEach(tr => {
+                const selects = Array.from(tr.querySelectorAll("select"));
+                const todosEnCero = selects.length > 0 && selects.every(sel => sel.value === "00");
+                const lockCheck = tr.querySelector(".day-lock-check");
+                const dayName = tr.querySelector(".day-name")?.textContent?.trim() || "";
+
+                if (!lockCheck) return;
+
+                if (todosEnCero) {
+                    if (!lockCheck.checked) {
+                        lockCheck.checked = true;
+                        lockCheck.dispatchEvent(new Event("change", {
+                            bubbles: true
+                        }));
+                    }
+                    if (dayName) diasBloqueados.push(dayName);
+                    return;
+                }
+
+                if (lockCheck.checked) {
+                    lockCheck.checked = false;
+                    lockCheck.dispatchEvent(new Event("change", {
+                        bubbles: true
+                    }));
+                }
+            });
+
+            updateHorarioDiasBloqueadosMsg(diasBloqueados);
 
             tbody.dispatchEvent(new Event("change", {
                 bubbles: true
@@ -1358,6 +1420,10 @@ function init() {
         if (sumNoLectivasCro) sumNoLectivasCro.value = "00:00";
         if (sumColacionMin) sumColacionMin.textContent = "00";
         if (sumColacionSelect) sumColacionSelect.value = "";
+        if (typeof window.updateHorasLectivasUI === "function") {
+            window.updateHorasLectivasUI();
+        }
+        updateHorarioDiasBloqueadosMsg([]);
 
         window.empleadoSeleccionadoPrefill = null;
         const infoEl = document.getElementById("empleadoSeleccionadoInfo");
@@ -1397,7 +1463,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const chkAutoRepeat = document.getElementById("chkAutoRepeatDown");
     const btnAutoRepeatHelp = document.getElementById("btnAutoRepeatHelp");
 
-    // 1) Auto-fill (si ya lo estás usando)
+    // 1) Auto-fill
     if (window.bindAutoFillHorario) {
         bindAutoFillHorario({
             tbodySelector: "#tbodyHorario",
@@ -1535,6 +1601,26 @@ document.addEventListener("click", function(e) {
         return td.getAttribute('data-value') || td.textContent.trim();
     }
 
+    function renumerarFilas() {
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        let correlativo = 1;
+
+        rows.forEach(tr => {
+            const td = tr.children[0];
+            if (!td) return;
+
+            if (tr.style.display === 'none') {
+                td.textContent = '';
+                td.setAttribute('data-value', '');
+                return;
+            }
+
+            const numero = String(correlativo++);
+            td.textContent = numero;
+            td.setAttribute('data-value', numero);
+        });
+    }
+
     function compare(a, b, type) {
         if (type === 'number') {
             return (parseFloat(a) || 0) - (parseFloat(b) || 0);
@@ -1558,6 +1644,7 @@ document.addEventListener("click", function(e) {
             const hay = normalize(tr.getAttribute('data-filter') || tr.textContent);
             tr.style.display = (q === '' || hay.includes(q)) ? '' : 'none';
         });
+        renumerarFilas();
     }
 
     function applySort(thIndex, type) {
@@ -1590,6 +1677,7 @@ document.addEventListener("click", function(e) {
 
         // reinsert (manteniendo filas ocultas al final sin tocar)
         visibleRows.forEach(r => tbody.appendChild(r));
+        renumerarFilas();
     }
 
     // ---- Search events

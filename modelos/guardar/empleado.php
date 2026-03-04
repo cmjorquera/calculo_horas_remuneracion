@@ -21,6 +21,10 @@ function normalize_run($run) {
   $run = strtoupper(trim((string)$run));
   return preg_replace('/[^0-9K]/', '', $run);
 }
+function minutes_to_ped_hours($minutes) {
+  $minutes = max(0, (int)$minutes);
+  return $minutes / 40;
+}
 
 // =====================
 // 1) POST
@@ -217,6 +221,21 @@ $horas_lectivas = max(0, $horas_lectivas);
 $horas_no_lectivas = max(0, $horas_no_lectivas);
 $horas_semanales_cron = max(0, $horas_semanales_cron);
 $min_colacion_diaria = max(0, $min_colacion_diaria);
+
+$horas_lectivas_ped = minutes_to_ped_hours($horas_lectivas);
+$horas_no_lectivas_ped = minutes_to_ped_hours($horas_no_lectivas);
+$horas_total_ped = $horas_lectivas_ped + $horas_no_lectivas_ped;
+$limite_ped = 54;
+
+if ($horas_lectivas_ped > $limite_ped) {
+  jerr("Las horas lectivas no pueden ser mayores a 54 pedagógicas.");
+}
+if ($horas_no_lectivas_ped > $limite_ped) {
+  jerr("Las horas no lectivas no pueden ser mayores a 54 pedagógicas.");
+}
+if ($horas_total_ped > $limite_ped) {
+  jerr("La suma de horas lectivas y no lectivas no puede ser mayor a 54 pedagógicas.");
+}
 
 $observacion = trim($_POST["observacion"] ?? "");
 

@@ -161,6 +161,17 @@ function contarDiasConHorario(horario) {
   return count;
 }
 
+function validarResumenLectivo() {
+  if (typeof window.getHorasLectivasState !== "function") {
+    return { isValid: true, errors: [] };
+  }
+  const state = window.getHorasLectivasState();
+  if (typeof window.updateHorasLectivasUI === "function") {
+    window.updateHorasLectivasUI();
+  }
+  return state;
+}
+
 
 
 
@@ -219,6 +230,20 @@ function guardarEmpleado() {
       icon: "warning",
       title: "Horario incompleto",
       text: errConsistencia,
+    });
+    return;
+  }
+
+  const resumenLectivo = validarResumenLectivo();
+  if (!resumenLectivo.isValid) {
+    Swal.fire({
+      icon: "warning",
+      title: "Horas lectivas inválidas",
+      html: resumenLectivo.errors.join("<br>"),
+      customClass: {
+        popup: "swal-seduc",
+        confirmButton: "btn-seduc btn-seduc-primary"
+      }
     });
     return;
   }
@@ -457,6 +482,12 @@ preConfirm: () => {
     const empleado = result.value;
 
     // 3) Payload final: empleado + horario + resumen
+    const resumenLectivo = validarResumenLectivo();
+    if (!resumenLectivo.isValid) {
+      Swal.fire("Horas lectivas inválidas", resumenLectivo.errors.join("\n"), "warning");
+      return;
+    }
+
     const resumen = recolectarResumen();
     if (!resumen.colacionId) {
       Swal.fire("Falta colación", "Selecciona una colación antes de guardar.", "warning");
