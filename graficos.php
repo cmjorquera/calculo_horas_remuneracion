@@ -26,9 +26,10 @@ $jornadaData = [];
 $lectivasData = [];
 $noLectivasData = [];
 $colacionMap = [];
+$sobreLegal = 0;
 $cumpleLegal = 0;
 $bajoLegal = 0;
-$totalJornadaMin = 0;
+$igualLegal = 0;
 
 foreach ($empleados as $e) {
     $nombre = trim((string)($e["nombres"] ?? "") . " " . (string)($e["apellido_paterno"] ?? "") . " " . (string)($e["apellido_materno"] ?? ""));
@@ -45,9 +46,12 @@ foreach ($empleados as $e) {
     $jornadaData[] = $jornadaMin;
     $lectivasData[] = $lectivasMin;
     $noLectivasData[] = $noLectivasMin;
-    $totalJornadaMin += $jornadaMin;
 
-    if ($jornadaMin >= 2400) {
+    if ($jornadaMin > 2400) {
+        $sobreLegal++;
+        $cumpleLegal++;
+    } elseif ($jornadaMin === 2400) {
+        $igualLegal++;
         $cumpleLegal++;
     } else {
         $bajoLegal++;
@@ -62,28 +66,30 @@ foreach ($empleados as $e) {
 ksort($colacionMap, SORT_NUMERIC);
 
 $kpiTotal = count($empleados);
-$kpiPromJornada = $kpiTotal > 0 ? (int)round($totalJornadaMin / $kpiTotal) : 0;
-
-// Top 10 por jornada para no saturar gráfico horizontal
-$topIndices = array_keys($jornadaData);
-usort($topIndices, function ($a, $b) use ($jornadaData) {
+$visibleEmployees = 10;
+$employeeRowHeight = 36;
+$chartViewportHeight = $visibleEmployees * $employeeRowHeight;
+$chartTopHeight = max($chartViewportHeight, $kpiTotal * $employeeRowHeight);
+$rankingIndices = array_keys($jornadaData);
+usort($rankingIndices, function ($a, $b) use ($jornadaData) {
     return $jornadaData[$b] <=> $jornadaData[$a];
 });
-$topIndices = array_slice($topIndices, 0, 10);
-$topLabels = [];
-$topJornada = [];
-foreach ($topIndices as $idx) {
-    $topLabels[] = $labels[$idx];
-    $topJornada[] = $jornadaData[$idx];
+$rankingLabels = [];
+$rankingJornada = [];
+foreach ($rankingIndices as $idx) {
+    $rankingLabels[] = $labels[$idx];
+    $rankingJornada[] = $jornadaData[$idx];
 }
 
 $chartPayload = [
     "labels" => $labels,
     "jornada" => $jornadaData,
+    "rankingLabels" => $rankingLabels,
+    "rankingJornada" => $rankingJornada,
     "lectivas" => $lectivasData,
     "noLectivas" => $noLectivasData,
-    "topLabels" => $topLabels,
-    "topJornada" => $topJornada,
+    "chartViewportHeight" => $chartViewportHeight,
+    "chartTopHeight" => $chartTopHeight,
     "colacionLabels" => array_map(function ($k) {
         return $k . " min";
     }, array_keys($colacionMap)),
@@ -151,17 +157,17 @@ $chartPayload = [
             </article>
             <article class="kpi-card kpi-promedio">
                 <div class="kpi-top">
-                    <span class="kpi-label">Promedio jornada</span>
-                    <span class="kpi-icon"><i class="bi bi-clock-history"></i></span>
+                    <span class="kpi-label">Sobre 40h</span>
+                    <span class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></span>
                 </div>
-                <span class="kpi-value"><?= htmlspecialchars(minToHHMM($kpiPromJornada)) ?></span>
+                <span class="kpi-value"><?= (int)$sobreLegal ?></span>
             </article>
             <article class="kpi-card kpi-cumplen">
                 <div class="kpi-top">
-                    <span class="kpi-label">Cumplen 40h+</span>
+                    <span class="kpi-label">40h exactas</span>
                     <span class="kpi-icon"><i class="bi bi-check-circle"></i></span>
                 </div>
-                <span class="kpi-value"><?= (int)$cumpleLegal ?></span>
+                <span class="kpi-value"><?= (int)$igualLegal ?></span>
             </article>
             <article class="kpi-card kpi-bajo">
                 <div class="kpi-top">
@@ -174,8 +180,14 @@ $chartPayload = [
 
         <section class="charts-grid">
             <article class="chart-card chart-g1">
-                <h3>Top 10 jornada cronológica</h3>
-                <div class="chart-wrap"><canvas id="chartTopJornada"></canvas></div>
+                <h3>Jornada cronológica por empleado</h3>
+                <div class="chart-wrap chart-wrap-scroll">
+                    <div class="chart-scroll-body">
+                        <div class="chart-scroll-inner" id="chartTopJornadaInner">
+                            <canvas id="chartTopJornada"></canvas>
+                        </div>
+                    </div>
+                </div>
             </article>
             <article class="chart-card chart-g2">
                 <h3>Horas lectivas vs no lectivas</h3>
@@ -221,13 +233,18 @@ function minutesToHHMM(v) {
 }
 
 function createCharts() {
+    const topChartInner = document.getElementById("chartTopJornadaInner");
+    const topChartViewport = document.querySelector(".chart-wrap-scroll");
+    topChartViewport.style.height = `${CHART_DATA.chartViewportHeight}px`;
+    topChartInner.style.height = `${CHART_DATA.chartTopHeight}px`;
+
     new Chart(document.getElementById("chartTopJornada"), {
         type: "bar",
         data: {
-            labels: CHART_DATA.topLabels,
+            labels: CHART_DATA.rankingLabels,
             datasets: [{
                 label: "Jornada",
-                data: CHART_DATA.topJornada,
+                data: CHART_DATA.rankingJornada,
                 backgroundColor: "#0E7490"
             }]
         },
