@@ -1093,6 +1093,58 @@
   max-width: 250px;
 }
 
+.cell-colegio{
+  min-width: 170px;
+}
+
+.cell-colegio-wrap{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 210px;
+}
+
+.colegio-avatar{
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  border-radius: 50%;
+  object-fit: cover !important;
+  border: 1px solid rgba(0, 0, 0, .12);
+  background: #fff;
+  flex: 0 0 20px;
+  display: block !important;
+}
+
+.colegio-avatar-fallback{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: #0B5E8A;
+  background: #e9f2ff;
+}
+
+.colegio-nombre{
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 170px;
+}
+
+/* Refuerzo para evitar que estilos globales de img agranden el avatar */
+.emp-table td.cell-colegio img.colegio-avatar{
+  width: 20px !important;
+  height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+}
+
 .cell-center{
   text-align: center;
   font-weight: 600;

@@ -11,7 +11,8 @@ require_once __DIR__ . "/class/funciones.php";
 
 $db = new MySQL("qaseduc_calculo_horario", "qaseduc_ucomun", "jorquera86;");
 $funciones = new Funciones($db);
-$empleados = $funciones->obtenerEmpleadosConResumen($_SESSION["id_colegio"]);
+$verTodosColegios = !empty($_SESSION["is_super_admin"]);
+$empleados = $funciones->obtenerEmpleadosConResumen($_SESSION["id_colegio"], $verTodosColegios);
 
 function minToHHMM($min)
 {
@@ -146,7 +147,7 @@ $chartPayload = [
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Gráficos | Calculadora de Horas</title>
-    <link rel="stylesheet" type="text/css" href="css/principal.css">
+    <link rel="stylesheet" type="text/css" href="css/principal.css?v=<?= filemtime(__DIR__ . '/css/principal.css') ?>">
     <link rel="stylesheet" type="text/css" href="css/menu_lateral.css">
     <link rel="stylesheet" type="text/css" href="css/modales.css">
     <link rel="stylesheet" type="text/css" href="css/graficos.css">
@@ -173,7 +174,7 @@ $chartPayload = [
                     <i class="bi bi-person-circle"></i>
                     <span><?= htmlspecialchars($_SESSION["nombre_completo"]) ?></span>
                     <span class="sep">•</span>
-                    <span><?= htmlspecialchars($_SESSION["nom_colegio"]) ?></span>
+                    <span><?= htmlspecialchars($_SESSION["cabecera_contexto"] ?? ($_SESSION["nom_colegio"] ?? "Sin colegio")) ?></span>
                 </div>
             </div>
         </div>

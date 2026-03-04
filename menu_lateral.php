@@ -6,11 +6,13 @@
  * - Acciones: scroll a secciones (puedes reemplazar por tus funciones).
  */
 $idColegio = $_SESSION["id_colegio"];
+$esSuperAdmin = !empty($_SESSION["is_super_admin"]);
+$whereColegio = $esSuperAdmin ? "1=1" : "id_colegio = " . (int)$idColegio;
 
 $sqlTotal = "
 SELECT COUNT(*) AS total
 FROM empleados
-WHERE id_colegio = $idColegio
+WHERE $whereColegio
 ";
 
 $resTotal = $db->consulta($sqlTotal);

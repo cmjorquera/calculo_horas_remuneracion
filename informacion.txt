@@ -57,3 +57,101 @@ Relaciones:
 - EMPLEADOS (1) ─── (N) CONTRATOS_EMPLEADO
 - CONTRATOS_EMPLEADO (1) ─── (N) HORARIOS_SEMANALES
 - (*) id_empleado en HORARIOS_SEMANALES es redundante si ya existe id_contrato
+
+
+┌───────────────────────────────┐
+│            USUARIOS            │
+├───────────────────────────────┤
+│ PK  id_usuario                 │
+│ IDX identificador              │
+│ IDX email                      │
+│     clave_hash                 │
+│     nombre                     │
+│     apellido_paterno           │
+│     apellido_materno (NULL)    │
+│     run (NULL)                 │
+│     telefono (NULL)            │
+│ FK  id_colegio  ───────────────┼──► COLEGIO.id_colegio (NULL)
+│     token_reinicio (NULL)      │
+│     token_reinicio_expira (NULL) │
+│     estado (default: 1)        │
+│     intentos (default: 0)      │
+│     ultimo_login (NULL)        │
+│     created_at                 │
+│     updated_at (NULL)          │
+└───────────────────────────────┘
+
+┌───────────────────────────────┐
+│            COLEGIO             │
+├───────────────────────────────┤
+│ PK  id_colegio                 │
+│     nom_colegio                │
+│     rza_colegio                │
+│     nco_colegio                │
+│     dir_colegio                │
+│     rbd_colegio                │
+│     id_dependencia             │
+│     id_comuna                  │
+│     tel_colegio                │
+│     web_colegio                │
+│     bd                         │
+│     orden                      │
+│     email_entrevista           │
+│     num_r_educacion            │
+│     ano_r_educacion            │
+│     ip                         │
+│     email_comunicaciones       │
+│     sexo                       │
+│     multi_cole                 │
+│     identificador              │
+│     rut_colegio                │
+│     correo_contrato            │
+│     url_pagina                 │
+└───────────────────────────────┘
+
+┌───────────────────────────────┐
+│             ROLES              │
+├───────────────────────────────┤
+│ PK  id_rol                     │
+│ IDX codigo                     │
+│     nombre                     │
+│     descripcion (NULL)         │
+└───────────────────────────────┘
+
+┌───────────────────────────────┐
+│       USUARIO_ROL_COLEGIO      │
+├───────────────────────────────┤
+│ PK  id                         │
+│ FK  id_usuario  ───────────────┼──► USUARIOS.id_usuario
+│ FK  id_rol      ───────────────┼──► ROLES.id_rol
+│ FK  id_colegio  ───────────────┼──► COLEGIO.id_colegio
+│     estado                     │
+│     created_at                 │
+└───────────────────────────────┘
+
+┌───────────────────────────────┐
+│          DIAS_SEMANA           │
+├───────────────────────────────┤
+│ PK  id_dia                     │
+│     clave                      │
+│     nombre                     │
+│     prefijo                    │
+│     orden                      │
+│     activo                     │
+└───────────────────────────────┘
+
+┌───────────────────────────────┐
+│            COLACION            │
+├───────────────────────────────┤
+│ PK  id_colacion                │
+│     hora                       │
+│     minutos                    │
+│     activo                     │
+│     created_at                 │
+└───────────────────────────────┘
+
+Relaciones adicionales:
+- COLEGIO (1) ─── (N) USUARIOS
+- USUARIOS (1) ─── (N) USUARIO_ROL_COLEGIO
+- ROLES (1) ─── (N) USUARIO_ROL_COLEGIO
+- COLEGIO (1) ─── (N) USUARIO_ROL_COLEGIO

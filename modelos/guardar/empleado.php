@@ -52,6 +52,7 @@ if ($nombres === "")    jerr("Nombres es obligatorio.");
 if ($ap_paterno === "") jerr("Apellido paterno es obligatorio.");
 if ($ap_materno === "") jerr("Apellido materno es obligatorio.");
 if ($run === "")        jerr("RUN es obligatorio.");
+if ($genero === "")     jerr("Género es obligatorio.");
 if ($genero !== "" && !in_array($genero, ["1","2"], true)) jerr("Género inválido.");
 
 if ($email !== "" && !filter_var($email, FILTER_VALIDATE_EMAIL)) {

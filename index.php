@@ -14,7 +14,9 @@ $db = new MySQL("qaseduc_calculo_horario", "qaseduc_ucomun", "jorquera86;");
 $funciones = new Funciones($db);
 $dias = $funciones->obtenerDiasSemana(true); // lunes a viernes
 $colaciones = $funciones->obtenerOpcionesColacion();
-$empleados = $funciones->obtenerEmpleadosConResumen($_SESSION["id_colegio"]);
+$verTodosColegios = !empty($_SESSION["is_super_admin"]);
+$empleados = $funciones->obtenerEmpleadosConResumen($_SESSION["id_colegio"], $verTodosColegios);
+$mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosColegios;
 
 
 function hhmm($hoursFloat){
@@ -40,7 +42,7 @@ function minutosAHHMM($totalMin){
 <html lang="es">
 
 <head>
-    <link rel="stylesheet" type="text/css" href="css/principal.css">
+    <link rel="stylesheet" type="text/css" href="css/principal.css?v=<?= filemtime(__DIR__ . '/css/principal.css') ?>">
     <link rel="stylesheet" type="text/css" href="css/menu_lateral.css">
     <link rel="stylesheet" type="text/css" href="css/modales.css">
     <meta charset="utf-8" />
@@ -56,7 +58,7 @@ function minutosAHHMM($totalMin){
 <link rel="icon" type="image/png" href="imagenes/logo_1.jpg" />
 <script src="js/funciones.js"></script>
 <script src="js/button.js"></script>
-<script src="js/guardar_empleado.js"></script>
+<script src="js/guardar_empleado.js?v=<?= filemtime(__DIR__ . '/js/guardar_empleado.js') ?>"></script>
 <script src="js/tabla_dinamicas.js"></script>
 <script src="js/horas_cronologicas.js"></script>
 
@@ -108,6 +110,7 @@ function minutosAHHMM($totalMin){
             display: flex;
             flex-direction: column;
             text-align: left;
+            min-width: 0;
         }
 
         .swal-field label {
@@ -120,6 +123,8 @@ function minutosAHHMM($totalMin){
         /* INPUTS MODERNOS */
         .swal-input-modern {
             height: 40px;
+            width: 100%;
+            box-sizing: border-box;
             border-radius: 10px;
             border: 1px solid #d1d5db;
             padding: 0 12px;
@@ -250,7 +255,7 @@ function minutosAHHMM($totalMin){
         }
 
         /* SELECT */
-        .swal-input-modern select {
+        select.swal-input-modern {
             cursor: pointer;
         }
 
@@ -297,7 +302,7 @@ function minutosAHHMM($totalMin){
                     <i class="bi bi-person-circle"></i>
                     <span><?= htmlspecialchars($_SESSION["nombre_completo"]) ?></span>
                     <span class="sep">•</span>
-                    <span><?= htmlspecialchars($_SESSION["nom_colegio"]) ?></span>
+                    <span><?= htmlspecialchars($_SESSION["cabecera_contexto"] ?? ($_SESSION["nom_colegio"] ?? "Sin colegio")) ?></span>
                 </div>
             </div>
         </div>
@@ -526,6 +531,9 @@ function minutosAHHMM($totalMin){
           <th class="sortable" data-type="number">N° <i class="bi bi-arrow-down-up sort-ico"></i></th>
           <th class="sortable" data-type="text">RUN <i class="bi bi-arrow-down-up sort-ico"></i></th>
           <th class="sortable" data-type="text">Nombre - Apellidos <i class="bi bi-arrow-down-up sort-ico"></i></th>
+          <?php if ($mostrarColumnaColegio): ?>
+          <th class="sortable" data-type="text">Colegio <i class="bi bi-arrow-down-up sort-ico"></i></th>
+          <?php endif; ?>
 
           <th class="sortable" data-type="time">
             <span class="th-flex">
@@ -567,6 +575,21 @@ function minutosAHHMM($totalMin){
           $apMatEmp = trim((string)($e['apellido_materno'] ?? ''));
           $runEmp = trim((string)($e['run'] ?? ''));
           $generoEmp = trim((string)($e['genero'] ?? ''));
+          $idColegioEmp = (int)($e['id_colegio'] ?? 0);
+          $nomColegioEmp = trim((string)($e['nco_colegio'] ?? ($e['nom_colegio'] ?? '')));
+          $logoColegioRel = "";
+          $logoColegioExiste = false;
+          if ($idColegioEmp > 0) {
+            foreach (["png", "jpg", "jpeg"] as $extLogo) {
+              $logoRelTmp = "imagenes/colegios/colegio_" . $idColegioEmp . "." . $extLogo;
+              $logoAbsTmp = __DIR__ . "/" . $logoRelTmp;
+              if (is_file($logoAbsTmp)) {
+                $logoColegioRel = $logoRelTmp;
+                $logoColegioExiste = true;
+                break;
+              }
+            }
+          }
           $nombre = trim($nombresEmp.' '.$apPatEmp.' '.$apMatEmp);
           $idEmpleado  = (int)$e['id_empleado'];
           $idContrato  = (int)($e['id_contrato'] ?? 0);
@@ -582,7 +605,7 @@ function minutosAHHMM($totalMin){
 
           $obs = trim((string)($e['observacion'] ?? ''));
         ?>
-        <tr data-filter="<?= htmlspecialchars(mb_strtolower($contador.' '.$runEmp.' '.$nombre.' '.$jornadaTxt.' '.$colacionTxt.' '.$noLectivasTxt.' '.$lectivasTxt), ENT_QUOTES) ?>">
+        <tr data-filter="<?= htmlspecialchars(mb_strtolower($contador.' '.$runEmp.' '.$nombre.' '.$nomColegioEmp.' '.$jornadaTxt.' '.$colacionTxt.' '.$noLectivasTxt.' '.$lectivasTxt), ENT_QUOTES) ?>">
 
           <td class="cell-num" data-col="N°" data-value="<?= $contador ?>"><?= $contador ?></td>
 
@@ -593,6 +616,22 @@ function minutosAHHMM($totalMin){
           <td class="cell-nombre" data-col="Nombre" data-value="<?= htmlspecialchars($nombre, ENT_QUOTES) ?>">
             <?= htmlspecialchars($nombre) ?>
           </td>
+          <?php if ($mostrarColumnaColegio): ?>
+          <td class="cell-colegio" data-col="Colegio" data-value="<?= htmlspecialchars($nomColegioEmp, ENT_QUOTES) ?>">
+            <div class="cell-colegio-wrap" title="<?= htmlspecialchars($nomColegioEmp !== '' ? $nomColegioEmp : ('Colegio ID ' . $idColegioEmp), ENT_QUOTES) ?>">
+              <?php if ($logoColegioExiste): ?>
+              <img
+                src="<?= htmlspecialchars($logoColegioRel, ENT_QUOTES) ?>"
+                alt="<?= htmlspecialchars($nomColegioEmp !== '' ? $nomColegioEmp : ('Colegio ' . $idColegioEmp), ENT_QUOTES) ?>"
+                class="colegio-avatar"
+                loading="lazy">
+              <?php else: ?>
+              <span class="colegio-avatar colegio-avatar-fallback"><?= $idColegioEmp > 0 ? $idColegioEmp : '?' ?></span>
+              <?php endif; ?>
+              <span class="colegio-nombre"><?= htmlspecialchars($nomColegioEmp !== '' ? $nomColegioEmp : ('Colegio ' . $idColegioEmp)) ?></span>
+            </div>
+          </td>
+          <?php endif; ?>
 
           <td class="cell-center" data-col="Jornada Ordinaria" data-type="time" data-value="<?= htmlspecialchars($jornadaTxt, ENT_QUOTES) ?>">
             <div class="cell-copy">

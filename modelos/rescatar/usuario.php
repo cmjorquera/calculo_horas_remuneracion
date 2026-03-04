@@ -26,7 +26,8 @@ function normalize_run($run) {
 }
 
 $id_colegio = (int)($_SESSION["id_colegio"] ?? 0);
-if ($id_colegio <= 0) {
+$es_super_admin = !empty($_SESSION["is_super_admin"]);
+if (!$es_super_admin && $id_colegio <= 0) {
   jresp(["ok" => false, "msg" => "id_colegio no encontrado."]);
 }
 
@@ -40,7 +41,7 @@ if ($runNorm === "") {
 $sql = "
   SELECT run, nombres, apellido_paterno, apellido_materno
   FROM empleados
-  WHERE id_colegio = $id_colegio
+  WHERE ".($es_super_admin ? "1=1" : "id_colegio = $id_colegio")."
     AND REPLACE(REPLACE(UPPER(run), '.', ''), '-', '') = '".esc($db, $runNorm)."'
   LIMIT 1
 ";
@@ -64,4 +65,3 @@ jresp([
   "run" => (string)($row["run"] ?? $runRaw),
   "nombre_completo" => $nombreCompleto
 ]);
-

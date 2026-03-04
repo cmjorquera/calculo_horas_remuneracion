@@ -33,13 +33,14 @@ class Funciones
 
         return $dias;
     }
-    public function obtenerEmpleadosConContratoVigente($id_colegio)
+    public function obtenerEmpleadosConContratoVigente($id_colegio, $verTodosColegios = false)
     {
         $id_colegio = (int)$id_colegio;
+        $whereColegio = $verTodosColegios ? "1=1" : "e.id_colegio = {$id_colegio}";
 
 $sql = "
   SELECT
-    e.id_empleado, e.codigo, e.run, e.nombres, e.apellido_paterno, e.apellido_materno, e.genero, e.activo,
+    e.id_empleado, e.id_colegio, co.nco_colegio, e.codigo, e.run, e.nombres, e.apellido_paterno, e.apellido_materno, e.genero, e.activo,
     c.id_contrato, c.horas_semanales_cron, c.horas_lectivas, c.horas_no_lectivas, c.min_colacion_diaria, c.observacion,
 
     COALESCE(SUM(
@@ -59,15 +60,17 @@ $sql = "
     ), 0) AS trabajadas_min
 
   FROM empleados e
+  LEFT JOIN colegio co
+    ON co.id_colegio = e.id_colegio
   LEFT JOIN contratos_empleado c
     ON c.id_empleado = e.id_empleado AND c.fecha_fin IS NULL
   LEFT JOIN horarios_semanales hs
     ON hs.id_contrato = c.id_contrato AND hs.activo = 1
 
-  WHERE e.id_colegio = {$id_colegio}
+  WHERE {$whereColegio}
 
   GROUP BY
-    e.id_empleado, e.codigo, e.run, e.nombres, e.apellido_paterno, e.apellido_materno, e.genero, e.activo,
+    e.id_empleado, e.id_colegio, co.nco_colegio, e.codigo, e.run, e.nombres, e.apellido_paterno, e.apellido_materno, e.genero, e.activo,
     c.id_contrato, c.horas_semanales_cron, c.horas_lectivas, c.horas_no_lectivas, c.min_colacion_diaria, c.observacion
 
   ORDER BY e.apellido_paterno, e.apellido_materno, e.nombres
@@ -125,9 +128,9 @@ $sql = "
     }
 
 
-    public function obtenerEmpleadosConResumen($id_colegio)
+    public function obtenerEmpleadosConResumen($id_colegio, $verTodosColegios = false)
 {
-    $empleados = $this->obtenerEmpleadosConContratoVigente($id_colegio);
+    $empleados = $this->obtenerEmpleadosConContratoVigente($id_colegio, $verTodosColegios);
 
     foreach ($empleados as &$e) {
         $contrato = (int)($e['horas_semanales_cron'] ?? 0);

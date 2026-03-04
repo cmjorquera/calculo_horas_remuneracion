@@ -188,6 +188,12 @@ function guardarEmpleado() {
   const prefill = window.empleadoSeleccionadoPrefill || null;
   const normalizeRun = (v) => String(v || "").toUpperCase().replace(/[^0-9K]/g, "");
   const prefillRunNorm = normalizeRun(prefill?.run || "");
+  const normalizeGeneroValue = (value) => {
+    const raw = String(value || "").trim().toLowerCase();
+    if (raw === "1" || raw === "hombre") return "1";
+    if (raw === "2" || raw === "mujer") return "2";
+    return "";
+  };
   const runLookupState = {
     checking: false,
     exists: false,
@@ -250,7 +256,7 @@ function guardarEmpleado() {
 
   // 2) Modal para datos del empleado
   Swal.fire({
-    title: "Registrar empleado + horario",
+    title: "Registrar empleado",
 html: `
   <div class="swal-form-modern">
     <div class="swal-layout-3col">
@@ -275,7 +281,7 @@ html: `
           <select id="sw_genero" class="swal-input-modern">
             <option value="">Selecciona...</option>
             <option value="1">Hombre</option>
-            <option value="2">Profesora</option>
+            <option value="2">Mujer</option>
           </select>
         </div>
       </div>
@@ -336,7 +342,7 @@ didOpen: () => {
     if (apPatInput) apPatInput.value = String(prefill.ap_paterno || "");
     if (apMatInput) apMatInput.value = String(prefill.ap_materno || "");
     if (observacionInput) observacionInput.value = String(prefill.observacion || "");
-    if (generoInput) generoInput.value = String(prefill.genero || "");
+    if (generoInput) generoInput.value = normalizeGeneroValue(prefill.genero);
     runInput.value = String(prefill.run || "");
     formatearRun(runInput);
   }
@@ -451,6 +457,7 @@ preConfirm: () => {
   if (!data.ap_paterno) { Swal.showValidationMessage("Apellido paterno es obligatorio."); return false; }
   if (!data.ap_materno) { Swal.showValidationMessage("Apellido materno es obligatorio."); return false; }
   if (!data.run)        { Swal.showValidationMessage("RUN es obligatorio."); return false; }
+  if (!data.genero)     { Swal.showValidationMessage("Género es obligatorio."); return false; }
 
   if (runLookupState.checking) {
     Swal.showValidationMessage("Espera la validación del RUN.");
