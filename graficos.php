@@ -25,11 +25,11 @@ $labels = [];
 $jornadaData = [];
 $lectivasData = [];
 $noLectivasData = [];
-$colacionMap = [];
 $sobreLegal = 0;
 $cumpleLegal = 0;
 $bajoLegal = 0;
 $igualLegal = 0;
+$colacionData = [];
 
 foreach ($empleados as $e) {
     $nombre = trim((string)($e["nombres"] ?? "") . " " . (string)($e["apellido_paterno"] ?? "") . " " . (string)($e["apellido_materno"] ?? ""));
@@ -57,13 +57,8 @@ foreach ($empleados as $e) {
         $bajoLegal++;
     }
 
-    if (!isset($colacionMap[$colacionMin])) {
-        $colacionMap[$colacionMin] = 0;
-    }
-    $colacionMap[$colacionMin]++;
+    $colacionData[] = $colacionMin;
 }
-
-ksort($colacionMap, SORT_NUMERIC);
 
 $kpiTotal = count($empleados);
 $visibleEmployees = 10;
@@ -73,6 +68,9 @@ $chartTopHeight = max($chartViewportHeight, $kpiTotal * $employeeRowHeight);
 $employeeColumnWidth = 120;
 $chartComposicionViewportWidth = $visibleEmployees * $employeeColumnWidth;
 $chartComposicionWidth = max($chartComposicionViewportWidth, $kpiTotal * $employeeColumnWidth);
+$colacionColumnWidth = 110;
+$chartColacionViewportWidth = $visibleEmployees * $colacionColumnWidth;
+$chartColacionWidth = max($chartColacionViewportWidth, $kpiTotal * $colacionColumnWidth);
 $rankingIndices = array_keys($jornadaData);
 usort($rankingIndices, function ($a, $b) use ($jornadaData) {
     return $jornadaData[$b] <=> $jornadaData[$a];
@@ -104,10 +102,10 @@ $chartPayload = [
     "chartTopHeight" => $chartTopHeight,
     "chartComposicionViewportWidth" => $chartComposicionViewportWidth,
     "chartComposicionWidth" => $chartComposicionWidth,
-    "colacionLabels" => array_map(function ($k) {
-        return $k . " min";
-    }, array_keys($colacionMap)),
-    "colacionValues" => array_values($colacionMap),
+    "chartColacionViewportWidth" => $chartColacionViewportWidth,
+    "chartColacionWidth" => $chartColacionWidth,
+    "colacionLabels" => $labels,
+    "colacionValues" => $colacionData,
     "cumplimiento" => [$cumpleLegal, $bajoLegal]
 ];
 ?>
@@ -214,8 +212,14 @@ $chartPayload = [
                 </div>
             </article>
             <article class="chart-card chart-g3">
-                <h3>Distribución colación diaria</h3>
-                <div class="chart-wrap"><canvas id="chartColacion"></canvas></div>
+                <h3>Colación diaria por empleado</h3>
+                <div class="chart-wrap chart-wrap-scroll-x chart-wrap-colacion" style="height: 360px; overflow: hidden;">
+                    <div class="chart-scroll-body-x" style="width: 100%; height: 360px; overflow-x: scroll; overflow-y: hidden; scrollbar-gutter: stable;">
+                        <div class="chart-scroll-inner-x" style="width: <?= (int)$chartColacionWidth ?>px; min-width: <?= (int)$chartColacionWidth ?>px; height: 326px;">
+                            <canvas id="chartColacion" width="<?= (int)$chartColacionWidth ?>" style="width: <?= (int)$chartColacionWidth ?>px !important; min-width: <?= (int)$chartColacionWidth ?>px; height: 326px !important;"></canvas>
+                        </div>
+                    </div>
+                </div>
             </article>
             <article class="chart-card chart-g4">
                 <h3>Cumplimiento jornada legal</h3>
@@ -321,15 +325,35 @@ function createCharts() {
         data: {
             labels: CHART_DATA.colacionLabels,
             datasets: [{
-                label: "Cantidad de empleados",
+                label: "Colación diaria",
                 data: CHART_DATA.colacionValues,
-                backgroundColor: "#8B5CF6"
+                backgroundColor: "#335C67",
+                borderColor: "#26474F",
+                borderWidth: 1,
+                borderRadius: 8,
+                maxBarThickness: 44
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } }
+            scales: {
+                x: { display: false },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: (value) => minutesToHHMM(value)
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => ` ${ctx.dataset.label}: ${minutesToHHMM(ctx.parsed.y)}`
+                    }
+                }
+            }
         }
     });
 

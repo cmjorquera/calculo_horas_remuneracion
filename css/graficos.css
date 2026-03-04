@@ -183,11 +183,11 @@
 .chart-g3 { grid-area: g3; }
 .chart-g4 { grid-area: g4; }
 
-.chart-g2 .chart-wrap {
+.chart-g2 .chart-wrap,
+.chart-g3 .chart-wrap {
     height: 340px;
 }
 
-.chart-g3 .chart-wrap,
 .chart-g4 .chart-wrap {
     height: 260px;
 }
