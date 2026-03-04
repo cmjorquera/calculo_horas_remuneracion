@@ -16,11 +16,11 @@ function copiarHoras(){
 
 
 
-function confirmarSalir() {     
+function confirmarSalir() {
     Swal.fire({
         title: '¿Salir del sistema?',
         html: `
-      <div style="color:#475569; font-size:14px; line-height:1.4;">
+      <div>
         Se cerrará tu sesión por seguridad.<br>
         ¿Deseas continuar?
       </div>
@@ -31,18 +31,13 @@ function confirmarSalir() {
         cancelButtonText: 'Cancelar',
         reverseButtons: true,
         focusCancel: true,
-        confirmButtonColor: '#0B5E8A', // azul institucional
-        cancelButtonColor: '#94A3B8', // gris elegante
         backdrop: 'rgba(15, 23, 42, .35)',
         customClass: {
-            popup: 'swal2-seduc-popup',
-            title: 'swal2-seduc-title',
-            confirmButton: 'swal2-seduc-confirm',
-            cancelButton: 'swal2-seduc-cancel'
+            popup: 'swal-seduc',
+            confirmButton: 'btn-seduc btn-seduc-primary',
+            cancelButton: 'btn-seduc btn-seduc-ghost'
         }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            window.location.href = '../logout.php';
-        }
+    }).then((r) => {
+        if (r.isConfirmed) window.location.href = 'logout.php';
     });
 }

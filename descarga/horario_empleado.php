@@ -80,6 +80,7 @@ SELECT
     e.apellido_materno,
     e.run,
     e.id_colegio,
+    c.id_empleado,
     co.nom_colegio,
     c.horas_semanales_cron,
     c.min_colacion_diaria,
@@ -102,10 +103,12 @@ $nombreCompleto = trim($info['nombres']." ".$info['apellido_paterno']." ".$info[
 $run        = trim((string)$info['run']);
 $colegio    = trim((string)$info['nom_colegio']);
 $idColegio  = (int)$info['id_colegio'];
+$idEmpleado = (int)($info['id_empleado'] ?? 0);
 
 $horasCron   = minutosAHoras($info['horas_semanales_cron'] ?? '');
 $minColacion = trim((string)($info['min_colacion_diaria'] ?? ''));
 $observacion = trim((string)($info['observacion'] ?? ''));
+$cargo       = '-';
 
 if ($minColacion === '') $minColacion = '-';
 if ($observacion === '') $observacion = '-';
@@ -114,13 +117,35 @@ if ($observacion === '') $observacion = '-';
    HORARIO
    ========================== */
 $sqlHorario = "
+SELECT COUNT(*) AS t
+FROM horarios_semanales
+WHERE id_contrato = $id_contrato
+  AND activo = 1
+";
+$resCnt = $db->consulta($sqlHorario);
+$cntHorContrato = (int)($db->fetch_assoc($resCnt)['t'] ?? 0);
+
+$filtroHorario = "hs.id_contrato = $id_contrato";
+if ($cntHorContrato <= 0 && $idEmpleado > 0) {
+    // Fallback: algunos registros antiguos quedaron asociados solo por empleado.
+    $filtroHorario = "hs.id_empleado = $idEmpleado";
+}
+
+$sqlHorario = "
 SELECT d.nombre,
        hs.man_ini, hs.man_fin,
        hs.tar_ini, hs.tar_fin
 FROM dias_semana d
 LEFT JOIN horarios_semanales hs
-  ON hs.id_contrato = $id_contrato
- AND hs.dia = UPPER(d.prefijo)
+  ON $filtroHorario
+ AND COALESCE(hs.activo, 1) = 1
+ AND (
+      UPPER(TRIM(hs.dia)) = UPPER(TRIM(d.prefijo))
+   OR UPPER(TRIM(hs.dia)) = UPPER(TRIM(d.clave))
+   OR UPPER(TRIM(hs.dia)) = UPPER(LEFT(TRIM(d.clave), 3))
+   OR UPPER(LEFT(TRIM(hs.dia), 3)) = UPPER(LEFT(TRIM(d.prefijo), 3))
+   OR UPPER(LEFT(TRIM(hs.dia), 3)) = UPPER(LEFT(TRIM(d.clave), 3))
+ )
 WHERE d.orden BETWEEN 1 AND 5
 ORDER BY d.orden
 ";
@@ -199,7 +224,7 @@ $pdf->Cell(0,7,pdf_txt($run !== '' ? $run : '-'),0,1);
 $pdf->SetFont('Arial','B',11);
 $pdf->Cell(35,7,pdf_txt('CARGO:'),0,0);
 $pdf->SetFont('Arial','',11);
-$pdf->Cell(0,7,pdf_txt($run !== '' ? $run : '-'),0,1);
+$pdf->Cell(0,7,pdf_txt($cargo),0,1);
 $pdf->Ln(6);
 
 /* ==========================

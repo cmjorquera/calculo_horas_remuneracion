@@ -129,7 +129,13 @@ LEFT JOIN contratos_empleado c
 JOIN dias_semana d ON d.orden BETWEEN 1 AND 5
 LEFT JOIN horarios_semanales hs
   ON hs.id_contrato = c.id_contrato
- AND hs.dia = UPPER(d.prefijo)
+ AND (
+      UPPER(TRIM(hs.dia)) = UPPER(TRIM(d.prefijo))
+   OR UPPER(TRIM(hs.dia)) = UPPER(TRIM(d.clave))
+   OR UPPER(TRIM(hs.dia)) = UPPER(LEFT(TRIM(d.clave), 3))
+   OR UPPER(LEFT(TRIM(hs.dia), 3)) = UPPER(LEFT(TRIM(d.prefijo), 3))
+   OR UPPER(LEFT(TRIM(hs.dia), 3)) = UPPER(LEFT(TRIM(d.clave), 3))
+ )
 ORDER BY co.nom_colegio, empleado, d.orden
 ";
 $resHor = $db->consulta($sqlHor);

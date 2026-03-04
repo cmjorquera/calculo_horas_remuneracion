@@ -100,17 +100,50 @@ function hhmmToMinutes(hhmm) {
   return (h * 60) + m;
 }
 
+function formatearRun(input) {
+  let value = input.value;
+
+  // Eliminar todo excepto números y K/k
+  value = value.replace(/[^0-9kK]/g, "").toUpperCase();
+
+  // Limitar largo máximo real (8 cuerpo + 1 dv)
+  if (value.length > 9) {
+    value = value.slice(0, 9);
+  }
+
+  if (value.length > 1) {
+    let cuerpo = value.slice(0, -1);
+    const dv = value.slice(-1);
+
+    // Agregar puntos
+    cuerpo = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    value = cuerpo + "-" + dv;
+  }
+
+  input.value = value;
+}
+
 function recolectarResumen() {
   const colacionSelect = document.getElementById("sumColacionSelect");
   const jornadaCroHHMM = (document.getElementById("sumJornadaCro")?.textContent || "00:00").trim();
   const colacionMinTxt = (document.getElementById("sumColacionMin")?.textContent || "0").trim();
   const lectivasCroHHMM = (document.getElementById("sumLectivasCro")?.value || "00:00").trim();
   const noLectivasCroHHMM = (document.getElementById("sumNoLectivasCro")?.value || "00:00").trim();
+  const colacionOpt = colacionSelect?.selectedOptions?.[0] || null;
+
+  let colacionMin = parseInt(colacionOpt?.dataset?.minutos || "", 10);
+  if (!Number.isFinite(colacionMin)) {
+    colacionMin = parseInt(colacionMinTxt, 10);
+  }
+  if (!Number.isFinite(colacionMin)) {
+    colacionMin = 0;
+  }
 
   return {
     colacionId: colacionSelect?.value || "",
     jornadaCroMinSemanal: hhmmToMinutes(jornadaCroHHMM),
-    colacionMinDiaria: parseInt(colacionMinTxt, 10) || 0,
+    colacionMinDiaria: colacionMin,
     horasLectivasMin: hhmmToMinutes(lectivasCroHHMM),
     horasNoLectivasMin: hhmmToMinutes(noLectivasCroHHMM)
   };
@@ -128,6 +161,17 @@ function contarDiasConHorario(horario) {
   return count;
 }
 
+function validarResumenLectivo() {
+  if (typeof window.getHorasLectivasState !== "function") {
+    return { isValid: true, errors: [] };
+  }
+  const state = window.getHorasLectivasState();
+  if (typeof window.updateHorasLectivasUI === "function") {
+    window.updateHorasLectivasUI();
+  }
+  return state;
+}
+
 
 
 
@@ -139,19 +183,43 @@ function contarDiasConHorario(horario) {
    ========================= */
 
 function guardarEmpleado() {
-  const { horario } = recolectarHorario();
+  const { horario, tieneAlgo } = recolectarHorario();
   const colacionSelect = document.getElementById("sumColacionSelect");
+  const prefill = window.empleadoSeleccionadoPrefill || null;
+  const normalizeRun = (v) => String(v || "").toUpperCase().replace(/[^0-9K]/g, "");
+  const prefillRunNorm = normalizeRun(prefill?.run || "");
+  const runLookupState = {
+    checking: false,
+    exists: false,
+    runNorm: "",
+    fullName: "",
+    ignorePrefilledExisting: !!prefillRunNorm
+  };
 
-  if (!colacionSelect || !colacionSelect.value) {
+  if (!tieneAlgo) {
     Swal.fire({
       icon: "warning",
-      title: "Falta colación",
-      text: "Debes seleccionar una hora de colación antes de guardar.",
+      title: "Horario vacío",
+      text: "Debes ingresar al menos un bloque horario antes de agregar.",
       customClass: {
         popup: "swal-seduc",
         confirmButton: "btn-seduc btn-seduc-primary"
       }
     });
+    return;
+  }
+
+  if (!colacionSelect?.value) {
+    Swal.fire({
+      icon: "warning",
+      title: "Colación requerida",
+      text: "Debes seleccionar una colación antes de agregar.",
+      customClass: {
+        popup: "swal-seduc",
+        confirmButton: "btn-seduc btn-seduc-primary"
+      }
+    });
+    colacionSelect?.focus();
     return;
   }
 
@@ -166,71 +234,206 @@ function guardarEmpleado() {
     return;
   }
 
+  const resumenLectivo = validarResumenLectivo();
+  if (!resumenLectivo.isValid) {
+    Swal.fire({
+      icon: "warning",
+      title: "Horas lectivas inválidas",
+      html: resumenLectivo.errors.join("<br>"),
+      customClass: {
+        popup: "swal-seduc",
+        confirmButton: "btn-seduc btn-seduc-primary"
+      }
+    });
+    return;
+  }
+
   // 2) Modal para datos del empleado
   Swal.fire({
     title: "Registrar empleado + horario",
 html: `
   <div class="swal-form-modern">
-    <div class="swal-grid-2">
+    <div class="swal-layout-3col">
+      <div class="swal-col-left">
+        <div class="swal-field">
+          <label>Nombres</label>
+          <input id="sw_nombres" class="swal-input-modern" placeholder="Ej: Juan">
+        </div>
 
-      <div class="swal-field">
-        <label>Nombres</label>
-        <input id="sw_nombres" class="swal-input-modern" placeholder="Ej: Juan">
+        <div class="swal-field">
+          <label>Apellido paterno</label>
+          <input id="sw_ap_paterno" class="swal-input-modern" placeholder="Ej: Pérez">
+        </div>
+
+        <div class="swal-field">
+          <label>Apellido materno</label>
+          <input id="sw_ap_materno" class="swal-input-modern" placeholder="Ej: Soto">
+        </div>
+
+        <div class="swal-field">
+          <label>Género</label>
+          <select id="sw_genero" class="swal-input-modern">
+            <option value="">Selecciona...</option>
+            <option value="1">Hombre</option>
+            <option value="2">Profesora</option>
+          </select>
+        </div>
       </div>
 
-      <div class="swal-field">
-        <label>Apellido paterno</label>
-        <input id="sw_ap_paterno" class="swal-input-modern" placeholder="Ej: Pérez">
+      <div class="swal-col-mid">
+        <div class="swal-field">
+          <label>RUN</label>
+          <input id="sw_run" class="swal-input-modern" placeholder="12.345.678-9">
+          <small id="sw_run_exists_msg" style="display:block;margin-top:6px;color:#6b7280;"></small>
+        </div>
+
+        <div class="swal-field">
+          <label>Email</label>
+          <input id="sw_email" class="swal-input-modern" placeholder="juan@seduc.cl">
+        </div>
+
+        <div class="swal-field">
+          <label>Teléfono</label>
+          <input id="sw_telefono" class="swal-input-modern" placeholder="+56 9 1234 5678">
+        </div>
       </div>
 
-      <div class="swal-field">
-        <label>Apellido materno</label>
-        <input id="sw_ap_materno" class="swal-input-modern" placeholder="Ej: Soto">
-      </div>
-
-      <div class="swal-field">
-        <label>RUN</label>
-        <input id="sw_run" class="swal-input-modern" placeholder="12.345.678-9">
-      </div>
-
-      <div class="swal-field">
-        <label>Email</label>
-        <input id="sw_email" class="swal-input-modern" placeholder="juan@seduc.cl">
-      </div>
-
-      <div class="swal-field">
-        <label>Teléfono</label>
-        <input id="sw_telefono" class="swal-input-modern" placeholder="+56 9 1234 5678">
+      <div class="swal-col-right">
+        <div class="swal-field swal-observacion-field">
+          <label>Observación contrato</label>
+          <textarea id="sw_observacion"
+                    class="swal-input-modern swal-textarea-modern"
+                    rows="12"
+                    placeholder="Ej: Contrato jornada completa, reemplazo, etc."></textarea>
+        </div>
       </div>
     </div>
-    <div class="swal-field swal-full">
-      <label>Género</label>
-      <select id="sw_genero" class="swal-input-modern">
-        <option value="">Selecciona...</option>
-        <option value="1">Profesor</option>
-        <option value="2">Profesora</option>
-      </select>
-    </div>
-    <div class="swal-field swal-full">
-  <label>Observación contrato</label>
-  <textarea id="sw_observacion"
-            class="swal-input-modern"
-            rows="3"
-            placeholder="Ej: Contrato jornada completa, reemplazo, etc."></textarea>
-</div>
-
   </div>
 `,
 
     showCancelButton: true,
     confirmButtonText: "Guardar",
     cancelButtonText: "Cancelar",
+    width: "1100px",
     focusConfirm: false,
             customClass: {
             popup: 'swal-seduc',
             confirmButton: 'btn-seduc btn-seduc-primary',
             cancelButton: 'btn-seduc btn-seduc-ghost'
         },
+didOpen: () => {
+  const nombresInput = document.getElementById("sw_nombres");
+  const apPatInput = document.getElementById("sw_ap_paterno");
+  const apMatInput = document.getElementById("sw_ap_materno");
+  const runInput = document.getElementById("sw_run");
+  const generoInput = document.getElementById("sw_genero");
+  const observacionInput = document.getElementById("sw_observacion");
+  const runMsg = document.getElementById("sw_run_exists_msg");
+  if (!runInput || !runMsg) return;
+
+  if (prefill) {
+    if (nombresInput) nombresInput.value = String(prefill.nombres || "");
+    if (apPatInput) apPatInput.value = String(prefill.ap_paterno || "");
+    if (apMatInput) apMatInput.value = String(prefill.ap_materno || "");
+    if (observacionInput) observacionInput.value = String(prefill.observacion || "");
+    if (generoInput) generoInput.value = String(prefill.genero || "");
+    runInput.value = String(prefill.run || "");
+    formatearRun(runInput);
+  }
+
+  let timer = null;
+
+  function setMsg(text, color) {
+    runMsg.textContent = text || "";
+    runMsg.style.color = color || "#6b7280";
+  }
+
+  async function buscarRun() {
+    const runRaw = runInput.value.trim();
+    const runNorm = normalizeRun(runRaw);
+
+    if (!runNorm) {
+      runLookupState.checking = false;
+      runLookupState.exists = false;
+      runLookupState.runNorm = "";
+      runLookupState.fullName = "";
+      setMsg("");
+      return;
+    }
+
+    runLookupState.checking = true;
+    runLookupState.exists = false;
+    runLookupState.runNorm = runNorm;
+    runLookupState.fullName = "";
+    setMsg("Buscando RUN...", "#6b7280");
+
+    try {
+      const body = new URLSearchParams({ run: runRaw });
+      const res = await fetch("modelos/rescatar/usuario.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body
+      });
+      const resp = await res.json();
+
+      if (normalizeRun(runInput.value.trim()) !== runNorm) return;
+
+      runLookupState.checking = false;
+      if (resp && resp.ok && resp.exists) {
+        runLookupState.exists = true;
+        runLookupState.fullName = String(resp.nombre_completo || "").trim();
+        const runTxt = String(resp.run || runRaw).trim();
+        setMsg(`El RUN ${runTxt} existe y está asociado a ${runLookupState.fullName}.`, "#b91c1c");
+        return;
+      }
+
+      runLookupState.exists = false;
+      runLookupState.fullName = "";
+      setMsg("RUN disponible.", "#166534");
+    } catch (e) {
+      runLookupState.checking = false;
+      runLookupState.exists = false;
+      runLookupState.fullName = "";
+      setMsg("No se pudo validar el RUN en este momento.", "#92400e");
+    }
+  }
+
+  runInput.addEventListener("input", () => {
+    formatearRun(runInput);
+    const currentNorm = normalizeRun(runInput.value.trim());
+    runLookupState.ignorePrefilledExisting = !!prefillRunNorm && currentNorm === prefillRunNorm;
+    if (runLookupState.ignorePrefilledExisting) {
+      runLookupState.checking = false;
+      runLookupState.exists = false;
+      runLookupState.runNorm = currentNorm;
+      runLookupState.fullName = "";
+      setMsg("");
+      if (timer) clearTimeout(timer);
+      return;
+    }
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(buscarRun, 350);
+  });
+
+  runInput.addEventListener("blur", () => {
+    formatearRun(runInput);
+    const currentNorm = normalizeRun(runInput.value.trim());
+    runLookupState.ignorePrefilledExisting = !!prefillRunNorm && currentNorm === prefillRunNorm;
+    if (runLookupState.ignorePrefilledExisting) {
+      runLookupState.checking = false;
+      runLookupState.exists = false;
+      runLookupState.runNorm = currentNorm;
+      runLookupState.fullName = "";
+      setMsg("");
+      return;
+    }
+    buscarRun();
+  });
+
+  if (runInput.value.trim() && !runLookupState.ignorePrefilledExisting) {
+    buscarRun();
+  }
+},
 
 preConfirm: () => {
   const data = {
@@ -248,12 +451,24 @@ preConfirm: () => {
   if (!data.ap_paterno) { Swal.showValidationMessage("Apellido paterno es obligatorio."); return false; }
   if (!data.ap_materno) { Swal.showValidationMessage("Apellido materno es obligatorio."); return false; }
   if (!data.run)        { Swal.showValidationMessage("RUN es obligatorio."); return false; }
-  if (!data.email)      { Swal.showValidationMessage("Email es obligatorio."); return false; }
-  if (!data.telefono)   { Swal.showValidationMessage("Teléfono es obligatorio."); return false; }
-  if (!data.genero)     { Swal.showValidationMessage("Selecciona Género."); return false; }
 
-  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email);
-  if (!emailOk) { Swal.showValidationMessage("Email inválido."); return false; }
+  if (runLookupState.checking) {
+    Swal.showValidationMessage("Espera la validación del RUN.");
+    return false;
+  }
+
+  if (!runLookupState.ignorePrefilledExisting &&
+      runLookupState.exists &&
+      normalizeRun(data.run) === runLookupState.runNorm) {
+    const nombre = runLookupState.fullName || "otro usuario";
+    Swal.showValidationMessage(`El RUN ${data.run} ya existe y está asociado a ${nombre}.`);
+    return false;
+  }
+
+  if (data.email) {
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email);
+    if (!emailOk) { Swal.showValidationMessage("Email inválido."); return false; }
+  }
 
   return data;
 }
@@ -267,7 +482,17 @@ preConfirm: () => {
     const empleado = result.value;
 
     // 3) Payload final: empleado + horario + resumen
+    const resumenLectivo = validarResumenLectivo();
+    if (!resumenLectivo.isValid) {
+      Swal.fire("Horas lectivas inválidas", resumenLectivo.errors.join("\n"), "warning");
+      return;
+    }
+
     const resumen = recolectarResumen();
+    if (!resumen.colacionId) {
+      Swal.fire("Falta colación", "Selecciona una colación antes de guardar.", "warning");
+      return;
+    }
 
     const payload = {
       ...empleado,
@@ -280,6 +505,15 @@ preConfirm: () => {
       horas_no_lectivas: String(resumen.horasNoLectivasMin)
 
     };
+
+    const prefillEmpleadoId = Number(prefill?.id_empleado || 0);
+    if (prefillEmpleadoId > 0) {
+      payload.id_empleado = String(prefillEmpleadoId);
+    }
+    const prefillContratoId = Number(prefill?.id_contrato || 0);
+    if (prefillContratoId > 0) {
+      payload.id_contrato = String(prefillContratoId);
+    }
 
 
     // 4) Enviar por AJAX
@@ -297,12 +531,13 @@ preConfirm: () => {
     icon: "success",
     title: "OK",
     text: resp.msg,
+    timer: 3000,
+    showConfirmButton: false,
     customClass: {
-      popup: 'swal-seduc',
-      confirmButton: 'btn-seduc btn-seduc-primary'
+      popup: 'swal-seduc'
     }
   }).then(() => {
-    location.reload(); // 🔥 recarga la página
+    location.reload(); // recarga la página
   });
 } else {
         Swal.fire("Error", resp.msg, "error");

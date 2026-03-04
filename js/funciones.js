@@ -53,10 +53,19 @@
 
         if (onlyIfEmpty && String(target.value) !== "00") continue;
 
-        target.value = newVal;
+        // Evita bloque inválido al auto-copiar:
+        // no permitir término si el inicio del mismo bloque sigue en 00:00.
+        let valueToApply = newVal;
+        if (tipo === "fin") {
+          const iniH = tbody.querySelector(`select[name="${dayPrefixes[i]}_${bloque}_ini_h"]`);
+          const iniM = tbody.querySelector(`select[name="${dayPrefixes[i]}_${bloque}_ini_m"]`);
+          const iniZero = !!iniH && !!iniM && iniH.value === "00" && iniM.value === "00";
+          if (iniZero) {
+            valueToApply = "00";
+          }
+        }
 
-        // Si quieres disparar "change" para recalcular totales automáticamente:
-        // target.dispatchEvent(new Event("change", { bubbles: true }));
+        target.value = valueToApply;
       }
 
       if (typeof opts.onAfterApply === "function") {
@@ -273,11 +282,17 @@
     select.addEventListener("change", updateFromSelect);
   }
 
+
+
+
+  
+
   // Exponer
   global.bindRecalculoHorario = bindRecalculoHorario;
   global.bindColacionFija = bindColacionFija;
 
 })(window);
+
 
 
 

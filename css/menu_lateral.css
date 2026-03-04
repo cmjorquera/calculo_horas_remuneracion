@@ -78,7 +78,17 @@
   /* Responsive: esconder si la pantalla es angosta (evita tapar) */
   @media (max-width: 1000px){
     .side-mini{ display:none; }
-  }.acciones-empleado{
+  }
+
+  /* Evita que el menú flotante tape el contenido principal */
+  @media (min-width: 1001px){
+    .page > .content,
+    .page > .empleados-panel{
+      margin-left: 86px;
+    }
+  }
+
+  .acciones-empleado{
   display: flex;
   gap: 10px;
   justify-content: flex-end;

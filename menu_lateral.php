@@ -16,13 +16,16 @@ WHERE id_colegio = $idColegio
 $resTotal = $db->consulta($sqlTotal);
 $rowTotal = $db->fetch_assoc($resTotal);
 $totalEmpleados = $rowTotal['total'];
+$paginaActual = basename($_SERVER["PHP_SELF"] ?? "");
+$activoEmpleados = $paginaActual === "index.php";
+$activoGraficos = $paginaActual === "grafico.php" || $paginaActual === "grafico.php";
 
 ?>
 
 <div class="side-mini" aria-label="Menú lateral">
     <!-- Empleados -->
     <div class="side-btn-wrap">
-        <button class="side-btn active" id="btnSideEmpleados" type="button" title="Empleados (lista y selección)"
+        <button class="side-btn<?= $activoEmpleados ? ' active' : '' ?>" id="btnSideEmpleados" type="button" title="Empleados (lista y selección)"
             onclick="window.location.href='index.php'">
             <i class="bi bi-people-fill"></i>
         </button>
@@ -33,17 +36,17 @@ $totalEmpleados = $rowTotal['total'];
     </div>
 
     <!-- Horario -->
-    <div class="side-btn-wrap">
+    <!-- <div class="side-btn-wrap">
         <button class="side-btn" id="btnSideHorario" type="button" title="Horario (copiar / limpiar / guardar)"
             onclick="sideGo('horario')">
             <i class="bi bi-calendar2-week-fill"></i>
         </button>
-    </div>
+    </div> -->
 
     <!-- Reportes -->
     <div class="side-btn-wrap">
-        <button class="side-btn" id="btnSideReportes" type="button" title="Gráficos y estadísticas"
-            onclick="window.location.href='graficos.php'">
+        <button class="side-btn<?= $activoGraficos ? ' active' : '' ?>" id="btnSideReportes" type="button" title="Gráficos y estadísticas"
+            onclick="window.location.href='grafico.php'">
             <i class="bi bi-bar-chart-fill"></i>
         </button>
     </div>
@@ -66,6 +69,7 @@ $totalEmpleados = $rowTotal['total'];
 function sideSetActive(key) {
     const map = {
         empleados: "btnSideEmpleados",
+        reportes: "btnSideReportes",
         horario: "btnSideHorario"
     };
     Object.values(map).forEach(id => {
@@ -102,29 +106,5 @@ function sideGo(key) {
     }
 }
 
-function confirmarSalir() {
-    Swal.fire({
-        title: '¿Salir del sistema?',
-        html: `
-      <div>
-        Se cerrará tu sesión por seguridad.<br>
-        ¿Deseas continuar?
-      </div>
-    `,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, salir',
-        cancelButtonText: 'Cancelar',
-        reverseButtons: true,
-        focusCancel: true,
-        backdrop: 'rgba(15, 23, 42, .35)',
-        customClass: {
-            popup: 'swal-seduc',
-            confirmButton: 'btn-seduc btn-seduc-primary',
-            cancelButton: 'btn-seduc btn-seduc-ghost'
-        }
-    }).then((r) => {
-        if (r.isConfirmed) window.location.href = 'logout.php';
-    });
-}
+
 </script>

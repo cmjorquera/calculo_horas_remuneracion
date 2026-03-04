@@ -82,10 +82,15 @@
     return Math.max(0, n);
   }
 
+  function formatPedHoursValue(value) {
+    const n = Math.max(0, Math.round((Number(value) || 0) * 100) / 100);
+    if (n === 0) return "0";
+    return String(n);
+  }
+
   function normalizePedNumber(value) {
     const n = parsePedHours(value);
-    if (n === 0) return "0";
-    return String(Math.round(n * 100) / 100);
+    return formatPedHoursValue(n);
   }
 
   function pedHoursToCronoHHMM(pedHours) {
@@ -93,32 +98,130 @@
     return formatHHMM(minCrono);
   }
 
+  function buzzInvalidInput(inputEl, shouldBuzz) {
+    if (!inputEl) return;
+
+    const wasInvalid = inputEl.dataset.wasInvalid === "1";
+    if (!shouldBuzz) {
+      inputEl.dataset.wasInvalid = "0";
+      inputEl.classList.remove("is-buzzing");
+      return;
+    }
+
+    if (wasInvalid) return;
+
+    inputEl.dataset.wasInvalid = "1";
+    inputEl.classList.remove("is-buzzing");
+    void inputEl.offsetWidth;
+    inputEl.classList.add("is-buzzing");
+  }
+
+  function enforcePedLimit(currentEl, otherEl) {
+    if (!currentEl) return 0;
+
+    const limitePed = 54;
+    const otherValue = parsePedHours(otherEl ? otherEl.value : "0");
+    const rawValue = parsePedHours(currentEl.value);
+    const maxForCurrent = Math.max(0, Math.min(limitePed, limitePed - otherValue));
+    const clampedValue = Math.min(rawValue, maxForCurrent);
+    const exceeded = rawValue > maxForCurrent;
+
+    if (exceeded) {
+      currentEl.value = formatPedHoursValue(clampedValue);
+      currentEl.classList.add("is-invalid");
+      buzzInvalidInput(currentEl, true);
+    } else {
+      buzzInvalidInput(currentEl, false);
+    }
+
+    return clampedValue;
+  }
+
+  function getHorasLectivasState() {
+    const lectivasPedEl = document.getElementById("sumLectivasPed");
+    const noLectivasPedEl = document.getElementById("sumNoLectivasPed");
+    const lectivasPed = parsePedHours(lectivasPedEl ? lectivasPedEl.value : "0");
+    const noLectivasPed = parsePedHours(noLectivasPedEl ? noLectivasPedEl.value : "0");
+    const totalPed = lectivasPed + noLectivasPed;
+    const limitePed = 54;
+    const errors = [];
+
+    if (lectivasPed > limitePed) {
+      errors.push("Las horas lectivas no pueden ser mayores a 54.");
+    }
+    if (noLectivasPed > limitePed) {
+      errors.push("Las horas no lectivas no pueden ser mayores a 54.");
+    }
+    if (totalPed > limitePed) {
+      errors.push("La suma de horas lectivas y no lectivas no puede ser mayor a 54.");
+    }
+
+    return {
+      lectivasPed,
+      noLectivasPed,
+      totalPed,
+      limitePed,
+      errors,
+      isValid: errors.length === 0
+    };
+  }
+
+  function updateHorasLectivasUI() {
+    const msgEl = document.getElementById("horasLectivasMsg");
+    const lectivasPedEl = document.getElementById("sumLectivasPed");
+    const noLectivasPedEl = document.getElementById("sumNoLectivasPed");
+    const state = getHorasLectivasState();
+    const lectivasInvalid = state.lectivasPed > state.limitePed || state.totalPed > state.limitePed;
+    const noLectivasInvalid = state.noLectivasPed > state.limitePed || state.totalPed > state.limitePed;
+
+    if (lectivasPedEl) {
+      lectivasPedEl.classList.toggle("is-invalid", lectivasInvalid);
+      buzzInvalidInput(lectivasPedEl, lectivasInvalid);
+    }
+    if (noLectivasPedEl) {
+      noLectivasPedEl.classList.toggle("is-invalid", noLectivasInvalid);
+      buzzInvalidInput(noLectivasPedEl, noLectivasInvalid);
+    }
+
+    if (!msgEl) return state;
+
+    msgEl.classList.remove("is-hidden", "is-ok");
+    if (state.errors.length > 0) {
+      msgEl.innerHTML = state.errors.join("<br>");
+      return state;
+    }
+
+    if (state.totalPed > 0) {
+      msgEl.classList.add("is-ok");
+      msgEl.textContent = `Horas lectivas + no lectivas: ${Math.round(state.totalPed * 100) / 100} de 54 pedagógicas.`;
+      return state;
+    }
+
+    msgEl.classList.add("is-hidden");
+    msgEl.textContent = "";
+    return state;
+  }
+
   function recalcularLectivas() {
     const pedEl = document.getElementById("sumLectivasPed");
     const croEl = document.getElementById("sumLectivasCro");
+    const noLectivasPedEl = document.getElementById("sumNoLectivasPed");
     if (!pedEl || !croEl) return;
 
-    const pedHours = parsePedHours(pedEl.value);
+    const pedHours = enforcePedLimit(pedEl, noLectivasPedEl);
     croEl.value = pedHoursToCronoHHMM(pedHours);
-    recalcularNoLectivas();
+    updateHorasLectivasUI();
   }
 
   function recalcularNoLectivas() {
-    const jornadaCroEl = document.getElementById("sumJornadaCro");
-    const lectivasCroEl = document.getElementById("sumLectivasCro");
+    const pedEl = document.getElementById("sumNoLectivasPed");
     const noLectivasCroEl = document.getElementById("sumNoLectivasCro");
+    const lectivasPedEl = document.getElementById("sumLectivasPed");
+    if (!pedEl || !noLectivasCroEl) return;
 
-    if (!jornadaCroEl || !lectivasCroEl || !noLectivasCroEl) return;
-
-    const jornadaMin = parseHHMM(jornadaCroEl.textContent);
-    const lectivasMin = parseHHMM(lectivasCroEl.value);
-
-    // Regla pedida:
-    // - Si lectivas cronológicas está vacío o en 00:00, repetir jornada ordinaria cronológica.
-    // - Si tiene valor, calcular No lectivas = Jornada - Lectivas.
-    const noLectivasMin = lectivasMin <= 0 ? jornadaMin : Math.max(0, jornadaMin - lectivasMin);
-
-    noLectivasCroEl.value = formatHHMM(noLectivasMin);
+    const pedHours = enforcePedLimit(pedEl, lectivasPedEl);
+    noLectivasCroEl.value = pedHoursToCronoHHMM(pedHours);
+    updateHorasLectivasUI();
   }
 
   function attachTimeValidation(inputEl) {
@@ -154,7 +257,7 @@
   function bindAutoCalc() {
     const lectivasPedEl = document.getElementById("sumLectivasPed");
     const lectivasCroEl = document.getElementById("sumLectivasCro");
-    const jornadaCroEl = document.getElementById("sumJornadaCro");
+    const noLectivasPedEl = document.getElementById("sumNoLectivasPed");
 
     if (!lectivasPedEl) return;
 
@@ -170,9 +273,14 @@
       attachTimeValidation(noLectivasCroEl);
     }
 
-    const noLectivasPedEl = document.getElementById("sumNoLectivasPed");
     if (noLectivasPedEl) {
       attachPedNumberValidation(noLectivasPedEl);
+      noLectivasPedEl.addEventListener("input", function () {
+        recalcularNoLectivas();
+      });
+      noLectivasPedEl.addEventListener("blur", function () {
+        recalcularNoLectivas();
+      });
     }
 
     lectivasPedEl.addEventListener("input", function () {
@@ -182,11 +290,6 @@
     lectivasPedEl.addEventListener("blur", function () {
       recalcularLectivas();
     });
-
-    if (jornadaCroEl && typeof MutationObserver !== "undefined") {
-      const observer = new MutationObserver(recalcularNoLectivas);
-      observer.observe(jornadaCroEl, { childList: true, characterData: true, subtree: true });
-    }
 
     recalcularLectivas();
     recalcularNoLectivas();
@@ -198,6 +301,8 @@
   global.cronoToPedHHMM = cronoToPedHHMM;
   global.recalcularLectivas = recalcularLectivas;
   global.recalcularNoLectivas = recalcularNoLectivas;
+  global.getHorasLectivasState = getHorasLectivasState;
+  global.updateHorasLectivasUI = updateHorasLectivasUI;
   global.attachTimeValidation = attachTimeValidation;
 
   if (document.readyState === "loading") {
