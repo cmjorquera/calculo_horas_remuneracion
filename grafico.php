@@ -238,6 +238,7 @@ $chartPayload = [
             <article class="chart-card chart-g1">
                 <h3>Jornada cronológica por empleado</h3>
                 <div class="chart-wrap chart-wrap-scroll" style="height: <?= (int)$chartViewportHeight ?>px; overflow: hidden;">
+                    <div class="chart-empty-state" id="emptyTopJornada" hidden>No se encontraron empleados para este filtro.</div>
                     <div class="chart-scroll-body" style="height: <?= (int)$chartViewportHeight ?>px; max-height: <?= (int)$chartViewportHeight ?>px; overflow-y: scroll; overflow-x: hidden; scrollbar-gutter: stable;">
                         <div class="chart-scroll-inner" id="chartTopJornadaInner" style="height: <?= (int)$chartTopHeight ?>px; min-height: <?= (int)$chartTopHeight ?>px;">
                             <canvas id="chartTopJornada"></canvas>
@@ -248,6 +249,7 @@ $chartPayload = [
             <article class="chart-card chart-g2">
                 <h3>Horas lectivas vs no lectivas</h3>
                 <div class="chart-wrap chart-wrap-scroll-x" style="height: 360px; overflow: hidden;">
+                    <div class="chart-empty-state" id="emptyComposicion" hidden>No se encontraron empleados para este filtro.</div>
                     <div class="chart-scroll-body-x" style="width: 100%; height: 360px; overflow-x: scroll; overflow-y: hidden; scrollbar-gutter: stable;">
                         <div class="chart-scroll-inner-x" style="width: <?= (int)$chartComposicionWidth ?>px; min-width: <?= (int)$chartComposicionWidth ?>px; height: 326px;">
                             <canvas id="chartComposicion" width="<?= (int)$chartComposicionWidth ?>" style="width: <?= (int)$chartComposicionWidth ?>px !important; min-width: <?= (int)$chartComposicionWidth ?>px; height: 326px !important;"></canvas>
@@ -258,6 +260,7 @@ $chartPayload = [
             <article class="chart-card chart-g3">
                 <h3>Colación diaria por empleado</h3>
                 <div class="chart-wrap chart-wrap-scroll-x chart-wrap-colacion" style="height: 360px; overflow: hidden;">
+                    <div class="chart-empty-state" id="emptyColacion" hidden>No se encontraron empleados para este filtro.</div>
                     <div class="chart-scroll-body-x" style="width: 100%; height: 360px; overflow-x: scroll; overflow-y: hidden; scrollbar-gutter: stable;">
                         <div class="chart-scroll-inner-x" style="width: <?= (int)$chartColacionWidth ?>px; min-width: <?= (int)$chartColacionWidth ?>px; height: 326px;">
                             <canvas id="chartColacion" width="<?= (int)$chartColacionWidth ?>" style="width: <?= (int)$chartColacionWidth ?>px !important; min-width: <?= (int)$chartColacionWidth ?>px; height: 326px !important;"></canvas>
@@ -267,7 +270,10 @@ $chartPayload = [
             </article>
             <article class="chart-card chart-g4">
                 <h3>Top 10 jornadas más altas</h3>
-                <div class="chart-wrap"><canvas id="chartCumplimiento"></canvas></div>
+                <div class="chart-wrap">
+                    <div class="chart-empty-state" id="emptyCumplimiento" hidden>No se encontraron empleados para este filtro.</div>
+                    <canvas id="chartCumplimiento"></canvas>
+                </div>
             </article>
         </section>
     </main>
@@ -279,6 +285,8 @@ const EMPLOYEES = Array.isArray(CHART_DATA.employees) ? CHART_DATA.employees : [
 const DEFAULT_VISIBLE_EMPLOYEES = 10;
 const EMPLOYEE_ROW_HEIGHT = 36;
 const TOP_CHART_MIN_HEIGHT = Number(CHART_DATA.chartMinHeight) || 220;
+const TOP_TEN_ROW_HEIGHT = 30;
+const TOP_TEN_MIN_HEIGHT = 320;
 const EMPLOYEE_COLUMN_WIDTH = 120;
 const COLACION_COLUMN_WIDTH = 110;
 
@@ -398,6 +406,7 @@ function updateKpis(employees) {
 }
 
 function updateChartContainers(state) {
+    const topTenCard = document.querySelector(".chart-g4");
     const topWrap = document.querySelector(".chart-g1 .chart-wrap-scroll");
     const topBody = document.querySelector(".chart-g1 .chart-scroll-body");
     const topInner = document.getElementById("chartTopJornadaInner");
@@ -405,6 +414,13 @@ function updateChartContainers(state) {
     const composicionCanvas = document.getElementById("chartComposicion");
     const colacionInner = document.querySelector(".chart-g3 .chart-scroll-inner-x");
     const colacionCanvas = document.getElementById("chartColacion");
+    const topTenWrap = document.querySelector(".chart-g4 .chart-wrap");
+    const topTenCount = Math.max(1, state.topRankingLabels.length);
+    const topTenNaturalHeight = Math.max(TOP_TEN_MIN_HEIGHT, topTenCount * TOP_TEN_ROW_HEIGHT);
+    const topTenCardHeight = topTenCard ? topTenCard.clientHeight : 0;
+    const topTenHeadingHeight = topTenCard ? (topTenCard.querySelector("h3")?.offsetHeight || 0) : 0;
+    const topTenAvailableHeight = topTenCardHeight > 0 ? Math.max(TOP_TEN_MIN_HEIGHT, topTenCardHeight - topTenHeadingHeight - 32) : 0;
+    const topTenHeight = Math.max(topTenNaturalHeight, topTenAvailableHeight);
 
     topWrap.style.height = `${state.chartViewportHeight}px`;
     topBody.style.height = `${state.chartViewportHeight}px`;
@@ -423,6 +439,29 @@ function updateChartContainers(state) {
     colacionCanvas.width = state.chartColacionWidth;
     colacionCanvas.style.width = `${state.chartColacionWidth}px`;
     colacionCanvas.style.minWidth = `${state.chartColacionWidth}px`;
+
+    if (topTenWrap) {
+        topTenWrap.style.height = `${topTenHeight}px`;
+    }
+}
+
+function toggleEmptyState(chartId, isEmpty) {
+    const map = {
+        chartTopJornada: "emptyTopJornada",
+        chartComposicion: "emptyComposicion",
+        chartColacion: "emptyColacion",
+        chartCumplimiento: "emptyCumplimiento"
+    };
+    const emptyId = map[chartId];
+    const emptyState = emptyId ? document.getElementById(emptyId) : null;
+    const canvas = document.getElementById(chartId);
+
+    if (!emptyState || !canvas) {
+        return;
+    }
+
+    emptyState.hidden = !isEmpty;
+    canvas.style.visibility = isEmpty ? "hidden" : "visible";
 }
 
 function createCharts() {
@@ -454,6 +493,13 @@ function createCharts() {
                 }
             },
             scales: {
+                y: {
+                    ticks: {
+                        mirror: false,
+                        crossAlign: "far",
+                        padding: 10
+                    }
+                },
                 x: {
                     ticks: {
                         callback: (value) => minutesToHHMM(value)
@@ -540,7 +586,10 @@ function createCharts() {
                 borderColor: initialState.topRankingColors,
                 borderWidth: 1,
                 borderRadius: 8,
-                maxBarThickness: 26
+                barThickness: 24,
+                maxBarThickness: 28,
+                categoryPercentage: 1,
+                barPercentage: 1
             }]
         },
         options: {
@@ -557,6 +606,13 @@ function createCharts() {
                 }
             },
             scales: {
+                y: {
+                    ticks: {
+                        mirror: false,
+                        crossAlign: "far",
+                        padding: 8
+                    }
+                },
                 x: {
                     ticks: {
                         callback: (value) => minutesToHHMM(value)
@@ -574,6 +630,8 @@ function createCharts() {
 function applyChartFilter(term) {
     const filteredEmployees = getFilteredEmployees(term);
     const state = buildChartState(filteredEmployees);
+    const hasSearchTerm = String(term || "").trim() !== "";
+    const isEmpty = hasSearchTerm && filteredEmployees.length === 0;
 
     updateChartContainers(state);
     updateKpis(filteredEmployees);
@@ -584,15 +642,18 @@ function applyChartFilter(term) {
     chartTopJornada.data.datasets[0].borderColor = state.rankingColors;
     chartTopJornada.data.datasets[0].runs = state.rankingLabels;
     chartTopJornada.update();
+    toggleEmptyState("chartTopJornada", isEmpty);
 
     chartComposicion.data.labels = state.labels;
     chartComposicion.data.datasets[0].data = state.lectivas;
     chartComposicion.data.datasets[1].data = state.noLectivas;
     chartComposicion.update();
+    toggleEmptyState("chartComposicion", isEmpty);
 
     chartColacion.data.labels = state.labels;
     chartColacion.data.datasets[0].data = state.colacion;
     chartColacion.update();
+    toggleEmptyState("chartColacion", isEmpty);
 
     chartCumplimiento.data.labels = state.topRankingLabels;
     chartCumplimiento.data.datasets[0].data = state.topRankingJornada;
@@ -600,6 +661,7 @@ function applyChartFilter(term) {
     chartCumplimiento.data.datasets[0].borderColor = state.topRankingColors;
     chartCumplimiento.data.datasets[0].names = state.topRankingNames;
     chartCumplimiento.update();
+    toggleEmptyState("chartCumplimiento", isEmpty);
 }
 
 function bindChartSearch() {
