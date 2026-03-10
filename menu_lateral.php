@@ -18,9 +18,22 @@ WHERE $whereColegio
 $resTotal = $db->consulta($sqlTotal);
 $rowTotal = $db->fetch_assoc($resTotal);
 $totalEmpleados = $rowTotal['total'];
+$mostrarUsuarios = !empty($_SESSION["is_super_admin"]) || (int)($_SESSION["id_rol"] ?? 0) === 1;
+$totalUsuarios = 0;
+if ($mostrarUsuarios) {
+    $sqlTotalUsuarios = "
+    SELECT COUNT(*) AS total
+    FROM usuarios
+    WHERE " . ($esSuperAdmin ? "1=1" : "id_colegio = " . (int)$idColegio);
+
+    $resTotalUsuarios = $db->consulta($sqlTotalUsuarios);
+    $rowTotalUsuarios = $db->fetch_assoc($resTotalUsuarios);
+    $totalUsuarios = (int)($rowTotalUsuarios['total'] ?? 0);
+}
 $paginaActual = basename($_SERVER["PHP_SELF"] ?? "");
 $activoEmpleados = $paginaActual === "index.php";
-$activoGraficos = $paginaActual === "grafico.php" || $paginaActual === "grafico.php";
+$activoGraficos = $paginaActual === "grafico.php";
+$activoUsuarios = $paginaActual === "usuarios.php";
 
 ?>
 
@@ -52,6 +65,18 @@ $activoGraficos = $paginaActual === "grafico.php" || $paginaActual === "grafico.
             <i class="bi bi-bar-chart-fill"></i>
         </button>
     </div>
+
+    <?php if ($mostrarUsuarios): ?>
+    <div class="side-btn-wrap">
+        <button class="side-btn<?= $activoUsuarios ? ' active' : '' ?>" id="btnSideUsuarios" type="button" title="Agregar usuario y revisar permisos"
+            onclick="window.location.href='usuarios.php'">
+            <i class="bi bi-person-plus-fill"></i>
+        </button>
+        <div class="side-badge" id="badgeUsuarios" title="Total usuarios">
+            <?= $totalUsuarios ?>
+        </div>
+    </div>
+    <?php endif; ?>
     <!--SALIR -->
     <div class="side-btn-wrap">
 
@@ -72,6 +97,7 @@ function sideSetActive(key) {
     const map = {
         empleados: "btnSideEmpleados",
         reportes: "btnSideReportes",
+        usuarios: "btnSideUsuarios",
         horario: "btnSideHorario"
     };
     Object.values(map).forEach(id => {

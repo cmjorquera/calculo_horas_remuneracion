@@ -102,6 +102,8 @@ if ($id_empleado_post > 0) {
       AND id_colegio = $id_colegio
     LIMIT 1
   ";
+  // echo $sqlEmpExiste;
+  // die();
   $resEmpExiste = $db->consulta($sqlEmpExiste);
   $rowEmpExiste = $db->fetch_assoc($resEmpExiste);
   if (!$rowEmpExiste) {

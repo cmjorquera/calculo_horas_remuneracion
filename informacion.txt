@@ -1,157 +1,195 @@
-┌───────────────────────────────┐
-│            EMPLEADOS           │
-├───────────────────────────────┤
-│ PK  id_empleado                │
-│     codigo                     │
-│     run                        │
-│     id_colegio                 │
-│     nombres                    │
-│     apellido_paterno           │
-│     apellido_materno           │
-│     email                      │
-│     telefono                   │
-│     activo                     │
-│     foto                       │
-│     genero                     │
-│     created_at                 │
-│     updated_at                 │
-└───────────────────────────────┘
-              1
-              │
-              │
-              ▼
-┌───────────────────────────────┐
-│       CONTRATOS_EMPLEADO       │
-├───────────────────────────────┤
-│ PK  id_contrato                │
-│ FK  id_empleado  ──────────────┼──► EMPLEADOS.id_empleado
-│     fecha_inicio               │
-│     fecha_fin                  │
-│     horas_semanales_cron       │
-│     horas_lectivas             │
-│     horas_no_lectivas          │
-│     min_colacion_diaria        │
-│     observacion                │
-│     created_at                 │
-└───────────────────────────────┘
-              1
-              │
-              │
-              ▼
-┌───────────────────────────────┐
-│        HORARIOS_SEMANALES      │
-├───────────────────────────────┤
-│ PK  id_horario                 │
-│ FK  id_contrato  ──────────────┼──► CONTRATOS_EMPLEADO.id_contrato
-│ FK  id_empleado  ──────────────┼──► EMPLEADOS.id_empleado   (*) opcional
-│     dia                        │
-│     man_ini                    │
-│     man_fin                    │
-│     tar_ini                    │
-│     tar_fin                    │
-│     activo                     │
-│     created_at                 │
-└───────────────────────────────┘
+ESQUEMA BD: qaseduc_calculo_horario
+===================================
 
-Relaciones:
-- EMPLEADOS (1) ─── (N) CONTRATOS_EMPLEADO
-- CONTRATOS_EMPLEADO (1) ─── (N) HORARIOS_SEMANALES
-- (*) id_empleado en HORARIOS_SEMANALES es redundante si ya existe id_contrato
+Tablas del sistema
+------------------
+
+1. COLACION
+-----------
+- PK: id_colacion
+- UK: hora
+- UK: minutos
+- Columnas:
+  - id_colacion int(11) NOT NULL AUTO_INCREMENT
+  - hora time NOT NULL
+  - minutos int(11) NOT NULL
+  - activo tinyint(1) DEFAULT 1
+  - created_at timestamp NOT NULL DEFAULT current_timestamp()
+
+2. COLEGIO
+----------
+- PK: id_colegio
+- Columnas:
+  - id_colegio int(11) NOT NULL AUTO_INCREMENT
+  - nom_colegio varchar(60) NOT NULL
+  - rza_colegio varchar(50) NOT NULL
+  - nco_colegio varchar(150) NOT NULL
+  - dir_colegio varchar(50) NOT NULL
+  - rbd_colegio varchar(10) NOT NULL
+  - id_dependencia int(11) NOT NULL
+  - id_comuna int(11) NOT NULL
+  - tel_colegio varchar(10) NOT NULL
+  - web_colegio varchar(60) NOT NULL
+  - bd varchar(30) NOT NULL
+  - orden int(11) NOT NULL
+  - email_entrevista varchar(100) NOT NULL
+  - num_r_educacion int(11) NOT NULL
+  - ano_r_educacion int(11) NOT NULL
+  - ip varchar(15) NOT NULL
+  - email_comunicaciones varchar(100) NOT NULL
+  - sexo int(11) NOT NULL DEFAULT 0
+  - multi_cole varchar(2) NOT NULL DEFAULT 'no'
+  - identificador varchar(20) NOT NULL
+  - rut_colegio varchar(12) NOT NULL
+  - correo_contrato varchar(50) NOT NULL
+  - url_pagina varchar(255) DEFAULT NULL
+
+3. EMPLEADOS
+------------
+- PK: id_empleado
+- UK: codigo
+- UK: run
+- Columnas:
+  - id_empleado int(11) NOT NULL AUTO_INCREMENT
+  - codigo varchar(30) NOT NULL
+  - run varchar(12) NOT NULL
+  - id_colegio int(11) NOT NULL
+  - nombres varchar(80) NOT NULL
+  - apellido_paterno varchar(60) NOT NULL
+  - apellido_materno varchar(60) NOT NULL
+  - email varchar(120) DEFAULT NULL
+  - telefono varchar(30) DEFAULT NULL
+  - activo tinyint(1) NOT NULL DEFAULT 1
+  - created_at timestamp NOT NULL DEFAULT current_timestamp()
+  - updated_at timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+  - foto varchar(255) DEFAULT NULL
+  - genero int(11) NOT NULL
+
+4. CONTRATOS_EMPLEADO
+---------------------
+- PK: id_contrato
+- IDX: fk_contrato_empleado (id_empleado)
+- FK real:
+  - id_empleado -> empleados.id_empleado ON DELETE CASCADE
+- Columnas:
+  - id_contrato int(11) NOT NULL AUTO_INCREMENT
+  - id_empleado int(11) NOT NULL
+  - fecha_inicio date NOT NULL
+  - fecha_fin date DEFAULT NULL
+  - horas_semanales_cron int(11) NOT NULL
+  - horas_lectivas int(11) NOT NULL DEFAULT 0
+  - horas_no_lectivas int(11) NOT NULL DEFAULT 0
+  - min_colacion_diaria int(11) NOT NULL DEFAULT 0
+  - observacion varchar(255) DEFAULT NULL
+  - created_at timestamp NOT NULL DEFAULT current_timestamp()
+
+5. HORARIOS_SEMANALES
+---------------------
+- PK: id_horario
+- UK: uk_horario_unico (id_contrato, dia)
+- UK: uq_hs_empleado_dia (id_empleado, dia)
+- UK: uq_hs_contrato_dia (id_contrato, dia)
+- IDX: idx_hs_empleado (id_empleado)
+- IDX: idx_hs_contrato (id_contrato)
+- FK declaradas en el dump: ninguna
+- Columnas:
+  - id_horario int(11) NOT NULL AUTO_INCREMENT
+  - id_empleado int(11) NOT NULL
+  - id_contrato int(11) NOT NULL
+  - dia enum('LUN','MAR','MIE','JUE','VIE','SAB','DOM') NOT NULL
+  - man_ini time DEFAULT NULL
+  - man_fin time DEFAULT NULL
+  - tar_ini time DEFAULT NULL
+  - tar_fin time DEFAULT NULL
+  - activo tinyint(1) NOT NULL DEFAULT 1
+  - created_at timestamp NOT NULL DEFAULT current_timestamp()
+
+6. DIAS_SEMANA
+--------------
+- PK: id_dia
+- Columnas:
+  - id_dia int(11) NOT NULL AUTO_INCREMENT
+  - clave varchar(20) NOT NULL
+  - nombre varchar(50) NOT NULL
+  - prefijo varchar(10) NOT NULL
+  - orden int(11) NOT NULL
+  - activo tinyint(1) DEFAULT 1
+
+7. ROLES
+--------
+- PK: id_rol
+- UK: codigo
+- Columnas:
+  - id_rol int(11) NOT NULL AUTO_INCREMENT
+  - codigo varchar(40) NOT NULL
+  - nombre varchar(80) NOT NULL
+  - descripcion varchar(200) DEFAULT NULL
+
+8. USUARIOS
+-----------
+- PK: id_usuario
+- UK: uk_identificador (identificador)
+- UK: uk_email (email)
+- Columnas:
+  - id_usuario int(11) NOT NULL AUTO_INCREMENT
+  - identificador varchar(60) NOT NULL
+  - email varchar(150) NOT NULL
+  - clave_hash varchar(255) NOT NULL
+  - nombre varchar(80) NOT NULL
+  - apellido_paterno varchar(80) NOT NULL
+  - apellido_materno varchar(80) DEFAULT NULL
+  - run varchar(20) DEFAULT NULL
+  - telefono varchar(25) DEFAULT NULL
+  - id_colegio int(11) DEFAULT NULL
+  - token_reinicio varchar(255) DEFAULT NULL
+  - token_reinicio_expira datetime DEFAULT NULL
+  - estado tinyint(1) NOT NULL DEFAULT 1
+  - intentos int(11) NOT NULL DEFAULT 0
+  - ultimo_login datetime DEFAULT NULL
+  - created_at datetime NOT NULL DEFAULT current_timestamp()
+  - updated_at datetime DEFAULT NULL ON UPDATE current_timestamp()
+
+9. USUARIO_ROL_COLEGIO
+----------------------
+- PK: id
+- UK: uk_urc (id_usuario, id_rol, id_colegio)
+- IDX: fk_urc_rol (id_rol)
+- FK reales:
+  - id_rol -> roles.id_rol ON DELETE CASCADE
+  - id_usuario -> usuarios.id_usuario ON DELETE CASCADE
+- Columnas:
+  - id int(11) NOT NULL AUTO_INCREMENT
+  - id_usuario int(11) NOT NULL
+  - id_rol int(11) NOT NULL
+  - id_colegio int(11) DEFAULT NULL
+  - estado tinyint(1) NOT NULL DEFAULT 1
+  - created_at datetime NOT NULL DEFAULT current_timestamp()
 
 
-┌───────────────────────────────┐
-│            USUARIOS            │
-├───────────────────────────────┤
-│ PK  id_usuario                 │
-│ IDX identificador              │
-│ IDX email                      │
-│     clave_hash                 │
-│     nombre                     │
-│     apellido_paterno           │
-│     apellido_materno (NULL)    │
-│     run (NULL)                 │
-│     telefono (NULL)            │
-│ FK  id_colegio  ───────────────┼──► COLEGIO.id_colegio (NULL)
-│     token_reinicio (NULL)      │
-│     token_reinicio_expira (NULL) │
-│     estado (default: 1)        │
-│     intentos (default: 0)      │
-│     ultimo_login (NULL)        │
-│     created_at                 │
-│     updated_at (NULL)          │
-└───────────────────────────────┘
+Relaciones del modelo
+---------------------
 
-┌───────────────────────────────┐
-│            COLEGIO             │
-├───────────────────────────────┤
-│ PK  id_colegio                 │
-│     nom_colegio                │
-│     rza_colegio                │
-│     nco_colegio                │
-│     dir_colegio                │
-│     rbd_colegio                │
-│     id_dependencia             │
-│     id_comuna                  │
-│     tel_colegio                │
-│     web_colegio                │
-│     bd                         │
-│     orden                      │
-│     email_entrevista           │
-│     num_r_educacion            │
-│     ano_r_educacion            │
-│     ip                         │
-│     email_comunicaciones       │
-│     sexo                       │
-│     multi_cole                 │
-│     identificador              │
-│     rut_colegio                │
-│     correo_contrato            │
-│     url_pagina                 │
-└───────────────────────────────┘
+Relaciones fisicas declaradas como FOREIGN KEY:
+- EMPLEADOS (1) -> (N) CONTRATOS_EMPLEADO
+- USUARIOS (1) -> (N) USUARIO_ROL_COLEGIO
+- ROLES (1) -> (N) USUARIO_ROL_COLEGIO
 
-┌───────────────────────────────┐
-│             ROLES              │
-├───────────────────────────────┤
-│ PK  id_rol                     │
-│ IDX codigo                     │
-│     nombre                     │
-│     descripcion (NULL)         │
-└───────────────────────────────┘
+Relaciones logicas por columnas/indices, pero NO declaradas como FOREIGN KEY en el dump:
+- COLEGIO (1) -> (N) EMPLEADOS por empleados.id_colegio
+- COLEGIO (1) -> (N) USUARIOS por usuarios.id_colegio
+- COLEGIO (1) -> (N) USUARIO_ROL_COLEGIO por usuario_rol_colegio.id_colegio
+- CONTRATOS_EMPLEADO (1) -> (N/1) HORARIOS_SEMANALES por horarios_semanales.id_contrato
+- EMPLEADOS (1) -> (N/1) HORARIOS_SEMANALES por horarios_semanales.id_empleado
 
-┌───────────────────────────────┐
-│       USUARIO_ROL_COLEGIO      │
-├───────────────────────────────┤
-│ PK  id                         │
-│ FK  id_usuario  ───────────────┼──► USUARIOS.id_usuario
-│ FK  id_rol      ───────────────┼──► ROLES.id_rol
-│ FK  id_colegio  ───────────────┼──► COLEGIO.id_colegio
-│     estado                     │
-│     created_at                 │
-└───────────────────────────────┘
 
-┌───────────────────────────────┐
-│          DIAS_SEMANA           │
-├───────────────────────────────┤
-│ PK  id_dia                     │
-│     clave                      │
-│     nombre                     │
-│     prefijo                    │
-│     orden                      │
-│     activo                     │
-└───────────────────────────────┘
-
-┌───────────────────────────────┐
-│            COLACION            │
-├───────────────────────────────┤
-│ PK  id_colacion                │
-│     hora                       │
-│     minutos                    │
-│     activo                     │
-│     created_at                 │
-└───────────────────────────────┘
-
-Relaciones adicionales:
-- COLEGIO (1) ─── (N) USUARIOS
-- USUARIOS (1) ─── (N) USUARIO_ROL_COLEGIO
-- ROLES (1) ─── (N) USUARIO_ROL_COLEGIO
-- COLEGIO (1) ─── (N) USUARIO_ROL_COLEGIO
+Resumen rapido de uso
+---------------------
+- COLEGIO almacena la informacion de los establecimientos.
+- EMPLEADOS guarda los trabajadores del colegio.
+- CONTRATOS_EMPLEADO registra contratos y carga horaria del empleado.
+- HORARIOS_SEMANALES distribuye el horario por dia para cada contrato/empleado.
+- DIAS_SEMANA es una tabla catalogo de dias.
+- COLACION es una tabla catalogo de opciones de colacion.
+- USUARIOS guarda cuentas de acceso al sistema.
+- ROLES define perfiles de acceso.
+- USUARIO_ROL_COLEGIO relaciona usuario, rol y colegio.

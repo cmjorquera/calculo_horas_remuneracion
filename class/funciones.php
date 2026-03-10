@@ -214,4 +214,118 @@ $sql = "
         return $opciones;
     }
 
+    public function obtenerRoles()
+    {
+        $sql = "
+            SELECT id_rol, codigo, nombre, descripcion
+            FROM roles
+            ORDER BY id_rol ASC
+        ";
+
+        $res = $this->db->consulta($sql);
+        $roles = [];
+        while ($row = $this->db->fetch_assoc($res)) {
+            $roles[] = $row;
+        }
+
+        return $roles;
+    }
+
+    public function obtenerUsuarios($id_colegio, $verTodosColegios = false)
+    {
+        $id_colegio = (int)$id_colegio;
+        $whereColegio = $verTodosColegios ? "1=1" : "COALESCE(u.id_colegio, urc.id_colegio, 0) = {$id_colegio}";
+
+        $sql = "
+            SELECT
+                u.id_usuario,
+                u.identificador,
+                u.email,
+                u.nombre,
+                u.apellido_paterno,
+                u.apellido_materno,
+                u.run,
+                u.telefono,
+                u.id_colegio,
+                u.estado,
+                u.intentos,
+                u.ultimo_login,
+                u.created_at,
+                c.nco_colegio,
+                GROUP_CONCAT(DISTINCT r.nombre ORDER BY r.id_rol SEPARATOR ', ') AS roles_asignados
+            FROM usuarios u
+            LEFT JOIN colegio c
+                ON c.id_colegio = u.id_colegio
+            LEFT JOIN usuario_rol_colegio urc
+                ON urc.id_usuario = u.id_usuario
+               AND urc.estado = 1
+            LEFT JOIN roles r
+                ON r.id_rol = urc.id_rol
+            WHERE {$whereColegio}
+            GROUP BY
+                u.id_usuario,
+                u.identificador,
+                u.email,
+                u.nombre,
+                u.apellido_paterno,
+                u.apellido_materno,
+                u.run,
+                u.telefono,
+                u.id_colegio,
+                u.estado,
+                u.intentos,
+                u.ultimo_login,
+                u.created_at,
+                c.nco_colegio
+            ORDER BY u.nombre ASC, u.apellido_paterno ASC, u.apellido_materno ASC
+        ";
+
+        $res = $this->db->consulta($sql);
+        $usuarios = [];
+        while ($row = $this->db->fetch_assoc($res)) {
+            $usuarios[] = $row;
+        }
+
+        return $usuarios;
+    }
+
+    public function obtenerUsuarioRolColegio($id_colegio, $verTodosColegios = false)
+    {
+        $id_colegio = (int)$id_colegio;
+        $whereColegio = $verTodosColegios ? "1=1" : "COALESCE(urc.id_colegio, u.id_colegio, 0) = {$id_colegio}";
+
+        $sql = "
+            SELECT
+                urc.id,
+                urc.id_usuario,
+                urc.id_rol,
+                urc.id_colegio,
+                urc.estado,
+                urc.created_at,
+                u.identificador,
+                CONCAT_WS(' ', u.nombre, u.apellido_paterno, u.apellido_materno) AS usuario_nombre,
+                u.email,
+                r.codigo AS rol_codigo,
+                r.nombre AS rol_nombre,
+                c.nco_colegio
+            FROM usuario_rol_colegio urc
+            INNER JOIN usuarios u
+                ON u.id_usuario = urc.id_usuario
+            INNER JOIN roles r
+                ON r.id_rol = urc.id_rol
+            LEFT JOIN colegio c
+                ON c.id_colegio = urc.id_colegio
+            WHERE {$whereColegio}
+            ORDER BY urc.id DESC
+        ";
+
+        $res = $this->db->consulta($sql);
+        $asignaciones = [];
+        while ($row = $this->db->fetch_assoc($res)) {
+            $asignaciones[] = $row;
+        }
+
+        return $asignaciones;
+    }
+
 }
