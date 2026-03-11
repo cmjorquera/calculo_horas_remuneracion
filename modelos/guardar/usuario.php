@@ -13,6 +13,7 @@ if ((int)($_SESSION["id_rol"] ?? 0) !== 1) {
 }
 
 require_once __DIR__ . "/../../class/conexion.php";
+require_once __DIR__ . "/../../envio_correo.php";
 
 $db = new MySQL("qaseduc_calculo_horario", "qaseduc_ucomun", "jorquera86;");
 
@@ -27,9 +28,20 @@ function esc($db, $valor)
     return $db->escape_string(trim((string)$valor));
 }
 
+function generarClaveTemporal($largo = 12)
+{
+    $bytes = random_bytes((int)ceil($largo / 2));
+    return substr(bin2hex($bytes), 0, $largo);
+}
+
+function generarTokenIncorporacion($largo = 64)
+{
+    $bytes = random_bytes((int)ceil($largo / 2));
+    return substr(bin2hex($bytes), 0, $largo);
+}
+
 $identificador = trim((string)($_POST["identificador"] ?? ""));
 $email = trim((string)($_POST["email"] ?? ""));
-$clave = trim((string)($_POST["clave"] ?? ""));
 $nombre = trim((string)($_POST["nombre"] ?? ""));
 $apellidoPaterno = trim((string)($_POST["apellido_paterno"] ?? ""));
 $apellidoMaterno = trim((string)($_POST["apellido_materno"] ?? ""));
@@ -38,26 +50,29 @@ $telefono = trim((string)($_POST["telefono"] ?? ""));
 $idRol = (int)($_POST["id_rol"] ?? 0);
 $idColegio = (int)($_POST["id_colegio"] ?? 0);
 $estado = (int)($_POST["estado"] ?? 1);
+$colegioNombre = trim((string)($_POST["colegio_nombre"] ?? ""));
 
 if ($identificador === "") salirError("El identificador es obligatorio.");
 if ($email === "") salirError("El email es obligatorio.");
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) salirError("El email no es válido.");
-if ($clave === "") salirError("La contraseña es obligatoria.");
-if (mb_strlen($clave, 'UTF-8') < 4) salirError("La contraseña debe tener al menos 4 caracteres.");
 if ($nombre === "") salirError("El nombre es obligatorio.");
 if ($apellidoPaterno === "") salirError("El apellido paterno es obligatorio.");
 if ($idRol <= 0) salirError("Debes seleccionar un rol.");
 if ($idColegio <= 0) salirError("Debes seleccionar un colegio.");
 if (!in_array($estado, [0, 1, 2], true)) salirError("Estado inválido.");
 
+$claveTemporal = generarClaveTemporal(12);
+$tokenIncorporacion = generarTokenIncorporacion(64);
+
 $identificadorEsc = esc($db, $identificador);
 $emailEsc = esc($db, $email);
-$claveEsc = esc($db, $clave);
+$claveEsc = esc($db, $claveTemporal);
 $nombreEsc = esc($db, $nombre);
 $apellidoPaternoEsc = esc($db, $apellidoPaterno);
 $apellidoMaternoEsc = esc($db, $apellidoMaterno);
 $runEsc = esc($db, $run);
 $telefonoEsc = esc($db, $telefono);
+$tokenIncorporacionEsc = esc($db, $tokenIncorporacion);
 
 $resRol = $db->consulta("
     SELECT id_rol
@@ -103,6 +118,8 @@ $sqlUsuario = "
         run,
         telefono,
         id_colegio,
+        token_reinicio,
+        token_reinicio_expira,
         estado,
         intentos,
         created_at,
@@ -117,6 +134,8 @@ $sqlUsuario = "
         " . ($runEsc === "" ? "NULL" : "'{$runEsc}'") . ",
         " . ($telefonoEsc === "" ? "NULL" : "'{$telefonoEsc}'") . ",
         {$idColegio},
+        '{$tokenIncorporacionEsc}',
+        DATE_ADD(NOW(), INTERVAL 3 DAY),
         {$estado},
         0,
         NOW(),
@@ -160,8 +179,18 @@ if ($errorInsertRol !== 0) {
 
 $db->consulta("COMMIT");
 
+$correoBienvenida = enviarCorreoBienvenidaUsuario([
+    'token' => $tokenIncorporacion,
+    'email' => $email,
+    'nombre' => trim($nombre . ' ' . $apellidoPaterno . ' ' . $apellidoMaterno),
+    'identificador' => $identificador,
+    'colegio' => $colegioNombre !== '' ? $colegioNombre : 'Seduc'
+]);
+
 echo json_encode([
     "ok" => true,
     "msg" => "Usuario creado correctamente.",
     "id_usuario" => $idUsuario,
+    "mail_ok" => (bool)($correoBienvenida['ok'] ?? false),
+    "mail_msg" => (string)($correoBienvenida['msg'] ?? ''),
 ], JSON_UNESCAPED_UNICODE);

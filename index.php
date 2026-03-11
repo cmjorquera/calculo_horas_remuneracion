@@ -221,8 +221,8 @@ $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosCol
                             <div class="name">Colación</div>
                             <!-- <div class="hint">Descuento diario</div> -->
                         </div>
-                        <div class="box"><small>Minutos</small><span id="sumColacionMin">0</span></div>
-                        <div class="box">
+                        <!-- <div class="box"><small>Minutos</small><span id="sumColacionMin">0</span></div> -->
+                        <div class="box" style="width:200%;">
                             <small>Minutos</small>
                             <select id="sumColacionSelect" class="sum-input" aria-label="Colación diaria en minutos">
                                 <option value="" selected disabled>Selecciona...</option>
@@ -257,7 +257,7 @@ $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosCol
     <div class="panel-head-top">
       <div class="panel-title">
         <span class="dot"></span>
-        Funcioanrios
+        Funcionarios
       </div>
 
       <div class="panel-head-right">

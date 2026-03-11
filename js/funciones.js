@@ -26,8 +26,6 @@
     if (!tbody || dayPrefixes.length === 0) return;
 
     tbody.addEventListener("change", function (ev) {
-      if (!isEnabled()) return;
-
       const sel = ev.target.closest("select");
       if (!sel || !sel.name) return;
 
@@ -226,6 +224,9 @@
     const elJorCro = document.getElementById("sumJornadaCro");
 
     if (elJorCro) elJorCro.textContent = minutesToHHMM(jornadaTotalMin);
+    if (typeof global.recalcularNoLectivas === "function") {
+      global.recalcularNoLectivas();
+    }
     updateJornadaLegalUI(jornadaTotalMin);
   }
 

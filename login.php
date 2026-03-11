@@ -64,6 +64,10 @@
             // ✅ Mensaje mejorado (lo que pediste)
             alerta("Bloqueo de seguridad: se registraron 3 intentos fallidos de ingreso. Tu cuenta fue bloqueada temporalmente para proteger tu información. Comunícate con el equipo de Informática para recuperar el acceso.");
           }
+
+          if ($msg === "clave_creada") {
+            alerta("Tu clave fue creada correctamente. Ya puedes iniciar sesión con tu identificador o correo.", "success");
+          }
 ?>
 
       <form method="post" action="validaciones.php" autocomplete="off">

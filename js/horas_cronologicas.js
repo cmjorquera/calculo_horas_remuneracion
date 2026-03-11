@@ -98,6 +98,12 @@
     return formatHHMM(minCrono);
   }
 
+  function getJornadaCronoMinutes() {
+    const jornadaCroEl = document.getElementById("sumJornadaCro");
+    if (!jornadaCroEl) return 0;
+    return parseHHMM(jornadaCroEl.textContent || jornadaCroEl.value || "00:00");
+  }
+
   function buzzInvalidInput(inputEl, shouldBuzz) {
     if (!inputEl) return;
 
@@ -210,6 +216,7 @@
 
     const pedHours = enforcePedLimit(pedEl, noLectivasPedEl);
     croEl.value = pedHoursToCronoHHMM(pedHours);
+    recalcularNoLectivas();
     updateHorasLectivasUI();
   }
 
@@ -217,10 +224,14 @@
     const pedEl = document.getElementById("sumNoLectivasPed");
     const noLectivasCroEl = document.getElementById("sumNoLectivasCro");
     const lectivasPedEl = document.getElementById("sumLectivasPed");
+    const lectivasCroEl = document.getElementById("sumLectivasCro");
     if (!pedEl || !noLectivasCroEl) return;
 
-    const pedHours = enforcePedLimit(pedEl, lectivasPedEl);
-    noLectivasCroEl.value = pedHoursToCronoHHMM(pedHours);
+    enforcePedLimit(pedEl, lectivasPedEl);
+    const jornadaCronoMin = getJornadaCronoMinutes();
+    const lectivasCronoMin = parseHHMM(lectivasCroEl ? lectivasCroEl.value : "00:00");
+    const noLectivasCronoMin = Math.max(0, jornadaCronoMin - lectivasCronoMin);
+    noLectivasCroEl.value = formatHHMM(noLectivasCronoMin);
     updateHorasLectivasUI();
   }
 

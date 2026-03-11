@@ -249,6 +249,12 @@
     padding-top: 8px;
 }
 
+.user-create-topbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
 .user-create-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -264,6 +270,25 @@
     color: #0f172a;
     font-size: 12px;
     font-weight: 800;
+}
+
+.user-field-note {
+    display: block;
+    font-size: 12px;
+    line-height: 1.35;
+    color: #64748b;
+}
+
+.user-field-note.is-hidden {
+    display: none;
+}
+
+.user-field-note.is-error {
+    color: #b42318;
+}
+
+.user-field-note.is-ok {
+    color: #027a48;
 }
 
 .user-field input,
@@ -285,7 +310,61 @@
     box-shadow: 0 0 0 3px rgba(0, 78, 140, 0.12);
 }
 
+.user-field input.is-invalid {
+    border-color: rgba(180, 35, 24, 0.55);
+    box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.12);
+}
+
+.colegio-logo-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 220px;
+    max-width: 100%;
+    padding: 10px 12px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.98) 0%, rgba(241, 245, 249, 0.98) 100%);
+    border: 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.colegio-logo-chip.is-hidden {
+    visibility: hidden;
+}
+
+.colegio-logo-chip-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    object-fit: contain;
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    padding: 5px;
+    flex: 0 0 auto;
+}
+
+.colegio-logo-chip-copy {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.colegio-logo-chip-copy strong {
+    color: #0f172a;
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+.colegio-logo-chip-copy span {
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.3;
+}
+
 @media (max-width: 760px) {
+    .user-create-topbar {
+        justify-content: center;
+    }
+
     .user-create-grid {
         grid-template-columns: 1fr;
     }

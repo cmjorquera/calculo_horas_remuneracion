@@ -100,3 +100,47 @@
 .swal-seduc .swal2-styled:focus {
   box-shadow: none !important;
 }
+
+.colegio-logo-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(241, 245, 249, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.colegio-logo-preview.is-hidden {
+  display: none;
+}
+
+.colegio-logo-preview-img {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  object-fit: contain;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  padding: 6px;
+  flex: 0 0 auto;
+}
+
+.colegio-logo-preview-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.colegio-logo-preview-copy strong {
+  color: #0f172a;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.colegio-logo-preview-copy span {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.3;
+}

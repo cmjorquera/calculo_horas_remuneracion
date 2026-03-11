@@ -36,6 +36,30 @@ $verTodosColegios = true;
 $usuarios = $funciones->obtenerUsuarios($_SESSION["id_colegio"], $verTodosColegios);
 $roles = $funciones->obtenerRoles();
 $colegios = $funciones->obtenerColegios();
+$colegiosLogoMap = [];
+
+foreach ($colegios as $colegio) {
+    $idColegioLogo = (int)($colegio["id_colegio"] ?? 0);
+    if ($idColegioLogo <= 0) {
+        continue;
+    }
+
+    $logoCandidates = [$idColegioLogo];
+    if ($idColegioLogo === 14 || $idColegioLogo === 15) {
+        $logoCandidates = [15, 14];
+    }
+
+    foreach ($logoCandidates as $logoId) {
+        foreach (["png", "jpg", "jpeg"] as $extLogo) {
+            $logoRelTmp = "imagenes/colegios/colegio_" . $logoId . "." . $extLogo;
+            $logoAbsTmp = __DIR__ . "/" . $logoRelTmp;
+            if (is_file($logoAbsTmp)) {
+                $colegiosLogoMap[(string)$idColegioLogo] = $logoRelTmp;
+                break 2;
+            }
+        }
+    }
+}
 
 function estadoUsuarioTexto($estado)
 {
@@ -146,6 +170,7 @@ function estadoClase($estado)
 <script>
 const ROLES_USUARIO = <?= json_encode($roles, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 const COLEGIOS_USUARIO = <?= json_encode($colegios, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+const COLEGIOS_LOGO_USUARIO = <?= json_encode($colegiosLogoMap, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 const SWAL_SEDUC_CONFIG = {
     buttonsStyling: false,
     reverseButtons: true,
@@ -178,6 +203,15 @@ function updateHeaderDateTime() {
 function mostrarCrearUsuario() {
     const html = `
         <form class="user-create-form" id="userCreateForm">
+            <div class="user-create-topbar">
+                <div id="nuevoColegioLogoWrap" class="colegio-logo-chip is-hidden" aria-live="polite">
+                    <img id="nuevoColegioLogoImg" class="colegio-logo-chip-img" src="" alt="">
+                    <div class="colegio-logo-chip-copy">
+                        <strong id="nuevoColegioLogoNombre">Colegio</strong>
+                        <span id="nuevoColegioLogoMeta">ID colegio</span>
+                    </div>
+                </div>
+            </div>
             <div class="user-create-grid">
                 <label class="user-field">
                     <span>Identificador</span>
@@ -186,10 +220,7 @@ function mostrarCrearUsuario() {
                 <label class="user-field">
                     <span>Email</span>
                     <input id="nuevoEmail" type="email" maxlength="150" placeholder="correo@colegio.cl">
-                </label>
-                <label class="user-field">
-                    <span>Contraseña</span>
-                    <input id="nuevaClave" type="text" maxlength="255" placeholder="Mínimo 4 caracteres">
+                    <small id="nuevoEmailEstado" class="user-field-note is-hidden"></small>
                 </label>
                 <label class="user-field">
                     <span>Rol</span>
@@ -249,11 +280,115 @@ function mostrarCrearUsuario() {
         confirmButtonText: "Crear usuario",
         cancelButtonText: "Cancelar",
         focusConfirm: false,
+        didOpen: () => {
+            const colegioSelect = document.getElementById("nuevoColegio");
+            const logoWrap = document.getElementById("nuevoColegioLogoWrap");
+            const logoImg = document.getElementById("nuevoColegioLogoImg");
+            const logoNombre = document.getElementById("nuevoColegioLogoNombre");
+            const logoMeta = document.getElementById("nuevoColegioLogoMeta");
+            const emailInput = document.getElementById("nuevoEmail");
+            const emailEstado = document.getElementById("nuevoEmailEstado");
+
+            const syncColegioLogo = () => {
+                if (!colegioSelect || !logoWrap || !logoImg || !logoNombre || !logoMeta) {
+                    return;
+                }
+
+                const idColegio = String(colegioSelect.value || "");
+                const selectedOption = colegioSelect.options[colegioSelect.selectedIndex];
+                const nombreColegio = selectedOption ? selectedOption.textContent.trim() : "Colegio";
+                const logoPath = COLEGIOS_LOGO_USUARIO[idColegio] || "";
+
+                if (!idColegio || !logoPath) {
+                    logoWrap.classList.add("is-hidden");
+                    logoImg.removeAttribute("src");
+                    logoImg.alt = "";
+                    return;
+                }
+
+                logoImg.src = logoPath;
+                logoImg.alt = `Logo de ${nombreColegio}`;
+                logoNombre.textContent = nombreColegio;
+                logoMeta.textContent = `ID colegio: ${idColegio}`;
+                logoWrap.classList.remove("is-hidden");
+            };
+
+            let lastEmailChecked = "";
+            let lastEmailResult = null;
+
+            const setEmailEstado = (type, text) => {
+                if (!emailEstado || !emailInput) return;
+
+                emailEstado.textContent = text || "";
+                emailEstado.classList.remove("is-hidden", "is-error", "is-ok");
+                emailInput.classList.remove("is-invalid");
+
+                if (!text) {
+                    emailEstado.classList.add("is-hidden");
+                    return;
+                }
+
+                if (type === "error") {
+                    emailEstado.classList.add("is-error");
+                    emailInput.classList.add("is-invalid");
+                    return;
+                }
+
+                if (type === "ok") {
+                    emailEstado.classList.add("is-ok");
+                    return;
+                }
+            };
+
+            const validarEmailExistente = async () => {
+                if (!emailInput) return null;
+
+                const email = emailInput.value.trim();
+                const emailNormalizado = email.toLowerCase();
+
+                if (!email) {
+                    lastEmailChecked = "";
+                    lastEmailResult = null;
+                    setEmailEstado("", "");
+                    return null;
+                }
+
+                if (emailNormalizado === lastEmailChecked) {
+                    return lastEmailResult;
+                }
+
+                const respuesta = await fetch(`modelos/rescatar/usuario_existente.php?email=${encodeURIComponent(email)}`);
+                const data = await respuesta.json();
+                lastEmailChecked = emailNormalizado;
+                lastEmailResult = data;
+
+                if (!data.ok) {
+                    setEmailEstado("", "");
+                    return data;
+                }
+
+                if (data.exists) {
+                    setEmailEstado("error", `Usuario ya existe: ${data.nombre_completo || "Usuario registrado"}.`);
+                    return data;
+                }
+
+                setEmailEstado("ok", "Correo disponible.");
+                return data;
+            };
+
+            colegioSelect?.addEventListener("change", syncColegioLogo);
+            emailInput?.addEventListener("blur", validarEmailExistente);
+            emailInput?.addEventListener("input", () => {
+                lastEmailChecked = "";
+                lastEmailResult = null;
+                setEmailEstado("", "");
+            });
+            syncColegioLogo();
+        },
         preConfirm: async () => {
             const payload = {
                 identificador: document.getElementById("nuevoIdentificador").value.trim(),
                 email: document.getElementById("nuevoEmail").value.trim(),
-                clave: document.getElementById("nuevaClave").value.trim(),
                 nombre: document.getElementById("nuevoNombre").value.trim(),
                 apellido_paterno: document.getElementById("nuevoApellidoPaterno").value.trim(),
                 apellido_materno: document.getElementById("nuevoApellidoMaterno").value.trim(),
@@ -261,11 +396,19 @@ function mostrarCrearUsuario() {
                 id_colegio: document.getElementById("nuevoColegio").value,
                 run: document.getElementById("nuevoRun").value.trim(),
                 telefono: document.getElementById("nuevoTelefono").value.trim(),
-                estado: document.getElementById("nuevoEstado").value
+                estado: document.getElementById("nuevoEstado").value,
+                colegio_nombre: document.getElementById("nuevoColegio").options[document.getElementById("nuevoColegio").selectedIndex]?.text?.trim() || ""
             };
 
-            if (!payload.identificador || !payload.email || !payload.clave || !payload.nombre || !payload.apellido_paterno || !payload.id_rol || !payload.id_colegio) {
+            if (!payload.identificador || !payload.email || !payload.nombre || !payload.apellido_paterno || !payload.id_rol || !payload.id_colegio) {
                 Swal.showValidationMessage("Completa los campos obligatorios del formulario.");
+                return false;
+            }
+
+            const verificacionEmail = await fetch(`modelos/rescatar/usuario_existente.php?email=${encodeURIComponent(payload.email)}`);
+            const dataEmail = await verificacionEmail.json();
+            if (dataEmail.ok && dataEmail.exists) {
+                Swal.showValidationMessage(`Usuario ya existe: ${dataEmail.nombre_completo || "Usuario registrado"}.`);
                 return false;
             }
 
@@ -286,7 +429,12 @@ function mostrarCrearUsuario() {
         }
     }).then((resultado) => {
         if (resultado.isConfirmed) {
-            Swal.fire("Usuario creado", "La cuenta fue registrada correctamente.", "success")
+            const data = resultado.value || {};
+            const texto = data.mail_ok
+                ? "La cuenta fue creada y se envio un correo de bienvenida con el enlace para definir la clave."
+                : `La cuenta fue creada, pero el correo no se pudo enviar. ${data.mail_msg || "Revisa la configuracion SMTP."}`;
+
+            Swal.fire("Usuario creado", texto, data.mail_ok ? "success" : "warning")
                 .then(() => window.location.reload());
         }
     });
