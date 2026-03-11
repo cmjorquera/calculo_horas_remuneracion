@@ -434,7 +434,13 @@ function mostrarCrearUsuario() {
                 ? "La cuenta fue creada y se envio un correo de bienvenida con el enlace para definir la clave."
                 : `La cuenta fue creada, pero el correo no se pudo enviar. ${data.mail_msg || "Revisa la configuracion SMTP."}`;
 
-            Swal.fire("Usuario creado", texto, data.mail_ok ? "success" : "warning")
+            Swal.fire({
+                ...SWAL_SEDUC_CONFIG,
+                title: "Usuario creado",
+                text: texto,
+                icon: data.mail_ok ? "success" : "warning",
+                confirmButtonText: "Aceptar"
+            })
                 .then(() => window.location.reload());
         }
     });
