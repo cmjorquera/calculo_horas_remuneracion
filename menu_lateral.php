@@ -18,7 +18,7 @@ WHERE $whereColegio
 $resTotal = $db->consulta($sqlTotal);
 $rowTotal = $db->fetch_assoc($resTotal);
 $totalEmpleados = $rowTotal['total'];
-$mostrarUsuarios = !empty($_SESSION["is_super_admin"]) || (int)($_SESSION["id_rol"] ?? 0) === 1;
+$mostrarUsuarios = (int)($_SESSION["id_rol"] ?? 0) === 1;
 $totalUsuarios = 0;
 if ($mostrarUsuarios) {
     $sqlTotalUsuarios = "

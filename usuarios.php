@@ -7,7 +7,7 @@ if (!isset($_SESSION["id_usuario"])) {
 }
 
 $esSuperAdmin = !empty($_SESSION["is_super_admin"]);
-$esAdminSistema = $esSuperAdmin || (int)($_SESSION["id_rol"] ?? 0) === 1;
+$esAdminSistema = (int)($_SESSION["id_rol"] ?? 0) === 1;
 
 if (!$esAdminSistema) {
     header("Location: index.php");
@@ -19,11 +19,9 @@ require_once __DIR__ . "/class/funciones.php";
 
 $db = new MySQL("qaseduc_calculo_horario", "qaseduc_ucomun", "jorquera86;");
 $funciones = new Funciones($db);
-$verTodosColegios = $esSuperAdmin;
+$verTodosColegios = true;
 
 $usuarios = $funciones->obtenerUsuarios($_SESSION["id_colegio"], $verTodosColegios);
-$asignaciones = $funciones->obtenerUsuarioRolColegio($_SESSION["id_colegio"], $verTodosColegios);
-$roles = $funciones->obtenerRoles();
 
 function estadoUsuarioTexto($estado)
 {
@@ -68,43 +66,8 @@ function estadoClase($estado)
             gap: 12px;
         }
 
-        .usuarios-kpis {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 12px;
-        }
-
-        .usuario-kpi {
-            padding: 18px;
-            border: 1px solid var(--line);
-            border-radius: var(--radius);
-            background: linear-gradient(180deg, #ffffff, #f8fafc);
-            box-shadow: var(--shadow);
-        }
-
-        .usuario-kpi .label {
-            display: block;
-            font-size: 12px;
-            color: var(--muted);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: .08em;
-        }
-
-        .usuario-kpi .value {
-            font-size: 28px;
-            font-weight: 900;
-            color: var(--inst-blue);
-        }
-
-        .usuarios-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-        }
-
         .admin-note {
-            margin-top: 12px;
+            margin: 12px 12px 14px;
             border: 1px solid rgba(0, 78, 140, .18);
             background: rgba(0, 78, 140, .06);
             color: #0f2744;
@@ -143,6 +106,32 @@ function estadoClase($estado)
 
         .table-admin tbody tr:hover {
             background: rgba(0, 78, 140, .03);
+        }
+
+        .users-head-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary-admin {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 0;
+            border-radius: 12px;
+            padding: 10px 14px;
+            background: linear-gradient(135deg, var(--inst-blue), #0a5f92);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 10px 24px rgba(0, 78, 140, .18);
+        }
+
+        .btn-primary-admin:hover {
+            filter: brightness(1.03);
         }
 
         .badge-state {
@@ -189,12 +178,6 @@ function estadoClase($estado)
             color: var(--muted);
             font-size: 13px;
         }
-
-        @media (max-width: 980px) {
-            .usuarios-kpis {
-                grid-template-columns: 1fr;
-            }
-        }
     </style>
 </head>
 <body>
@@ -223,32 +206,23 @@ function estadoClase($estado)
             </div>
             <div class="chip">
                 <span class="label">Acceso</span>
-                <span class="value"><?= $esSuperAdmin ? "Super Admin" : "Administrador" ?></span>
+                <span class="value">Solo id_rol 1</span>
             </div>
         </div>
     </header>
 
     <main class="usuarios-main">
-        <section class="usuarios-kpis">
-            <article class="usuario-kpi">
-                <span class="label">Usuarios</span>
-                <span class="value"><?= count($usuarios) ?></span>
-            </article>
-            <article class="usuario-kpi">
-                <span class="label">Asignaciones usuario/rol</span>
-                <span class="value"><?= count($asignaciones) ?></span>
-            </article>
-            <article class="usuario-kpi">
-                <span class="label">Roles</span>
-                <span class="value"><?= count($roles) ?></span>
-            </article>
-        </section>
-
         <section class="card">
             <div class="card-head">
                 <div>
                     <h2>Tabla usuarios</h2>
-                    <small>Cuentas del sistema con su colegio y roles activos.</small>
+                    <small>Solo el rol 1 debe administrar usuarios y decidir qué menú puede ver cada cuenta.</small>
+                </div>
+                <div class="users-head-actions">
+                    <button type="button" class="btn-primary-admin" onclick="mostrarCrearUsuario()">
+                        <i class="bi bi-person-plus-fill"></i>
+                        Agregar usuario
+                    </button>
                 </div>
             </div>
             <div class="table-wrap-users">
@@ -287,89 +261,20 @@ function estadoClase($estado)
                 </table>
                 <?php endif; ?>
             </div>
-        </section>
-
-        <section class="card">
-            <div class="card-head">
-                <div>
-                    <h2>Tabla usuario_rol_colegio</h2>
-                    <small>Asignaciones activas e históricas entre usuario, rol y colegio.</small>
-                </div>
-            </div>
-            <div class="table-wrap-users">
-                <?php if (!$asignaciones): ?>
-                    <div class="empty-table">No hay asignaciones registradas.</div>
-                <?php else: ?>
-                <table class="table-admin">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Usuario</th>
-                            <th>Identificador</th>
-                            <th>Email</th>
-                            <th>Rol</th>
-                            <th>Colegio</th>
-                            <th>Estado</th>
-                            <th>Creado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($asignaciones as $asignacion): ?>
-                        <tr>
-                            <td><?= (int)$asignacion["id"] ?></td>
-                            <td><?= htmlspecialchars($asignacion["usuario_nombre"] ?: "Sin nombre") ?></td>
-                            <td><?= htmlspecialchars($asignacion["identificador"] ?? "") ?></td>
-                            <td><?= htmlspecialchars($asignacion["email"] ?? "") ?></td>
-                            <td><?= htmlspecialchars(($asignacion["rol_nombre"] ?? "") . " (" . ($asignacion["rol_codigo"] ?? "") . ")") ?></td>
-                            <td><?= htmlspecialchars($asignacion["nco_colegio"] ?? "Sin colegio") ?></td>
-                            <td><span class="badge-state <?= estadoClase($asignacion["estado"] ?? 0) ?>"><?= (int)($asignacion["estado"] ?? 0) === 1 ? "Activo" : "Inactivo" ?></span></td>
-                            <td><?= htmlspecialchars($asignacion["created_at"] ?? "") ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
-                <?php endif; ?>
-            </div>
-        </section>
-
-        <section class="card">
-            <div class="card-head">
-                <div>
-                    <h2>Tabla roles</h2>
-                    <small>Catálogo actual de perfiles disponibles.</small>
-                </div>
-            </div>
-            <div class="table-wrap-users">
-                <?php if (!$roles): ?>
-                    <div class="empty-table">No hay roles definidos.</div>
-                <?php else: ?>
-                <table class="table-admin">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Código</th>
-                            <th>Nombre</th>
-                            <th>Descripción</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($roles as $rol): ?>
-                        <tr>
-                            <td><?= (int)$rol["id_rol"] ?></td>
-                            <td><span class="role-pill"><?= htmlspecialchars($rol["codigo"] ?? "") ?></span></td>
-                            <td><?= htmlspecialchars($rol["nombre"] ?? "") ?></td>
-                            <td><?= htmlspecialchars($rol["descripcion"] ?? "") ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
-                <?php endif; ?>
-            </div>
             <div class="admin-note">
-                Recomendación: usa esta pantalla como base de administración y después separa creación/edición en un formulario con validaciones, hash de contraseña y asignación explícita de rol por colegio.
+                Siguiente paso recomendado: crear una tabla de permisos por menú, por ejemplo `usuario_menu`, para que el super usuario decida si cada cuenta puede ver Empleados, Gráficos o Usuarios.
             </div>
         </section>
     </main>
 </div>
+<script>
+function mostrarCrearUsuario() {
+    Swal.fire({
+        icon: 'info',
+        title: 'Agregar usuario',
+        text: 'El botón ya quedó visible. El siguiente paso es conectar este botón a un formulario para crear usuario y asignarle los menús permitidos.'
+    });
+}
+</script>
 </body>
 </html>
