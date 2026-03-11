@@ -55,130 +55,11 @@ function estadoClase($estado)
     <title>Usuarios | Calculadora de Horas</title>
     <link rel="stylesheet" type="text/css" href="css/principal.css?v=<?= filemtime(__DIR__ . '/css/principal.css') ?>">
     <link rel="stylesheet" type="text/css" href="css/menu_lateral.css">
+    <link rel="stylesheet" type="text/css" href="css/usuarios.css?v=<?= filemtime(__DIR__ . '/css/usuarios.css') ?>">
     <link rel="icon" type="image/png" href="imagenes/logo_1.jpg" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/button.js"></script>
-    <style>
-        .usuarios-main {
-            margin-top: var(--gap);
-            display: grid;
-            gap: 12px;
-        }
-
-        .admin-note {
-            margin: 12px 12px 14px;
-            border: 1px solid rgba(0, 78, 140, .18);
-            background: rgba(0, 78, 140, .06);
-            color: #0f2744;
-            border-radius: 12px;
-            padding: 12px 14px;
-            font-size: 13px;
-            line-height: 1.45;
-        }
-
-        .table-wrap-users {
-            overflow-x: auto;
-        }
-
-        .table-admin {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 840px;
-        }
-
-        .table-admin th,
-        .table-admin td {
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--line);
-            text-align: left;
-            vertical-align: top;
-            font-size: 13px;
-        }
-
-        .table-admin th {
-            background: #f8fafc;
-            color: #0f172a;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: .04em;
-        }
-
-        .table-admin tbody tr:hover {
-            background: rgba(0, 78, 140, .03);
-        }
-
-        .users-head-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .btn-primary-admin {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            border: 0;
-            border-radius: 12px;
-            padding: 10px 14px;
-            background: linear-gradient(135deg, var(--inst-blue), #0a5f92);
-            color: #fff;
-            font-size: 13px;
-            font-weight: 800;
-            cursor: pointer;
-            box-shadow: 0 10px 24px rgba(0, 78, 140, .18);
-        }
-
-        .btn-primary-admin:hover {
-            filter: brightness(1.03);
-        }
-
-        .badge-state {
-            display: inline-flex;
-            align-items: center;
-            padding: 5px 10px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 800;
-            border: 1px solid transparent;
-            white-space: nowrap;
-        }
-
-        .badge-state.is-ok {
-            background: rgba(34, 197, 94, .12);
-            color: #166534;
-            border-color: rgba(34, 197, 94, .22);
-        }
-
-        .badge-state.is-warning {
-            background: rgba(245, 158, 11, .12);
-            color: #92400e;
-            border-color: rgba(245, 158, 11, .22);
-        }
-
-        .badge-state.is-muted {
-            background: rgba(100, 116, 139, .12);
-            color: #475569;
-            border-color: rgba(100, 116, 139, .22);
-        }
-
-        .role-pill {
-            display: inline-flex;
-            padding: 4px 8px;
-            border-radius: 999px;
-            background: rgba(0, 111, 173, .1);
-            color: #075985;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .empty-table {
-            padding: 18px;
-            color: var(--muted);
-            font-size: 13px;
-        }
-    </style>
 </head>
 <body>
 <div class="page">
@@ -190,7 +71,7 @@ function estadoClase($estado)
                 <img src="imagenes/logo_2.jpg" alt="Logo" onerror="this.style.display='none'">
             </div>
             <div class="titles">
-                <h1>Agregar usuario</h1>
+                <h1>Administrar usuarios</h1>
                 <div class="user-info">
                     <i class="bi bi-person-circle"></i>
                     <span><?= htmlspecialchars($_SESSION["nombre_completo"]) ?></span>

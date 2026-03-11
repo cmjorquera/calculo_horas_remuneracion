@@ -82,6 +82,8 @@
 
   /* Evita que el menú flotante tape el contenido principal */
   @media (min-width: 1001px){
+    .page > .header,
+    .page > .usuarios-main,
     .page > .content,
     .page > .empleados-panel{
       margin-left: 86px;
