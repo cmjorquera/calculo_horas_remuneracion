@@ -4,6 +4,7 @@ require_once __DIR__ . "/helpers.php";
 class Funciones
 {
     private $db;
+    private $menuSchemaReady = false;
 
     public function __construct(MySQL $db)
     {
@@ -325,6 +326,178 @@ $sql = "
         }
 
         return $asignaciones;
+    }
+
+    private function asegurarEsquemaMenus()
+    {
+        if ($this->menuSchemaReady) {
+            return;
+        }
+
+        $this->db->consulta("
+            CREATE TABLE IF NOT EXISTS menu_v (
+                id_menu INT AUTO_INCREMENT PRIMARY KEY,
+                codigo VARCHAR(50) NOT NULL,
+                nombre VARCHAR(100) NOT NULL,
+                url VARCHAR(255) NOT NULL,
+                icono VARCHAR(100) DEFAULT NULL,
+                descripcion VARCHAR(255) DEFAULT NULL,
+                orden INT NOT NULL DEFAULT 0,
+                visible TINYINT(1) NOT NULL DEFAULT 1,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY uk_menu_v_codigo (codigo)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+
+        $this->db->consulta("
+            CREATE TABLE IF NOT EXISTS usuario_menu_v (
+                id_usuario_menu INT AUTO_INCREMENT PRIMARY KEY,
+                id_usuario INT NOT NULL,
+                id_menu INT NOT NULL,
+                permitido TINYINT(1) NOT NULL DEFAULT 1,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY uk_usuario_menu_v (id_usuario, id_menu),
+                KEY idx_usuario_menu_v_usuario (id_usuario),
+                KEY idx_usuario_menu_v_menu (id_menu),
+                KEY idx_usuario_menu_v_permitido (permitido)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+
+        $this->db->consulta("
+            INSERT INTO menu_v (codigo, nombre, url, icono, descripcion, orden, visible)
+            VALUES
+                ('empleados', 'Empleados', 'index.php', 'bi-people-fill', 'Modulo principal de empleados', 10, 1),
+                ('graficos', 'Graficos', 'grafico.php', 'bi-bar-chart-fill', 'Graficos y reportes', 20, 1),
+                ('usuarios', 'Usuarios', 'usuarios.php', 'bi-person-plus-fill', 'Administracion de usuarios', 30, 1)
+            ON DUPLICATE KEY UPDATE
+                nombre = VALUES(nombre),
+                url = VALUES(url),
+                icono = VALUES(icono),
+                descripcion = VALUES(descripcion),
+                orden = VALUES(orden),
+                visible = VALUES(visible)
+        ");
+
+        $this->db->consulta("
+            INSERT INTO usuario_menu_v (id_usuario, id_menu, permitido)
+            SELECT u.id_usuario, m.id_menu,
+                CASE
+                    WHEN m.codigo = 'usuarios' THEN
+                        CASE
+                            WHEN EXISTS (
+                                SELECT 1
+                                FROM usuario_rol_colegio urc
+                                WHERE urc.id_usuario = u.id_usuario
+                                  AND urc.id_rol = 1
+                                  AND urc.estado = 1
+                            ) THEN 1
+                            ELSE 0
+                        END
+                    ELSE 1
+                END AS permitido
+            FROM usuarios u
+            INNER JOIN menu_v m
+                ON m.visible = 1
+            LEFT JOIN usuario_menu_v um
+                ON um.id_usuario = u.id_usuario
+               AND um.id_menu = m.id_menu
+            WHERE um.id_usuario_menu IS NULL
+        ");
+
+        $this->menuSchemaReady = true;
+    }
+
+    public function obtenerMenusSistema()
+    {
+        $this->asegurarEsquemaMenus();
+
+        $res = $this->db->consulta("
+            SELECT id_menu, codigo, nombre, url, icono, descripcion, orden, visible
+            FROM menu_v
+            WHERE visible = 1
+            ORDER BY orden ASC, id_menu ASC
+        ");
+
+        $menus = [];
+        while ($row = $this->db->fetch_assoc($res)) {
+            $menus[] = $row;
+        }
+
+        return $menus;
+    }
+
+    public function obtenerPermisosMenuUsuario($idUsuario)
+    {
+        $this->asegurarEsquemaMenus();
+        $idUsuario = (int)$idUsuario;
+
+        $res = $this->db->consulta("
+            SELECT
+                m.id_menu,
+                m.codigo,
+                m.nombre,
+                m.url,
+                m.icono,
+                m.orden,
+                m.descripcion,
+                COALESCE(um.permitido, 0) AS permitido
+            FROM menu_v m
+            LEFT JOIN usuario_menu_v um
+                ON um.id_menu = m.id_menu
+               AND um.id_usuario = {$idUsuario}
+            WHERE m.visible = 1
+            ORDER BY m.orden ASC, m.id_menu ASC
+        ");
+
+        $permisos = [];
+        while ($row = $this->db->fetch_assoc($res)) {
+            $row["permitido"] = (int)($row["permitido"] ?? 0);
+            $permisos[] = $row;
+        }
+
+        return $permisos;
+    }
+
+    public function obtenerCodigosMenusPermitidosUsuario($idUsuario)
+    {
+        $permisos = $this->obtenerPermisosMenuUsuario($idUsuario);
+        $codigos = [];
+
+        foreach ($permisos as $permiso) {
+            if ((int)($permiso["permitido"] ?? 0) === 1) {
+                $codigos[] = (string)$permiso["codigo"];
+            }
+        }
+
+        return $codigos;
+    }
+
+    public function guardarPermisosMenuUsuario($idUsuario, array $menusPermitidos)
+    {
+        $this->asegurarEsquemaMenus();
+        $idUsuario = (int)$idUsuario;
+
+        $menus = $this->obtenerMenusSistema();
+        $permitidosMap = [];
+        foreach ($menusPermitidos as $codigo) {
+            $permitidosMap[(string)$codigo] = true;
+        }
+
+        foreach ($menus as $menu) {
+            $idMenu = (int)$menu["id_menu"];
+            $codigo = (string)$menu["codigo"];
+            $permitido = isset($permitidosMap[$codigo]) ? 1 : 0;
+
+            $this->db->consulta("
+                INSERT INTO usuario_menu_v (id_usuario, id_menu, permitido)
+                VALUES ({$idUsuario}, {$idMenu}, {$permitido})
+                ON DUPLICATE KEY UPDATE
+                    permitido = VALUES(permitido),
+                    updated_at = CURRENT_TIMESTAMP
+            ");
+        }
     }
 
 }

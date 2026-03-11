@@ -18,7 +18,20 @@ WHERE $whereColegio
 $resTotal = $db->consulta($sqlTotal);
 $rowTotal = $db->fetch_assoc($resTotal);
 $totalEmpleados = $rowTotal['total'];
-$mostrarUsuarios = (int)($_SESSION["id_rol"] ?? 0) === 1;
+$menusPermitidos = [];
+if (isset($funciones) && is_object($funciones) && method_exists($funciones, 'obtenerCodigosMenusPermitidosUsuario')) {
+    $menusPermitidos = $funciones->obtenerCodigosMenusPermitidosUsuario((int)($_SESSION["id_usuario"] ?? 0));
+}
+if (!$menusPermitidos) {
+    $menusPermitidos = ['empleados', 'graficos'];
+    if ((int)($_SESSION["id_rol"] ?? 0) === 1) {
+        $menusPermitidos[] = 'usuarios';
+    }
+}
+
+$mostrarEmpleados = in_array('empleados', $menusPermitidos, true);
+$mostrarGraficos = in_array('graficos', $menusPermitidos, true);
+$mostrarUsuarios = in_array('usuarios', $menusPermitidos, true);
 $totalUsuarios = 0;
 if ($mostrarUsuarios) {
     $sqlTotalUsuarios = "
@@ -39,6 +52,7 @@ $activoUsuarios = $paginaActual === "usuarios.php";
 
 <div class="side-mini" aria-label="Menú lateral">
     <!-- Empleados -->
+    <?php if ($mostrarEmpleados): ?>
     <div class="side-btn-wrap">
         <button class="side-btn<?= $activoEmpleados ? ' active' : '' ?>" id="btnSideEmpleados" type="button" title="Empleados (lista y selección)"
             onclick="window.location.href='index.php'">
@@ -49,6 +63,7 @@ $activoUsuarios = $paginaActual === "usuarios.php";
             <?= $totalEmpleados ?>
         </div>
     </div>
+    <?php endif; ?>
 
     <!-- Horario -->
     <!-- <div class="side-btn-wrap">
@@ -59,12 +74,14 @@ $activoUsuarios = $paginaActual === "usuarios.php";
     </div> -->
 
     <!-- Reportes -->
+    <?php if ($mostrarGraficos): ?>
     <div class="side-btn-wrap">
         <button class="side-btn<?= $activoGraficos ? ' active' : '' ?>" id="btnSideReportes" type="button" title="Gráficos y estadísticas"
             onclick="window.location.href='grafico.php'">
             <i class="bi bi-bar-chart-fill"></i>
         </button>
     </div>
+    <?php endif; ?>
 
     <?php if ($mostrarUsuarios): ?>
     <div class="side-btn-wrap">

@@ -11,6 +11,17 @@ require_once __DIR__ . "/class/funciones.php";
 
 $db = new MySQL("qaseduc_calculo_horario", "qaseduc_ucomun", "jorquera86;");
 $funciones = new Funciones($db);
+$menusPermitidosActual = $funciones->obtenerCodigosMenusPermitidosUsuario((int)($_SESSION["id_usuario"] ?? 0));
+if (!in_array('graficos', $menusPermitidosActual, true)) {
+    if (in_array('empleados', $menusPermitidosActual, true)) {
+        header("Location: index.php");
+    } elseif (in_array('usuarios', $menusPermitidosActual, true)) {
+        header("Location: usuarios.php");
+    } else {
+        header("Location: logout.php");
+    }
+    exit;
+}
 $verTodosColegios = !empty($_SESSION["is_super_admin"]);
 $empleados = $funciones->obtenerEmpleadosConResumen($_SESSION["id_colegio"], $verTodosColegios);
 
