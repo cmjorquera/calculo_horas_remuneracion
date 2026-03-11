@@ -34,6 +34,8 @@ if (!in_array('usuarios', $menusPermitidosActual, true)) {
 
 $verTodosColegios = true;
 $usuarios = $funciones->obtenerUsuarios($_SESSION["id_colegio"], $verTodosColegios);
+$roles = $funciones->obtenerRoles();
+$colegios = $funciones->obtenerColegios();
 
 function estadoUsuarioTexto($estado)
 {
@@ -60,6 +62,8 @@ function estadoClase($estado)
     <link rel="stylesheet" type="text/css" href="css/principal.css?v=<?= filemtime(__DIR__ . '/css/principal.css') ?>">
     <link rel="stylesheet" type="text/css" href="css/menu_lateral.css?v=<?= filemtime(__DIR__ . '/css/menu_lateral.css') ?>">
     <link rel="stylesheet" type="text/css" href="css/usuarios.css?v=<?= filemtime(__DIR__ . '/css/usuarios.css') ?>">
+        <link rel="stylesheet" type="text/css" href="css/modales.css">
+
     <link rel="icon" type="image/png" href="imagenes/logo_1.jpg" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -164,6 +168,9 @@ function estadoClase($estado)
 </div>
 
 <script>
+const ROLES_USUARIO = <?= json_encode($roles, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+const COLEGIOS_USUARIO = <?= json_encode($colegios, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+
 function updateHeaderDateTime() {
     const now = new Date();
     const fecha = new Intl.DateTimeFormat("es-CL", {
@@ -183,10 +190,118 @@ function updateHeaderDateTime() {
 }
 
 function mostrarCrearUsuario() {
+    const html = `
+        <form class="user-create-form" id="userCreateForm">
+            <div class="user-create-grid">
+                <label class="user-field">
+                    <span>Identificador</span>
+                    <input id="nuevoIdentificador" type="text" maxlength="60" placeholder="Ej: cjorquera">
+                </label>
+                <label class="user-field">
+                    <span>Email</span>
+                    <input id="nuevoEmail" type="email" maxlength="150" placeholder="correo@colegio.cl">
+                </label>
+                <label class="user-field">
+                    <span>Contraseña</span>
+                    <input id="nuevaClave" type="text" maxlength="255" placeholder="Mínimo 4 caracteres">
+                </label>
+                <label class="user-field">
+                    <span>Rol</span>
+                    <select id="nuevoRol">
+                        <option value="">Selecciona</option>
+                        ${ROLES_USUARIO.map((rol) => `<option value="${Number(rol.id_rol)}">${escapeHtml(rol.nombre || rol.codigo || "Rol")}</option>`).join("")}
+                    </select>
+                </label>
+                <label class="user-field">
+                    <span>Nombre</span>
+                    <input id="nuevoNombre" type="text" maxlength="80" placeholder="Nombre">
+                </label>
+                <label class="user-field">
+                    <span>Apellido paterno</span>
+                    <input id="nuevoApellidoPaterno" type="text" maxlength="80" placeholder="Apellido paterno">
+                </label>
+                <label class="user-field">
+                    <span>Apellido materno</span>
+                    <input id="nuevoApellidoMaterno" type="text" maxlength="80" placeholder="Apellido materno">
+                </label>
+                <label class="user-field">
+                    <span>Colegio</span>
+                    <select id="nuevoColegio">
+                        <option value="">Selecciona</option>
+                        ${COLEGIOS_USUARIO.map((colegio) => {
+                            const nombre = colegio.nco_colegio || colegio.nom_colegio || `Colegio ${Number(colegio.id_colegio)}`;
+                            return `<option value="${Number(colegio.id_colegio)}">${escapeHtml(nombre)}</option>`;
+                        }).join("")}
+                    </select>
+                </label>
+                <label class="user-field">
+                    <span>RUN</span>
+                    <input id="nuevoRun" type="text" maxlength="20" placeholder="Opcional">
+                </label>
+                <label class="user-field">
+                    <span>Teléfono</span>
+                    <input id="nuevoTelefono" type="text" maxlength="25" placeholder="Opcional">
+                </label>
+                <label class="user-field">
+                    <span>Estado</span>
+                    <select id="nuevoEstado">
+                        <option value="1" selected>Activo</option>
+                        <option value="0">Inactivo</option>
+                        <option value="2">Bloqueado</option>
+                    </select>
+                </label>
+            </div>
+        </form>
+    `;
+
     Swal.fire({
-        icon: "info",
         title: "Agregar usuario",
-        text: "Falta conectar el formulario de creación."
+        html,
+        width: 760,
+        showCancelButton: true,
+        confirmButtonText: "Crear usuario",
+        cancelButtonText: "Cancelar",
+        focusConfirm: false,
+        preConfirm: async () => {
+            const payload = {
+                identificador: document.getElementById("nuevoIdentificador").value.trim(),
+                email: document.getElementById("nuevoEmail").value.trim(),
+                clave: document.getElementById("nuevaClave").value.trim(),
+                nombre: document.getElementById("nuevoNombre").value.trim(),
+                apellido_paterno: document.getElementById("nuevoApellidoPaterno").value.trim(),
+                apellido_materno: document.getElementById("nuevoApellidoMaterno").value.trim(),
+                id_rol: document.getElementById("nuevoRol").value,
+                id_colegio: document.getElementById("nuevoColegio").value,
+                run: document.getElementById("nuevoRun").value.trim(),
+                telefono: document.getElementById("nuevoTelefono").value.trim(),
+                estado: document.getElementById("nuevoEstado").value
+            };
+
+            if (!payload.identificador || !payload.email || !payload.clave || !payload.nombre || !payload.apellido_paterno || !payload.id_rol || !payload.id_colegio) {
+                Swal.showValidationMessage("Completa los campos obligatorios del formulario.");
+                return false;
+            }
+
+            const body = new URLSearchParams(payload);
+            const respuesta = await fetch("modelos/guardar/usuario.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+                body: body.toString()
+            });
+
+            const data = await respuesta.json();
+            if (!data.ok) {
+                Swal.showValidationMessage(data.msg || "No se pudo crear el usuario.");
+                return false;
+            }
+
+            return data;
+        }
+    }).then((resultado) => {
+        if (resultado.isConfirmed) {
+            Swal.fire("Usuario creado", "La cuenta fue registrada correctamente.", "success")
+                .then(() => window.location.reload());
+        }
     });
 }
 

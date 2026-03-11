@@ -243,3 +243,50 @@
 .menu-perm-switch input:checked + .menu-perm-slider::before {
     transform: translateX(22px);
 }
+
+.user-create-form {
+    text-align: left;
+    padding-top: 8px;
+}
+
+.user-create-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+}
+
+.user-field {
+    display: grid;
+    gap: 6px;
+}
+
+.user-field span {
+    color: #0f172a;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.user-field input,
+.user-field select {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid rgba(148, 163, 184, 0.55);
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: #fff;
+    color: #0f172a;
+    font-size: 14px;
+    outline: none;
+}
+
+.user-field input:focus,
+.user-field select:focus {
+    border-color: rgba(0, 78, 140, 0.55);
+    box-shadow: 0 0 0 3px rgba(0, 78, 140, 0.12);
+}
+
+@media (max-width: 760px) {
+    .user-create-grid {
+        grid-template-columns: 1fr;
+    }
+}

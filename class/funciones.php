@@ -231,6 +231,26 @@ $sql = "
         return $roles;
     }
 
+    public function obtenerColegios()
+    {
+        $sql = "
+            SELECT
+                id_colegio,
+                nom_colegio,
+                nco_colegio
+            FROM colegio
+            ORDER BY COALESCE(NULLIF(nco_colegio, ''), nom_colegio) ASC, id_colegio ASC
+        ";
+
+        $res = $this->db->consulta($sql);
+        $colegios = [];
+        while ($row = $this->db->fetch_assoc($res)) {
+            $colegios[] = $row;
+        }
+
+        return $colegios;
+    }
+
     public function obtenerUsuarios($id_colegio, $verTodosColegios = false)
     {
         $id_colegio = (int)$id_colegio;
