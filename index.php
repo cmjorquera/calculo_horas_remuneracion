@@ -8,6 +8,7 @@ if (!isset($_SESSION["id_usuario"])) {
 
 require_once __DIR__ . "/class/conexion.php";
 require_once __DIR__ . "/class/funciones.php";
+require_once __DIR__ . "/class/helpers.php";
 
 $db = new MySQL("qaseduc_calculo_horario", "qaseduc_ucomun", "jorquera86;");
 
@@ -18,20 +19,6 @@ $verTodosColegios = !empty($_SESSION["is_super_admin"]);
 $empleados = $funciones->obtenerEmpleadosConResumen($_SESSION["id_colegio"], $verTodosColegios);
 $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosColegios;
 
-
-function hhmm($hoursFloat){
-  $totalMin = (int)round($hoursFloat * 60);
-  $h = floor($totalMin/60);
-  $m = $totalMin % 60;
-  return str_pad($h,2,'0',STR_PAD_LEFT).":".str_pad($m,2,'0',STR_PAD_LEFT);
-}
-
-function minutosAHHMM($totalMin){
-  $totalMin = max(0, (int)$totalMin);
-  $h = floor($totalMin / 60);
-  $m = $totalMin % 60;
-  return str_pad($h, 2, '0', STR_PAD_LEFT).":".str_pad($m, 2, '0', STR_PAD_LEFT);
-}
 ?>
 
 
@@ -43,7 +30,7 @@ function minutosAHHMM($totalMin){
 
 <head>
     <link rel="stylesheet" type="text/css" href="css/principal.css?v=<?= filemtime(__DIR__ . '/css/principal.css') ?>">
-    <link rel="stylesheet" type="text/css" href="css/menu_lateral.css">
+    <link rel="stylesheet" type="text/css" href="css/menu_lateral.css?v=<?= filemtime(__DIR__ . '/css/menu_lateral.css') ?>">
     <link rel="stylesheet" type="text/css" href="css/modales.css">
     <link rel="stylesheet" type="text/css" href="css/index.css?v=<?= filemtime(__DIR__ . '/css/index.css') ?>">
     <meta charset="utf-8" />

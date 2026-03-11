@@ -148,7 +148,7 @@ $chartPayload = [
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Gráficos | Calculadora de Horas</title>
     <link rel="stylesheet" type="text/css" href="css/principal.css?v=<?= filemtime(__DIR__ . '/css/principal.css') ?>">
-    <link rel="stylesheet" type="text/css" href="css/menu_lateral.css">
+    <link rel="stylesheet" type="text/css" href="css/menu_lateral.css?v=<?= filemtime(__DIR__ . '/css/menu_lateral.css') ?>">
     <link rel="stylesheet" type="text/css" href="css/modales.css">
     <link rel="stylesheet" type="text/css" href="css/graficos.css">
     <link rel="icon" type="image/png" href="imagenes/logo_1.jpg" />

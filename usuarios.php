@@ -54,7 +54,7 @@ function estadoClase($estado)
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Usuarios | Calculadora de Horas</title>
     <link rel="stylesheet" type="text/css" href="css/principal.css?v=<?= filemtime(__DIR__ . '/css/principal.css') ?>">
-    <link rel="stylesheet" type="text/css" href="css/menu_lateral.css">
+    <link rel="stylesheet" type="text/css" href="css/menu_lateral.css?v=<?= filemtime(__DIR__ . '/css/menu_lateral.css') ?>">
     <link rel="stylesheet" type="text/css" href="css/usuarios.css?v=<?= filemtime(__DIR__ . '/css/usuarios.css') ?>">
     <link rel="icon" type="image/png" href="imagenes/logo_1.jpg" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -65,13 +65,15 @@ function estadoClase($estado)
 <div class="page">
     <?php include __DIR__ . "/menu_lateral.php"; ?>
 
-    <header class="header">
+  <header class="header">
         <div class="brand">
             <div class="logo">
                 <img src="imagenes/logo_2.jpg" alt="Logo" onerror="this.style.display='none'">
             </div>
             <div class="titles">
-                <h1>Administrar usuarios</h1>
+                <h1>Calculadora de Horas Cronológicas</h1>
+                <!-- <p>Distribución semanal (mañana / tarde) y resumen de totales</p> -->
+                <!-- Usuario logueado -->
                 <div class="user-info">
                     <i class="bi bi-person-circle"></i>
                     <span><?= htmlspecialchars($_SESSION["nombre_completo"]) ?></span>
@@ -80,19 +82,20 @@ function estadoClase($estado)
                 </div>
             </div>
         </div>
+
         <div class="meta">
             <div class="chip">
-                <span class="label">Módulo</span>
-                <span class="value">Usuarios</span>
+                <span class="label">Fecha</span>
+                <span class="value" id="uiFecha">--</span>
             </div>
             <div class="chip">
-                <span class="label">Acceso</span>
-                <span class="value">Solo id_rol 1</span>
+                <span class="label">Hora</span>
+                <span class="value" id="uiHora">--</span>
             </div>
         </div>
     </header>
 
-    <main class="usuarios-main">
+    <main class="usuarios-main page-shell">
         <section class="card">
             <div class="card-head">
                 <div>
@@ -149,6 +152,24 @@ function estadoClase($estado)
     </main>
 </div>
 <script>
+function updateHeaderDateTime() {
+    const now = new Date();
+    const fecha = new Intl.DateTimeFormat("es-CL", {
+        weekday: "long",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+    }).format(now);
+    const hora = new Intl.DateTimeFormat("es-CL", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+    }).format(now);
+
+    document.getElementById("uiFecha").textContent = fecha;
+    document.getElementById("uiHora").textContent = hora;
+}
+
 function mostrarCrearUsuario() {
     Swal.fire({
         icon: 'info',
@@ -156,6 +177,9 @@ function mostrarCrearUsuario() {
         text: 'El botón ya quedó visible. El siguiente paso es conectar este botón a un formulario para crear usuario y asignarle los menús permitidos.'
     });
 }
+
+updateHeaderDateTime();
+setInterval(updateHeaderDateTime, 1000);
 </script>
 </body>
 </html>

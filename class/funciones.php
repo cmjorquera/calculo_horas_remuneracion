@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . "/helpers.php";
+
 class Funciones
 {
     private $db;
@@ -89,10 +91,7 @@ $sql = "
 
     private function minutosAHHMM($totalMin)
     {
-        $totalMin = max(0, (int)$totalMin);
-        $h = floor($totalMin / 60);
-        $m = $totalMin % 60;
-        return str_pad((string)$h, 2, '0', STR_PAD_LEFT) . ":" . str_pad((string)$m, 2, '0', STR_PAD_LEFT);
+        return minutosAHHMM($totalMin);
     }
 
     public function calcularHorasSemanales($id_contrato)

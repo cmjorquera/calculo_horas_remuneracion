@@ -83,6 +83,7 @@
   /* Evita que el menú flotante tape el contenido principal */
   @media (min-width: 1001px){
     .page > .header,
+    .page > .page-shell,
     .page > .usuarios-main,
     .page > .content,
     .page > .empleados-panel{
