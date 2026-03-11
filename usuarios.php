@@ -6,8 +6,8 @@ if (!isset($_SESSION["id_usuario"])) {
     exit;
 }
 
-$esSuperAdmin = !empty($_SESSION["is_super_admin"]);
-$esAdminSistema = (int)($_SESSION["id_rol"] ?? 0) === 1;
+$esSuperAdmin       = !empty($_SESSION["is_super_admin"]);
+$esAdminSistema     = (int)($_SESSION["id_rol"] ?? 0) === 1;
 
 if (!$esAdminSistema) {
     header("Location: index.php");
@@ -62,7 +62,7 @@ function estadoClase($estado)
     <link rel="stylesheet" type="text/css" href="css/principal.css?v=<?= filemtime(__DIR__ . '/css/principal.css') ?>">
     <link rel="stylesheet" type="text/css" href="css/menu_lateral.css?v=<?= filemtime(__DIR__ . '/css/menu_lateral.css') ?>">
     <link rel="stylesheet" type="text/css" href="css/usuarios.css?v=<?= filemtime(__DIR__ . '/css/usuarios.css') ?>">
-        <link rel="stylesheet" type="text/css" href="css/modales.css">
+    <link rel="stylesheet" type="text/css" href="css/modales.css?v=<?= filemtime(__DIR__ . '/css/modales.css') ?>">
 
     <link rel="icon" type="image/png" href="imagenes/logo_1.jpg" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -72,34 +72,10 @@ function estadoClase($estado)
 <body>
 <div class="page">
     <?php include __DIR__ . "/menu_lateral.php"; ?>
+    <!-- Menu lateral -->
+     <?php $headerTitle = "Calculadora de Horas Cronológicas"; ?>
+    <?php include __DIR__ . "/header.php"; ?>
 
-    <header class="header">
-        <div class="brand">
-            <div class="logo">
-                <img src="imagenes/logo_2.jpg" alt="Logo" onerror="this.style.display='none'">
-            </div>
-            <div class="titles">
-                <h1>Calculadora de Horas Cronológicas</h1>
-                <div class="user-info">
-                    <i class="bi bi-person-circle"></i>
-                    <span><?= htmlspecialchars($_SESSION["nombre_completo"]) ?></span>
-                    <span class="sep">•</span>
-                    <span><?= htmlspecialchars($_SESSION["cabecera_contexto"] ?? ($_SESSION["nom_colegio"] ?? "Sin colegio")) ?></span>
-                </div>
-            </div>
-        </div>
-
-        <div class="meta">
-            <div class="chip">
-                <span class="label">Fecha</span>
-                <span class="value" id="uiFecha">--</span>
-            </div>
-            <div class="chip">
-                <span class="label">Hora</span>
-                <span class="value" id="uiHora">--</span>
-            </div>
-        </div>
-    </header>
 
     <main class="usuarios-main page-shell">
         <section class="card">

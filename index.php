@@ -42,7 +42,7 @@ $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosCol
 <head>
     <link rel="stylesheet" type="text/css" href="css/principal.css?v=<?= filemtime(__DIR__ . '/css/principal.css') ?>">
     <link rel="stylesheet" type="text/css" href="css/menu_lateral.css?v=<?= filemtime(__DIR__ . '/css/menu_lateral.css') ?>">
-    <link rel="stylesheet" type="text/css" href="css/modales.css">
+    <link rel="stylesheet" type="text/css" href="css/modales.css?v=<?= filemtime(__DIR__ . '/css/modales.css') ?>">
     <link rel="stylesheet" type="text/css" href="css/index.css?v=<?= filemtime(__DIR__ . '/css/index.css') ?>">
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -64,35 +64,8 @@ $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosCol
 <div class="page">
     <?php include __DIR__ . "/menu_lateral.php"; ?>
     <!-- Menu lateral -->
-    <header class="header">
-        <div class="brand">
-            <div class="logo">
-                <img src="imagenes/logo_2.jpg" alt="Logo" onerror="this.style.display='none'">
-            </div>
-            <div class="titles">
-                <h1>Calculadora de Horas Cronológicas</h1>
-                <!-- <p>Distribución semanal (mañana / tarde) y resumen de totales</p> -->
-                <!-- Usuario logueado -->
-                <div class="user-info">
-                    <i class="bi bi-person-circle"></i>
-                    <span><?= htmlspecialchars($_SESSION["nombre_completo"]) ?></span>
-                    <span class="sep">•</span>
-                    <span><?= htmlspecialchars($_SESSION["cabecera_contexto"] ?? ($_SESSION["nom_colegio"] ?? "Sin colegio")) ?></span>
-                </div>
-            </div>
-        </div>
-
-        <div class="meta">
-            <div class="chip">
-                <span class="label">Fecha</span>
-                <span class="value" id="uiFecha">--</span>
-            </div>
-            <div class="chip">
-                <span class="label">Hora</span>
-                <span class="value" id="uiHora">--</span>
-            </div>
-        </div>
-    </header>
+    <?php $headerTitle = "Calculadora de Horas Cronológicas"; ?>
+    <?php include __DIR__ . "/header.php"; ?>
 
 
     <main class="content">
