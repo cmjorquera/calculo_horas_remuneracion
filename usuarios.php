@@ -127,8 +127,6 @@ function estadoClase($estado)
                             <th>Roles</th>
                             <th>Permisos</th>
                             <th>Estado</th>
-                            <th>Intentos</th>
-                            <th>Último login</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -155,8 +153,6 @@ function estadoClase($estado)
                                 </button>
                             </td>
                             <td><span class="badge-state <?= estadoClase($usuario["estado"] ?? 0) ?>"><?= htmlspecialchars(estadoUsuarioTexto($usuario["estado"] ?? 0)) ?></span></td>
-                            <td><?= (int)($usuario["intentos"] ?? 0) ?></td>
-                            <td><?= htmlspecialchars($usuario["ultimo_login"] ?? "Sin registro") ?></td>
                         </tr>
                     <?php endforeach; ?>
                     </tbody>
