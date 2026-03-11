@@ -127,7 +127,7 @@ function enviarCorreoBienvenidaUsuario(array $data)
     $baseUrl = appBaseUrl();
     $activationUrl = $baseUrl . '/incorporacion.php?token=' . rawurlencode((string)($data['token'] ?? ''));
     $logoPath = __DIR__ . '/imagenes/todoslo_logos.jpg';
-    $logoCid = 'seduc-logos';
+    $logoUrl = $baseUrl . '/imagenes/todoslo_logos.jpg';
 
     $mail = new PHPMailer(true);
 
@@ -150,9 +150,6 @@ function enviarCorreoBienvenidaUsuario(array $data)
 
         $mail->setFrom($config['from_email'], $config['from_name']);
         $mail->addAddress((string)$data['email'], trim((string)($data['nombre'] ?? 'Usuario')));
-        if (is_file($logoPath)) {
-            $mail->addEmbeddedImage($logoPath, $logoCid, 'todoslo_logos.jpg');
-        }
         $mail->isHTML(true);
         $mail->Subject = 'Bienvenido al sistema de Calculo de Horas';
         $mail->Body = plantillaBienvenidaHtml([
@@ -160,7 +157,7 @@ function enviarCorreoBienvenidaUsuario(array $data)
             'colegio' => $data['colegio'] ?? 'Seduc',
             'identificador' => $data['identificador'] ?? '',
             'activation_url' => $activationUrl,
-            'logo_url' => is_file($logoPath) ? 'cid:' . $logoCid : ''
+            'logo_url' => is_file($logoPath) ? $logoUrl : ''
         ]);
         $mail->AltBody =
             "Hola " . ($data['nombre'] ?? 'Usuario') . ",\n\n" .

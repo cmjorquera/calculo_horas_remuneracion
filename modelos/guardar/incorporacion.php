@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . "/class/conexion.php";
+require_once dirname(__DIR__, 2) . "/class/conexion.php";
 
 $db = new MySQL("qaseduc_calculo_horario", "qaseduc_ucomun", "jorquera86;");
 $token = trim((string)($_GET["token"] ?? ""));
@@ -74,6 +74,13 @@ if ($mensajeCodigo === "campos_vacios") {
 } elseif ($mensajeCodigo === "token_invalido") {
     $mensajeAlerta = "El enlace de incorporacion no es valido.";
 }
+
+$assetBase = "../../";
+$cssFile = dirname(__DIR__, 2) . "/css/login.css";
+$cssHref = $assetBase . "css/login.css";
+$logoHref = $assetBase . "imagenes/logo_seduc_02.png";
+$loginHref = $assetBase . "login.php";
+$guardarClaveAction = "establecer_clave.php";
 ?>
 <!doctype html>
 <html lang="es">
@@ -81,7 +88,7 @@ if ($mensajeCodigo === "campos_vacios") {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Incorporacion | Calculo de Horas</title>
-  <link rel="stylesheet" type="text/css" href="css/login.css?v=<?= filemtime(__DIR__ . '/css/login.css') ?>">
+  <link rel="stylesheet" type="text/css" href="<?= htmlspecialchars($cssHref, ENT_QUOTES) ?>?v=<?= is_file($cssFile) ? filemtime($cssFile) : time() ?>">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
@@ -89,7 +96,7 @@ if ($mensajeCodigo === "campos_vacios") {
     <div class="panel form-panel">
       <div class="brand">
         <div class="logo">
-          <img src="imagenes/logo_seduc_02.png" alt="Logo Seduc">
+          <img src="<?= htmlspecialchars($logoHref, ENT_QUOTES) ?>" alt="Logo Seduc">
         </div>
         <div>
           <h1>Calculo de Horas</h1>
@@ -122,7 +129,7 @@ if ($mensajeCodigo === "campos_vacios") {
           <input class="input" type="text" value="<?= htmlspecialchars((string)($estadoVista["usuario"]["colegio"] ?? "Seduc")) ?>" readonly>
         </div>
 
-        <form method="post" action="modelos/guardar/establecer_clave.php" autocomplete="off">
+        <form method="post" action="<?= htmlspecialchars($guardarClaveAction, ENT_QUOTES) ?>" autocomplete="off">
           <input type="hidden" name="token" value="<?= htmlspecialchars($token, ENT_QUOTES) ?>">
           <div class="field">
             <div class="label">Nueva clave</div>
@@ -145,7 +152,7 @@ if ($mensajeCodigo === "campos_vacios") {
           <button class="btn" type="submit">Guardar clave</button>
         </form>
       <?php else: ?>
-        <a class="btn" style="display:inline-block;text-align:center;text-decoration:none;" href="login.php">Volver al inicio</a>
+        <a class="btn" style="display:inline-block;text-align:center;text-decoration:none;" href="<?= htmlspecialchars($loginHref, ENT_QUOTES) ?>">Volver al inicio</a>
       <?php endif; ?>
 
       <div class="foot">© <?= date('Y') ?> · Seduc</div>
