@@ -13,7 +13,7 @@ if ((int)($_SESSION["id_rol"] ?? 0) !== 1) {
 }
 
 require_once __DIR__ . "/../../class/conexion.php";
-require_once __DIR__ . "/../../envio_correo.php";
+require_once __DIR__ . "/../../envio_correo_recuperado.php";
 
 $db = new MySQL("qaseduc_calculo_horario", "qaseduc_ucomun", "jorquera86;");
 
