@@ -78,10 +78,6 @@ $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosCol
                 </div>
                 <div class="card-head-side">
                     <div class="horario-tools">
-                    <label class="horario-repeat">
-                        <input type="checkbox" id="chkAutoRepeatDown">
-                        Repetir hacia abajo
-                    </label>
                     <button type="button" class="horario-help" id="btnAutoRepeatHelp"
                         aria-label="Ayuda repetir hacia abajo" title="Cómo funciona">
                         <i class="bi bi-info-circle"></i>
@@ -99,10 +95,30 @@ $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosCol
                             <th colspan="2">Tarde</th>
                         </tr>
                         <tr>
-                            <th>Inicio</th>
-                            <th>Término</th>
-                            <th>Inicio</th>
-                            <th>Término</th>
+                            <th>
+                                <label class="col-repeat-toggle">
+                                    <input type="checkbox" id="chkRepeatManIni" checked>
+                                    <span>Inicio</span>
+                                </label>
+                            </th>
+                            <th>
+                                <label class="col-repeat-toggle">
+                                    <input type="checkbox" id="chkRepeatManFin" checked>
+                                    <span>Término</span>
+                                </label>
+                            </th>
+                            <th>
+                                <label class="col-repeat-toggle">
+                                    <input type="checkbox" id="chkRepeatTarIni" checked>
+                                    <span>Inicio</span>
+                                </label>
+                            </th>
+                            <th>
+                                <label class="col-repeat-toggle">
+                                    <input type="checkbox" id="chkRepeatTarFin" checked>
+                                    <span>Término</span>
+                                </label>
+                            </th>
                         </tr>
                     </thead>
 
@@ -205,21 +221,20 @@ $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosCol
                             <div class="name">Colación</div>
                             <!-- <div class="hint">Descuento diario</div> -->
                         </div>
-                        <div class="box"><small>Minutos</small><span id="sumColacionMin">00</span></div>
+                        <div class="box"><small>Minutos</small><span id="sumColacionMin">0</span></div>
                         <div class="box">
-                            <small>Horas</small>
-                            <select id="sumColacionSelect" class="sum-input" aria-label="Colación diaria en horas">
+                            <small>Minutos</small>
+                            <select id="sumColacionSelect" class="sum-input" aria-label="Colación diaria en minutos">
                                 <option value="" selected disabled>Selecciona...</option>
                                 <?php foreach ($colaciones as $col): ?>
                                     <?php
                                         $idCol = (int)($col['id_colacion'] ?? 0);
                                         $min = (int)($col['minutos'] ?? 0);
-                                        $hora = (string)($col['hora'] ?? minutosAHHMM($min));
                                     ?>
                                     <option
                                         value="<?= $idCol ?>"
                                         data-minutos="<?= $min ?>">
-                                        <?= htmlspecialchars($hora, ENT_QUOTES) ?>
+                                        <?= htmlspecialchars((string)$min, ENT_QUOTES) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -1187,8 +1202,9 @@ function init() {
             tr.querySelectorAll("select").forEach(s => s.disabled = false);
         });
 
-        const chkAutoRepeat = document.getElementById("chkAutoRepeatDown");
-        if (chkAutoRepeat) chkAutoRepeat.checked = false;
+        document.querySelectorAll(".col-repeat-toggle input[type='checkbox']").forEach((check) => {
+            check.checked = true;
+        });
 
         const sumJornadaPed = document.getElementById("sumJornadaPed");
         const sumJornadaCro = document.getElementById("sumJornadaCro");
@@ -1205,7 +1221,7 @@ function init() {
         if (sumLectivasCro) sumLectivasCro.value = "00:00";
         if (sumNoLectivasPed) sumNoLectivasPed.value = "0";
         if (sumNoLectivasCro) sumNoLectivasCro.value = "00:00";
-        if (sumColacionMin) sumColacionMin.textContent = "00";
+        if (sumColacionMin) sumColacionMin.textContent = "0";
         if (sumColacionSelect) sumColacionSelect.value = "";
         if (typeof window.updateHorasLectivasUI === "function") {
             window.updateHorasLectivasUI();
@@ -1247,8 +1263,13 @@ init();
 <!--calculo de horas Cronologicas-->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const chkAutoRepeat = document.getElementById("chkAutoRepeatDown");
     const btnAutoRepeatHelp = document.getElementById("btnAutoRepeatHelp");
+    const repeatColumns = {
+        man_ini: document.getElementById("chkRepeatManIni"),
+        man_fin: document.getElementById("chkRepeatManFin"),
+        tar_ini: document.getElementById("chkRepeatTarIni"),
+        tar_fin: document.getElementById("chkRepeatTarFin")
+    };
 
     // 1) Auto-fill
     if (window.bindAutoFillHorario) {
@@ -1256,7 +1277,10 @@ document.addEventListener("DOMContentLoaded", function() {
             tbodySelector: "#tbodyHorario",
             dayPrefixes: ["lun", "mar", "mie", "jue", "vie"],
             onlyIfEmpty: false,
-            isEnabled: () => !!(chkAutoRepeat && chkAutoRepeat.checked)
+            isEnabled: ({ bloque, tipo }) => {
+                const key = `${bloque}_${tipo}`;
+                return !!(repeatColumns[key] && repeatColumns[key].checked);
+            }
         });
     }
 
@@ -1274,7 +1298,7 @@ document.addEventListener("DOMContentLoaded", function() {
             Swal.fire({
                 icon: "info",
                 title: "Repetir hacia abajo",
-                text: "Si activas este check, al cambiar una hora en un día se copia a los días siguientes en la misma columna. Si está desactivado, no se repite nada.",
+                text: "Cada columna tiene su propio check. Si está activo, cualquier cambio en esa columna se copia a los días siguientes. Por defecto todos vienen activados.",
                 customClass: {
                     popup: 'swal-seduc',
                     confirmButton: 'btn-seduc btn-seduc-primary'

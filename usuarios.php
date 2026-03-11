@@ -146,6 +146,16 @@ function estadoClase($estado)
 <script>
 const ROLES_USUARIO = <?= json_encode($roles, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 const COLEGIOS_USUARIO = <?= json_encode($colegios, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+const SWAL_SEDUC_CONFIG = {
+    buttonsStyling: false,
+    reverseButtons: true,
+    backdrop: "rgba(15, 23, 42, .35)",
+    customClass: {
+        popup: "swal-seduc",
+        confirmButton: "btn-seduc btn-seduc-primary",
+        cancelButton: "btn-seduc btn-seduc-ghost"
+    }
+};
 
 function updateHeaderDateTime() {
     const now = new Date();
@@ -231,6 +241,7 @@ function mostrarCrearUsuario() {
     `;
 
     Swal.fire({
+        ...SWAL_SEDUC_CONFIG,
         title: "Agregar usuario",
         html,
         width: 760,
@@ -318,6 +329,7 @@ async function abrirPermisosUsuario(idUsuario, nombreUsuario, identificador) {
     `;
 
     const resultado = await Swal.fire({
+        ...SWAL_SEDUC_CONFIG,
         title: "Permisos por menú",
         html,
         width: 720,

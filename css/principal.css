@@ -407,6 +407,11 @@
       border-radius: 12px;
       background: #fff;
       padding: 10px;
+      min-height: 94px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
       text-align:center;
       font-weight: 900;
       font-size: 20px;
@@ -474,6 +479,10 @@
     /* ===== Inputs editables (HH:MM) dentro de boxes ===== */
 .sum-input{
   width: 100%;
+  height: 56px;
+  min-height: 56px;
+  box-sizing: border-box;
+  display: block;
   border: 1px dashed rgba(15, 23, 42, .25);
   background: rgba(255,255,255,.55);
   border-radius: 14px;
@@ -482,9 +491,25 @@
   font-size: 20px;
   line-height: 1.1;
   color: #0f172a;
-  padding: 10px 10px;
+  padding: 0 14px;
   cursor: text;
   transition: box-shadow .15s ease, border-color .15s ease, transform .05s ease;
+}
+
+select.sum-input{
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 36px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #0f172a 50%),
+    linear-gradient(135deg, #0f172a 50%, transparent 50%);
+  background-position:
+    calc(100% - 22px) calc(50% - 3px),
+    calc(100% - 16px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
 }
 
 .sum-input:hover{

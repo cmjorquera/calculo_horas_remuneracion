@@ -39,6 +39,8 @@
       const tipo       = match[3]; // ini/fin
       const hm         = match[4]; // h/m
 
+      if (!isEnabled({ sel, fromPrefix, bloque, tipo, hm })) return;
+
       const fromIdx = dayPrefixes.indexOf(fromPrefix);
       if (fromIdx === -1) return;
 
