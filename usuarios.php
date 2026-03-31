@@ -76,6 +76,42 @@ function estadoClase($estado)
     if ($estado === 2) return "is-warning";
     return "is-muted";
 }
+
+function estadoUsuarioDetalle(array $usuario)
+{
+    $estado = (int)($usuario["estado"] ?? 0);
+    $tokenPendiente = trim((string)($usuario["token_reinicio"] ?? "")) !== "";
+
+    if ($estado === 2) {
+        return [
+            "texto" => "Bloqueado",
+            "clase" => "is-warning",
+            "popover" => ""
+        ];
+    }
+
+    if ($tokenPendiente) {
+        return [
+            "texto" => "Inactivo",
+            "clase" => "is-muted",
+            "popover" => "Esperando que active su clave."
+        ];
+    }
+
+    if ($estado === 1) {
+        return [
+            "texto" => "Activo",
+            "clase" => "is-ok",
+            "popover" => ""
+        ];
+    }
+
+    return [
+        "texto" => "Inactivo",
+        "clase" => "is-muted",
+        "popover" => ""
+    ];
+}
 ?>
 <!doctype html>
 <html lang="es">
@@ -120,47 +156,89 @@ function estadoClase($estado)
                 <?php if (!$usuarios): ?>
                     <div class="empty-table">No hay usuarios para el contexto seleccionado.</div>
                 <?php else: ?>
-                <table class="table-admin">
+                <div class="emp-table-wrap users-table-wrap">
+                <table class="emp-table" id="usersTable">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Identificador</th>
-                            <th>Nombre</th>
-                            <th>Email</th>
-                            <th>Colegio</th>
-                            <th>Roles</th>
-                            <th>Permisos</th>
-                            <th>Estado</th>
+                            <th class="sortable" data-type="number">N° <i class="bi bi-arrow-down-up sort-ico"></i></th>
+                            <th class="sortable" data-type="number">ID <i class="bi bi-arrow-down-up sort-ico"></i></th>
+                            <th class="sortable" data-type="text">Identificador <i class="bi bi-arrow-down-up sort-ico"></i></th>
+                            <th class="sortable" data-type="text">Nombre - Apellidos <i class="bi bi-arrow-down-up sort-ico"></i></th>
+                            <th class="sortable" data-type="text">Email <i class="bi bi-arrow-down-up sort-ico"></i></th>
+                            <th class="sortable" data-type="text">Colegio <i class="bi bi-arrow-down-up sort-ico"></i></th>
+                            <th class="sortable" data-type="text">Roles <i class="bi bi-arrow-down-up sort-ico"></i></th>
+                            <th class="sortable" data-type="text">Estado <i class="bi bi-arrow-down-up sort-ico"></i></th>
+                            <th class="sortable" data-type="text">Opciones <i class="bi bi-arrow-down-up sort-ico"></i></th>
                         </tr>
                     </thead>
                     <tbody>
                     <?php foreach ($usuarios as $usuario): ?>
-                        <?php $nombreCompleto = trim(($usuario["nombre"] ?? "") . " " . ($usuario["apellido_paterno"] ?? "") . " " . ($usuario["apellido_materno"] ?? "")); ?>
+                        <?php
+                            static $contadorUsuarios = 0;
+                            $contadorUsuarios++;
+                            $nombreCompleto = trim(($usuario["nombre"] ?? "") . " " . ($usuario["apellido_paterno"] ?? "") . " " . ($usuario["apellido_materno"] ?? ""));
+                            $idColegioUsuario = (int)($usuario["id_colegio"] ?? 0);
+                            $nombreColegioUsuario = trim((string)($usuario["nco_colegio"] ?? "Sin colegio"));
+                            $logoColegioUsuario = $colegiosLogoMap[(string)$idColegioUsuario] ?? "";
+                            $rolesAsignados = trim((string)($usuario["roles_asignados"] ?: "Sin roles"));
+                            $estadoDetalle = estadoUsuarioDetalle($usuario);
+                        ?>
                         <tr>
-                            <td><?= (int)$usuario["id_usuario"] ?></td>
-                            <td><?= htmlspecialchars($usuario["identificador"] ?? "") ?></td>
-                            <td><?= htmlspecialchars($nombreCompleto) ?></td>
-                            <td><?= htmlspecialchars($usuario["email"] ?? "") ?></td>
-                            <td><?= htmlspecialchars($usuario["nco_colegio"] ?? "Sin colegio") ?></td>
-                            <td><?= htmlspecialchars($usuario["roles_asignados"] ?: "Sin roles") ?></td>
-                            <td>
-                                <button
-                                    type="button"
-                                    class="btn-outline-admin"
-                                    onclick="abrirPermisosUsuario(
-                                        <?= (int)$usuario['id_usuario'] ?>,
-                                        <?= htmlspecialchars(json_encode($nombreCompleto), ENT_QUOTES) ?>,
-                                        <?= htmlspecialchars(json_encode($usuario['identificador'] ?? ''), ENT_QUOTES) ?>
-                                    )">
-                                    <i class="bi bi-sliders2"></i>
-                                    Menús
-                                </button>
+                            <td class="cell-num" data-value="<?= $contadorUsuarios ?>"><?= $contadorUsuarios ?></td>
+                            <td class="cell-center" data-value="<?= (int)$usuario["id_usuario"] ?>"><?= (int)$usuario["id_usuario"] ?></td>
+                            <td class="cell-run" data-value="<?= htmlspecialchars($usuario["identificador"] ?? "", ENT_QUOTES) ?>">
+                                <?= htmlspecialchars($usuario["identificador"] ?? "") ?>
                             </td>
-                            <td><span class="badge-state <?= estadoClase($usuario["estado"] ?? 0) ?>"><?= htmlspecialchars(estadoUsuarioTexto($usuario["estado"] ?? 0)) ?></span></td>
+                            <td class="cell-nombre" data-value="<?= htmlspecialchars($nombreCompleto, ENT_QUOTES) ?>">
+                                <?= htmlspecialchars($nombreCompleto) ?>
+                            </td>
+                            <td data-value="<?= htmlspecialchars($usuario["email"] ?? "", ENT_QUOTES) ?>">
+                                <?= htmlspecialchars($usuario["email"] ?? "") ?>
+                            </td>
+                            <td class="cell-colegio" data-value="<?= htmlspecialchars($nombreColegioUsuario, ENT_QUOTES) ?>">
+                                <div class="cell-colegio-wrap">
+                                    <?php if ($logoColegioUsuario !== ''): ?>
+                                        <img class="colegio-avatar" src="<?= htmlspecialchars($logoColegioUsuario, ENT_QUOTES) ?>" alt="<?= htmlspecialchars($nombreColegioUsuario) ?>">
+                                    <?php else: ?>
+                                        <span class="colegio-avatar colegio-avatar-fallback"><?= $idColegioUsuario > 0 ? $idColegioUsuario : '-' ?></span>
+                                    <?php endif; ?>
+                                    <span class="colegio-nombre"><?= htmlspecialchars($nombreColegioUsuario) ?></span>
+                                </div>
+                            </td>
+                            <td data-value="<?= htmlspecialchars($rolesAsignados, ENT_QUOTES) ?>">
+                                <span class="role-pill"><?= htmlspecialchars($rolesAsignados) ?></span>
+                            </td>
+                            <td data-value="<?= htmlspecialchars($estadoDetalle["texto"], ENT_QUOTES) ?>">
+                                <div class="status-cell">
+                                    <span class="badge-state <?= htmlspecialchars($estadoDetalle["clase"], ENT_QUOTES) ?>"><?= htmlspecialchars($estadoDetalle["texto"]) ?></span>
+                                    <?php if ($estadoDetalle["popover"] !== ""): ?>
+                                        <button type="button" class="status-help-btn" aria-label="Información de estado">
+                                            <i class="bi bi-question-circle-fill"></i>
+                                        </button>
+                                        <div class="status-popover"><?= htmlspecialchars($estadoDetalle["popover"]) ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                            <td class="cell-opciones" data-value="menus">
+                                <div class="cell-actions">
+                                    <button
+                                        type="button"
+                                        class="btn-table-icon"
+                                        title="Menús"
+                                        onclick="abrirPermisosUsuario(
+                                            <?= (int)$usuario['id_usuario'] ?>,
+                                            <?= htmlspecialchars(json_encode($nombreCompleto), ENT_QUOTES) ?>,
+                                            <?= htmlspecialchars(json_encode($usuario['identificador'] ?? ''), ENT_QUOTES) ?>
+                                        )">
+                                        <i class="bi bi-sliders2"></i>
+                                    </button>
+                                </div>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                     </tbody>
                 </table>
+                </div>
                 <?php endif; ?>
             </div>
         </section>
@@ -213,10 +291,6 @@ function mostrarCrearUsuario() {
                 </div>
             </div>
             <div class="user-create-grid">
-                <label class="user-field">
-                    <span>Identificador</span>
-                    <input id="nuevoIdentificador" type="text" maxlength="60" placeholder="Ej: cjorquera">
-                </label>
                 <label class="user-field">
                     <span>Email</span>
                     <input id="nuevoEmail" type="email" maxlength="150" placeholder="correo@colegio.cl">
@@ -387,7 +461,6 @@ function mostrarCrearUsuario() {
         },
         preConfirm: async () => {
             const payload = {
-                identificador: document.getElementById("nuevoIdentificador").value.trim(),
                 email: document.getElementById("nuevoEmail").value.trim(),
                 nombre: document.getElementById("nuevoNombre").value.trim(),
                 apellido_paterno: document.getElementById("nuevoApellidoPaterno").value.trim(),
@@ -400,7 +473,7 @@ function mostrarCrearUsuario() {
                 colegio_nombre: document.getElementById("nuevoColegio").options[document.getElementById("nuevoColegio").selectedIndex]?.text?.trim() || ""
             };
 
-            if (!payload.identificador || !payload.email || !payload.nombre || !payload.apellido_paterno || !payload.id_rol || !payload.id_colegio) {
+            if (!payload.email || !payload.nombre || !payload.apellido_paterno || !payload.id_rol || !payload.id_colegio) {
                 Swal.showValidationMessage("Completa los campos obligatorios del formulario.");
                 return false;
             }
@@ -526,6 +599,83 @@ function escapeHtml(value) {
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+    const table = document.getElementById("usersTable");
+    const statusHelpButtons = Array.from(document.querySelectorAll(".status-help-btn"));
+    if (statusHelpButtons.length > 0) {
+        function closeStatusPopovers(currentButton = null) {
+            document.querySelectorAll(".status-popover.is-open").forEach((popover) => {
+                if (currentButton && popover.previousElementSibling === currentButton) return;
+                popover.classList.remove("is-open");
+            });
+        }
+
+        statusHelpButtons.forEach((button) => {
+            button.addEventListener("click", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                const popover = button.nextElementSibling;
+                if (!popover || !popover.classList.contains("status-popover")) return;
+
+                const willOpen = !popover.classList.contains("is-open");
+                closeStatusPopovers(button);
+                popover.classList.toggle("is-open", willOpen);
+            });
+        });
+
+        document.addEventListener("click", function () {
+            closeStatusPopovers();
+        });
+    }
+
+    if (!table) return;
+
+    const tbody = table.querySelector("tbody");
+    const headers = Array.from(table.querySelectorAll("thead th.sortable"));
+    let sortState = { index: -1, dir: "asc", type: "text" };
+
+    function normalize(text) {
+        return String(text ?? "")
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function parseValue(value, type) {
+        const raw = String(value ?? "").trim();
+        if (type === "number") return Number(raw) || 0;
+        return normalize(raw);
+    }
+
+    function sortRows(index, type) {
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+        const dir = sortState.index === index && sortState.dir === "asc" ? "desc" : "asc";
+        sortState = { index, dir, type };
+
+        headers.forEach((th, idx) => {
+            th.classList.remove("is-sorted", "sort-asc", "sort-desc");
+            if (idx === index) {
+                th.classList.add("is-sorted", dir === "asc" ? "sort-asc" : "sort-desc");
+            }
+        });
+
+        rows.sort((a, b) => {
+            const aVal = parseValue(a.children[index]?.getAttribute("data-value") ?? a.children[index]?.textContent, type);
+            const bVal = parseValue(b.children[index]?.getAttribute("data-value") ?? b.children[index]?.textContent, type);
+
+            if (aVal < bVal) return dir === "asc" ? -1 : 1;
+            if (aVal > bVal) return dir === "asc" ? 1 : -1;
+            return 0;
+        });
+
+        rows.forEach((row) => tbody.appendChild(row));
+    }
+
+    headers.forEach((th, index) => {
+        th.addEventListener("click", () => sortRows(index, th.dataset.type || "text"));
+    });
+});
 
 updateHeaderDateTime();
 setInterval(updateHeaderDateTime, 1000);

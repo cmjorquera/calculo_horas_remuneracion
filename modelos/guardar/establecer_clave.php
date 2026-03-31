@@ -60,6 +60,7 @@ $db->consulta("
         clave_hash = '{$claveEsc}',
         token_reinicio = NULL,
         token_reinicio_expira = NULL,
+        estado = 1,
         intentos = 0,
         updated_at = NOW()
     WHERE id_usuario = {$idUsuario}

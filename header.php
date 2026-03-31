@@ -1,5 +1,7 @@
 <?php
 $headerTitle = isset($headerTitle) ? (string)$headerTitle : "Calculadora de Horas Cronológicas";
+$nombreColegioHeader = trim((string)($_SESSION["nom_colegio"] ?? $_SESSION["nco_colegio"] ?? "Sin colegio"));
+$idUsuarioHeader = (int)($_SESSION["id_usuario"] ?? 0);
 ?>
 <header class="header">
     <div class="brand">
@@ -13,6 +15,10 @@ $headerTitle = isset($headerTitle) ? (string)$headerTitle : "Calculadora de Hora
                 <span><?= htmlspecialchars($_SESSION["nombre_completo"]) ?></span>
                 <span class="sep">•</span>
                 <span><?= htmlspecialchars($_SESSION["cabecera_contexto"] ?? ($_SESSION["nom_colegio"] ?? "Sin colegio")) ?></span>
+                <span class="sep">•</span>
+                <span><?= htmlspecialchars($nombreColegioHeader) ?></span>
+                <span class="sep">•</span>
+                <span>ID usuario: <?= $idUsuarioHeader ?></span>
             </div>
         </div>
     </div>

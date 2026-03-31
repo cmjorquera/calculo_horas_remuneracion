@@ -13,9 +13,11 @@ if ((int)($_SESSION["id_rol"] ?? 0) !== 1) {
 }
 
 require_once __DIR__ . "/../../class/conexion.php";
+require_once __DIR__ . "/../../class/funciones.php";
 require_once __DIR__ . "/../../envio_correo_recuperado.php";
 
 $db = new MySQL("qaseduc_calculo_horario", "qaseduc_ucomun", "jorquera86;");
+$funciones = new Funciones($db);
 
 function salirError($msg)
 {
@@ -40,7 +42,60 @@ function generarTokenIncorporacion($largo = 64)
     return substr(bin2hex($bytes), 0, $largo);
 }
 
-$identificador = trim((string)($_POST["identificador"] ?? ""));
+function normalizarIdentificadorBase($valor)
+{
+    $valor = trim((string)$valor);
+    if ($valor === "") {
+        return "";
+    }
+
+    if (function_exists('iconv')) {
+        $convertido = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $valor);
+        if ($convertido !== false) {
+            $valor = $convertido;
+        }
+    }
+
+    $valor = strtolower($valor);
+    $valor = preg_replace('/[^a-z0-9]+/', '', $valor);
+    return trim((string)$valor);
+}
+
+function generarIdentificadorUsuario($db, $nombre, $apellidoPaterno)
+{
+    $nombreBase = normalizarIdentificadorBase($nombre);
+    $apellidoBase = normalizarIdentificadorBase($apellidoPaterno);
+
+    $inicial = $nombreBase !== "" ? substr($nombreBase, 0, 1) : "u";
+    $base = $inicial . ($apellidoBase !== "" ? $apellidoBase : "usuario");
+    $base = substr($base, 0, 60);
+
+    if ($base === "") {
+        $base = "usuario";
+    }
+
+    $identificador = $base;
+    $correlativo = 1;
+
+    while (true) {
+        $identificadorEsc = esc($db, $identificador);
+        $res = $db->consulta("
+            SELECT id_usuario
+            FROM usuarios
+            WHERE identificador = '{$identificadorEsc}'
+            LIMIT 1
+        ");
+
+        if ($db->num_rows($res) === 0) {
+            return $identificador;
+        }
+
+        $sufijo = (string)$correlativo;
+        $identificador = substr($base, 0, max(1, 60 - strlen($sufijo))) . $sufijo;
+        $correlativo++;
+    }
+}
+
 $email = trim((string)($_POST["email"] ?? ""));
 $nombre = trim((string)($_POST["nombre"] ?? ""));
 $apellidoPaterno = trim((string)($_POST["apellido_paterno"] ?? ""));
@@ -52,7 +107,6 @@ $idColegio = (int)($_POST["id_colegio"] ?? 0);
 $estado = (int)($_POST["estado"] ?? 1);
 $colegioNombre = trim((string)($_POST["colegio_nombre"] ?? ""));
 
-if ($identificador === "") salirError("El identificador es obligatorio.");
 if ($email === "") salirError("El email es obligatorio.");
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) salirError("El email no es válido.");
 if ($nombre === "") salirError("El nombre es obligatorio.");
@@ -60,6 +114,9 @@ if ($apellidoPaterno === "") salirError("El apellido paterno es obligatorio.");
 if ($idRol <= 0) salirError("Debes seleccionar un rol.");
 if ($idColegio <= 0) salirError("Debes seleccionar un colegio.");
 if (!in_array($estado, [0, 1, 2], true)) salirError("Estado inválido.");
+
+$identificador = generarIdentificadorUsuario($db, $nombre, $apellidoPaterno);
+$estadoCreacion = 0;
 
 $claveTemporal = generarClaveTemporal(12);
 $tokenIncorporacion = generarTokenIncorporacion(64);
@@ -136,7 +193,7 @@ $sqlUsuario = "
         {$idColegio},
         '{$tokenIncorporacionEsc}',
         DATE_ADD(NOW(), INTERVAL 3 DAY),
-        {$estado},
+        {$estadoCreacion},
         0,
         NOW(),
         NOW()
@@ -176,6 +233,12 @@ if ($errorInsertRol !== 0) {
     $db->consulta("ROLLBACK");
     salirError("No se pudo asignar el rol al usuario.");
 }
+
+$menusPermitidos = ["empleados", "graficos"];
+if ($idRol === 1) {
+    $menusPermitidos[] = "usuarios";
+}
+$funciones->guardarPermisosMenuUsuario($idUsuario, $menusPermitidos);
 
 $db->consulta("COMMIT");
 

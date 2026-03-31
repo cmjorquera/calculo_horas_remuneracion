@@ -19,31 +19,125 @@
     overflow-x: auto;
 }
 
-.table-admin {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 840px;
+.users-table-wrap {
+    margin-top: 0;
+    max-height: 62vh;
 }
 
-.table-admin th,
-.table-admin td {
+#usersTable {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+    min-width: 1080px;
+}
+
+#usersTable thead th {
+    position: sticky;
+    top: 0;
+    background: #fff !important;
+    z-index: 2;
+    border-bottom: 2px solid rgba(0, 0, 0, .08) !important;
+    text-align: center !important;
+    white-space: nowrap;
+}
+
+#usersTable tbody td,
+#usersTable tbody th {
+    background: transparent !important;
+    border-top: 0 !important;
+    vertical-align: middle !important;
+}
+
+#usersTable tbody tr:nth-child(odd) td {
+    background: #fafafa !important;
+}
+
+#usersTable tbody tr:nth-child(even) td {
+    background: #f1f6ff !important;
+}
+
+#usersTable tbody tr:hover td {
+    background: #eaf2ff !important;
+}
+
+#usersTable td.cell-opciones {
+    display: table-cell !important;
+}
+
+#usersTable .cell-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+#usersTable .cell-center {
+    text-align: center;
+}
+
+.status-cell {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.status-help-btn {
+    width: 22px;
+    height: 22px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+}
+
+.status-help-btn:hover {
+    color: #0b5d90;
+    background: rgba(11, 93, 144, 0.08);
+}
+
+.status-popover {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    min-width: 220px;
+    max-width: 260px;
     padding: 10px 12px;
-    border-bottom: 1px solid var(--line);
-    text-align: left;
-    vertical-align: top;
-    font-size: 13px;
-}
-
-.table-admin th {
-    background: #f8fafc;
-    color: #0f172a;
+    border-radius: 12px;
+    background: #0f172a;
+    color: #fff;
     font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    line-height: 1.4;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.24);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+    z-index: 20;
+    text-align: left;
 }
 
-.table-admin tbody tr:hover {
-    background: rgba(0, 78, 140, 0.03);
+.status-popover::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    right: 14px;
+    width: 12px;
+    height: 12px;
+    background: #0f172a;
+    transform: rotate(45deg);
+}
+
+.status-popover.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
 }
 
 .users-head-actions {
