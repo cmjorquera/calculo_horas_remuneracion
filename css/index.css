@@ -167,44 +167,6 @@
     color: #374151;
 }
 
-.horario-help {
-    border: 0;
-    background: transparent;
-    color: #6b7280;
-    padding: 0;
-    line-height: 1;
-    cursor: pointer;
-}
-
-.horario-help i {
-    font-size: 16px;
-}
-
-.col-repeat-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 800;
-    color: #0f172a;
-    cursor: pointer;
-    user-select: none;
-}
-
-.col-repeat-toggle input {
-    width: 14px;
-    height: 14px;
-    margin: 0;
-    accent-color: var(--inst-blue);
-    cursor: pointer;
-}
-
-.col-repeat-toggle span {
-    display: inline-block;
-    line-height: 1;
-}
-
 select.swal-input-modern {
     cursor: pointer;
 }

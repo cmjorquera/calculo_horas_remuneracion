@@ -100,6 +100,37 @@ function hhmmToMinutes(hhmm) {
   return (h * 60) + m;
 }
 
+function sanitizePedNumberInput(value) {
+  const raw = String(value || "");
+  let out = "";
+  let hasSep = false;
+
+  for (const ch of raw) {
+    if (/\d/.test(ch)) {
+      out += ch;
+      continue;
+    }
+    if ((ch === "." || ch === ",") && !hasSep) {
+      out += ".";
+      hasSep = true;
+    }
+  }
+
+  return out;
+}
+
+function parsePedHours(value) {
+  const s = sanitizePedNumberInput(value);
+  if (!s) return 0;
+  const n = Number(s);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, n);
+}
+
+function pedHoursToCronoMinutes(value) {
+  return Math.round(parsePedHours(value) * 40);
+}
+
 function formatearRun(input) {
   let value = input.value;
 
@@ -128,9 +159,22 @@ function recolectarResumen() {
   const colacionSelect = document.getElementById("sumColacionSelect");
   const jornadaCroHHMM = (document.getElementById("sumJornadaCro")?.textContent || "00:00").trim();
   const colacionMinTxt = (document.getElementById("sumColacionMin")?.textContent || "0").trim();
+  const colacionOpt = colacionSelect?.selectedOptions?.[0] || null;
+
+  if (typeof window.recalcularLectivas === "function") {
+    window.recalcularLectivas();
+  }
+  if (typeof window.recalcularNoLectivas === "function") {
+    window.recalcularNoLectivas();
+  }
+  if (typeof window.updateHorasLectivasUI === "function") {
+    window.updateHorasLectivasUI();
+  }
+
+  const lectivasPedTxt = (document.getElementById("sumLectivasPed")?.value || "0").trim();
+  const noLectivasPedTxt = (document.getElementById("sumNoLectivasPed")?.value || "0").trim();
   const lectivasCroHHMM = (document.getElementById("sumLectivasCro")?.value || "00:00").trim();
   const noLectivasCroHHMM = (document.getElementById("sumNoLectivasCro")?.value || "00:00").trim();
-  const colacionOpt = colacionSelect?.selectedOptions?.[0] || null;
 
   let colacionMin = parseInt(colacionOpt?.dataset?.minutos || "", 10);
   if (!Number.isFinite(colacionMin)) {
@@ -144,8 +188,8 @@ function recolectarResumen() {
     colacionId: colacionSelect?.value || "",
     jornadaCroMinSemanal: hhmmToMinutes(jornadaCroHHMM),
     colacionMinDiaria: colacionMin,
-    horasLectivasMin: hhmmToMinutes(lectivasCroHHMM),
-    horasNoLectivasMin: hhmmToMinutes(noLectivasCroHHMM)
+    horasLectivasMin: pedHoursToCronoMinutes(lectivasPedTxt) || hhmmToMinutes(lectivasCroHHMM),
+    horasNoLectivasMin: pedHoursToCronoMinutes(noLectivasPedTxt) || hhmmToMinutes(noLectivasCroHHMM)
   };
 }
 

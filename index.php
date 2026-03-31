@@ -59,7 +59,7 @@ $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosCol
 <script src="js/button.js"></script>
 <script src="js/guardar_empleado.js?v=<?= filemtime(__DIR__ . '/js/guardar_empleado.js') ?>"></script>
 <script src="js/tabla_dinamicas.js"></script>
-<script src="js/horas_cronologicas.js"></script>
+<script src="js/horas_cronologicas.js?v=<?= filemtime(__DIR__ . '/js/horas_cronologicas.js') ?>"></script>
 
 <div class="page">
     <?php include __DIR__ . "/menu_lateral.php"; ?>
@@ -78,10 +78,6 @@ $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosCol
                 </div>
                 <div class="card-head-side">
                     <div class="horario-tools">
-                    <button type="button" class="horario-help" id="btnAutoRepeatHelp"
-                        aria-label="Ayuda repetir hacia abajo" title="Cómo funciona">
-                        <i class="bi bi-info-circle"></i>
-                    </button>
                     </div>
                 </div>
             </div>
@@ -95,30 +91,10 @@ $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosCol
                             <th colspan="2">Tarde</th>
                         </tr>
                         <tr>
-                            <th>
-                                <label class="col-repeat-toggle">
-                                    <input type="checkbox" id="chkRepeatManIni" checked>
-                                    <span>Inicio</span>
-                                </label>
-                            </th>
-                            <th>
-                                <label class="col-repeat-toggle">
-                                    <input type="checkbox" id="chkRepeatManFin" checked>
-                                    <span>Término</span>
-                                </label>
-                            </th>
-                            <th>
-                                <label class="col-repeat-toggle">
-                                    <input type="checkbox" id="chkRepeatTarIni" checked>
-                                    <span>Inicio</span>
-                                </label>
-                            </th>
-                            <th>
-                                <label class="col-repeat-toggle">
-                                    <input type="checkbox" id="chkRepeatTarFin" checked>
-                                    <span>Término</span>
-                                </label>
-                            </th>
+                            <th>Inicio</th>
+                            <th>Término</th>
+                            <th>Inicio</th>
+                            <th>Término</th>
                         </tr>
                     </thead>
 
@@ -160,7 +136,7 @@ $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosCol
                             <div class="name">Jornada ordinaria</div>
                             <div class="hint">Total semanal</div>
                         </div>
-                        <div class="box"><small>Pedagógicas</small><span id="sumJornadaPed">--:--</span> </div>
+                        <div class="box"><small>Pedagógicas</small><span id="sumJornadaPed">0</span> </div>
                         <div class="box"><small>Cronológicas</small><span id="sumJornadaCro">00:00</span></div>
                     </div>
 
@@ -1202,10 +1178,6 @@ function init() {
             tr.querySelectorAll("select").forEach(s => s.disabled = false);
         });
 
-        document.querySelectorAll(".col-repeat-toggle input[type='checkbox']").forEach((check) => {
-            check.checked = true;
-        });
-
         const sumJornadaPed = document.getElementById("sumJornadaPed");
         const sumJornadaCro = document.getElementById("sumJornadaCro");
         const sumLectivasPed = document.getElementById("sumLectivasPed");
@@ -1215,7 +1187,7 @@ function init() {
         const sumColacionMin = document.getElementById("sumColacionMin");
         const sumColacionSelect = document.getElementById("sumColacionSelect");
 
-        if (sumJornadaPed) sumJornadaPed.textContent = "--:--";
+        if (sumJornadaPed) sumJornadaPed.textContent = "0";
         if (sumJornadaCro) sumJornadaCro.textContent = "00:00";
         if (sumLectivasPed) sumLectivasPed.value = "0";
         if (sumLectivasCro) sumLectivasCro.value = "00:00";
@@ -1263,50 +1235,14 @@ init();
 <!--calculo de horas Cronologicas-->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const btnAutoRepeatHelp = document.getElementById("btnAutoRepeatHelp");
-    const repeatColumns = {
-        man_ini: document.getElementById("chkRepeatManIni"),
-        man_fin: document.getElementById("chkRepeatManFin"),
-        tar_ini: document.getElementById("chkRepeatTarIni"),
-        tar_fin: document.getElementById("chkRepeatTarFin")
-    };
-
-    // 1) Auto-fill
-    if (window.bindAutoFillHorario) {
-        bindAutoFillHorario({
-            tbodySelector: "#tbodyHorario",
-            dayPrefixes: ["lun", "mar", "mie", "jue", "vie"],
-            onlyIfEmpty: false,
-            isEnabled: ({ bloque, tipo }) => {
-                const key = `${bloque}_${tipo}`;
-                return !!(repeatColumns[key] && repeatColumns[key].checked);
-            }
-        });
-    }
-
-    // 2) Re-cálculo jornada + resumen
+    // 1) Re-cálculo jornada + resumen
     bindRecalculoHorario({
         tbodySelector: "#tbodyHorario",
         dayPrefixes: ["lun", "mar", "mie", "jue", "vie"]
     });
 
-    // 3) Colación fija seleccionada desde BD
+    // 2) Colación fija seleccionada desde BD
     bindColacionFija();
-
-    if (btnAutoRepeatHelp) {
-        btnAutoRepeatHelp.addEventListener("click", function() {
-            Swal.fire({
-                icon: "info",
-                title: "Repetir hacia abajo",
-                text: "Cada columna tiene su propio check. Si está activo, cualquier cambio en esa columna se copia a los días siguientes. Por defecto todos vienen activados.",
-                customClass: {
-                    popup: 'swal-seduc',
-                    confirmButton: 'btn-seduc btn-seduc-primary'
-                }
-            });
-        });
-    }
-
 });
 </script>
 

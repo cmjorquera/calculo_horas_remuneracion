@@ -174,11 +174,16 @@
 
   function updateHorasLectivasUI() {
     const msgEl = document.getElementById("horasLectivasMsg");
+    const jornadaPedEl = document.getElementById("sumJornadaPed");
     const lectivasPedEl = document.getElementById("sumLectivasPed");
     const noLectivasPedEl = document.getElementById("sumNoLectivasPed");
     const state = getHorasLectivasState();
     const lectivasInvalid = state.lectivasPed > state.limitePed || state.totalPed > state.limitePed;
     const noLectivasInvalid = state.noLectivasPed > state.limitePed || state.totalPed > state.limitePed;
+
+    if (jornadaPedEl) {
+      jornadaPedEl.textContent = formatPedHoursValue(state.totalPed);
+    }
 
     if (lectivasPedEl) {
       lectivasPedEl.classList.toggle("is-invalid", lectivasInvalid);
@@ -224,14 +229,10 @@
     const pedEl = document.getElementById("sumNoLectivasPed");
     const noLectivasCroEl = document.getElementById("sumNoLectivasCro");
     const lectivasPedEl = document.getElementById("sumLectivasPed");
-    const lectivasCroEl = document.getElementById("sumLectivasCro");
     if (!pedEl || !noLectivasCroEl) return;
 
-    enforcePedLimit(pedEl, lectivasPedEl);
-    const jornadaCronoMin = getJornadaCronoMinutes();
-    const lectivasCronoMin = parseHHMM(lectivasCroEl ? lectivasCroEl.value : "00:00");
-    const noLectivasCronoMin = Math.max(0, jornadaCronoMin - lectivasCronoMin);
-    noLectivasCroEl.value = formatHHMM(noLectivasCronoMin);
+    const pedHours = enforcePedLimit(pedEl, lectivasPedEl);
+    noLectivasCroEl.value = pedHoursToCronoHHMM(pedHours);
     updateHorasLectivasUI();
   }
 

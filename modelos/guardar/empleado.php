@@ -83,6 +83,7 @@ foreach ($horario as $d) {
 // 3) DATOS EXTRA
 // =====================
 $id_colegio = (int)($_SESSION["id_colegio"] ?? 0);
+$es_super_admin = !empty($_SESSION["is_super_admin"]);
 if ($id_colegio <= 0) jerr("id_colegio no encontrado.");
 
 $codigo = "EMP" . date("ymdHis") . rand(100, 999);
@@ -94,16 +95,15 @@ $db->consulta("START TRANSACTION");
 
 // 4.1) Resolver empleado destino (nuevo o existente)
 $id_empleado = 0;
+$id_colegio_objetivo = $id_colegio;
 if ($id_empleado_post > 0) {
   $sqlEmpExiste = "
-    SELECT id_empleado
+    SELECT id_empleado, id_colegio
     FROM empleados
     WHERE id_empleado = $id_empleado_post
-      AND id_colegio = $id_colegio
+      ".($es_super_admin ? "" : "AND id_colegio = $id_colegio")."
     LIMIT 1
   ";
-  // echo $sqlEmpExiste;
-  // die();
   $resEmpExiste = $db->consulta($sqlEmpExiste);
   $rowEmpExiste = $db->fetch_assoc($resEmpExiste);
   if (!$rowEmpExiste) {
@@ -111,6 +111,11 @@ if ($id_empleado_post > 0) {
     jerr("El empleado seleccionado no existe en este colegio.");
   }
   $id_empleado = (int)$rowEmpExiste["id_empleado"];
+  $id_colegio_objetivo = (int)($rowEmpExiste["id_colegio"] ?? 0);
+  if ($id_colegio_objetivo <= 0) {
+    $db->consulta("ROLLBACK");
+    jerr("No se pudo determinar el colegio del empleado seleccionado.");
+  }
 }
 $modoModificar = $id_empleado > 0;
 
@@ -119,7 +124,7 @@ $runNorm = normalize_run($run);
 $sqlCheck = "
   SELECT id_empleado
   FROM empleados
-  WHERE id_colegio = $id_colegio
+  WHERE id_colegio = $id_colegio_objetivo
     AND REPLACE(REPLACE(UPPER(run), '.', ''), '-', '') = '".esc($db,$runNorm)."'
     ".($id_empleado > 0 ? "AND id_empleado <> $id_empleado" : "")."
   LIMIT 1
@@ -143,7 +148,7 @@ if ($id_empleado > 0) {
       genero = CASE WHEN '".esc($db,$genero)."' = '' THEN genero ELSE '".esc($db,$genero)."' END,
       updated_at = NOW()
     WHERE id_empleado = $id_empleado
-      AND id_colegio = $id_colegio
+      AND id_colegio = $id_colegio_objetivo
     LIMIT 1
   ";
   if (!$db->consulta($sqlEmpUpdate)) {
@@ -158,7 +163,7 @@ if ($id_empleado > 0) {
     (
       '".esc($db,$codigo)."',
       '".esc($db,$run)."',
-      $id_colegio,
+      $id_colegio_objetivo,
       '".esc($db,$nombres)."',
       '".esc($db,$ap_paterno)."',
       '".esc($db,$ap_materno)."',
