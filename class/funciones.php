@@ -355,53 +355,51 @@ $sql = "
         }
 
         $this->db->consulta("
-            CREATE TABLE IF NOT EXISTS menu_v (
+            CREATE TABLE IF NOT EXISTS menus (
                 id_menu INT AUTO_INCREMENT PRIMARY KEY,
                 codigo VARCHAR(50) NOT NULL,
                 nombre VARCHAR(100) NOT NULL,
-                url VARCHAR(255) NOT NULL,
+                ruta VARCHAR(255) NOT NULL,
                 icono VARCHAR(100) DEFAULT NULL,
-                descripcion VARCHAR(255) DEFAULT NULL,
                 orden INT NOT NULL DEFAULT 0,
-                visible TINYINT(1) NOT NULL DEFAULT 1,
+                estado TINYINT(1) NOT NULL DEFAULT 1,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                UNIQUE KEY uk_menu_v_codigo (codigo)
+                UNIQUE KEY uk_menus_codigo (codigo)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         ");
 
         $this->db->consulta("
-            CREATE TABLE IF NOT EXISTS usuario_menu_v (
+            CREATE TABLE IF NOT EXISTS usuario_menu (
                 id_usuario_menu INT AUTO_INCREMENT PRIMARY KEY,
                 id_usuario INT NOT NULL,
                 id_menu INT NOT NULL,
                 permitido TINYINT(1) NOT NULL DEFAULT 1,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                UNIQUE KEY uk_usuario_menu_v (id_usuario, id_menu),
-                KEY idx_usuario_menu_v_usuario (id_usuario),
-                KEY idx_usuario_menu_v_menu (id_menu),
-                KEY idx_usuario_menu_v_permitido (permitido)
+                UNIQUE KEY uk_usuario_menu (id_usuario, id_menu),
+                KEY idx_usuario_menu_usuario (id_usuario),
+                KEY idx_usuario_menu_menu (id_menu),
+                KEY idx_usuario_menu_permitido (permitido)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         ");
 
         $this->db->consulta("
-            INSERT INTO menu_v (codigo, nombre, url, icono, descripcion, orden, visible)
+            INSERT INTO menus (codigo, nombre, ruta, icono, orden, estado)
             VALUES
-                ('empleados', 'Empleados', 'index.php', 'bi-people-fill', 'Modulo principal de empleados', 10, 1),
-                ('graficos', 'Graficos', 'grafico.php', 'bi-bar-chart-fill', 'Graficos y reportes', 20, 1),
-                ('usuarios', 'Usuarios', 'usuarios.php', 'bi-person-plus-fill', 'Administracion de usuarios', 30, 1)
+                ('empleados', 'Empleados', 'index.php', 'bi-people-fill', 10, 1),
+                ('graficos', 'Graficos', 'grafico.php', 'bi-bar-chart-fill', 20, 1),
+                ('usuarios', 'Usuarios', 'usuarios.php', 'bi-person-plus-fill', 30, 1)
             ON DUPLICATE KEY UPDATE
                 nombre = VALUES(nombre),
-                url = VALUES(url),
+                ruta = VALUES(ruta),
                 icono = VALUES(icono),
-                descripcion = VALUES(descripcion),
                 orden = VALUES(orden),
-                visible = VALUES(visible)
+                estado = VALUES(estado)
         ");
 
         $this->db->consulta("
-            INSERT INTO usuario_menu_v (id_usuario, id_menu, permitido)
+            INSERT INTO usuario_menu (id_usuario, id_menu, permitido)
             SELECT u.id_usuario, m.id_menu,
                 CASE
                     WHEN m.codigo = 'usuarios' THEN
@@ -418,9 +416,9 @@ $sql = "
                     ELSE 1
                 END AS permitido
             FROM usuarios u
-            INNER JOIN menu_v m
-                ON m.visible = 1
-            LEFT JOIN usuario_menu_v um
+            INNER JOIN menus m
+                ON m.estado = 1
+            LEFT JOIN usuario_menu um
                 ON um.id_usuario = u.id_usuario
                AND um.id_menu = m.id_menu
             WHERE um.id_usuario_menu IS NULL
@@ -434,9 +432,17 @@ $sql = "
         $this->asegurarEsquemaMenus();
 
         $res = $this->db->consulta("
-            SELECT id_menu, codigo, nombre, url, icono, descripcion, orden, visible
-            FROM menu_v
-            WHERE visible = 1
+            SELECT
+                id_menu,
+                codigo,
+                nombre,
+                ruta AS url,
+                icono,
+                '' AS descripcion,
+                orden,
+                estado AS visible
+            FROM menus
+            WHERE estado = 1
             ORDER BY orden ASC, id_menu ASC
         ");
 
@@ -458,16 +464,16 @@ $sql = "
                 m.id_menu,
                 m.codigo,
                 m.nombre,
-                m.url,
+                m.ruta AS url,
                 m.icono,
                 m.orden,
-                m.descripcion,
+                '' AS descripcion,
                 COALESCE(um.permitido, 0) AS permitido
-            FROM menu_v m
-            LEFT JOIN usuario_menu_v um
+            FROM menus m
+            LEFT JOIN usuario_menu um
                 ON um.id_menu = m.id_menu
                AND um.id_usuario = {$idUsuario}
-            WHERE m.visible = 1
+            WHERE m.estado = 1
             ORDER BY m.orden ASC, m.id_menu ASC
         ");
 
@@ -511,7 +517,7 @@ $sql = "
             $permitido = isset($permitidosMap[$codigo]) ? 1 : 0;
 
             $this->db->consulta("
-                INSERT INTO usuario_menu_v (id_usuario, id_menu, permitido)
+                INSERT INTO usuario_menu (id_usuario, id_menu, permitido)
                 VALUES ({$idUsuario}, {$idMenu}, {$permitido})
                 ON DUPLICATE KEY UPDATE
                     permitido = VALUES(permitido),

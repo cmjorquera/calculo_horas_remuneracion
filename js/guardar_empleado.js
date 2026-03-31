@@ -280,6 +280,11 @@ function guardarEmpleado() {
       icon: "warning",
       title: "Horario incompleto",
       text: errConsistencia,
+      buttonsStyling: false,
+      customClass: {
+        popup: "swal-seduc",
+        confirmButton: "btn-seduc btn-seduc-primary"
+      }
     });
     return;
   }
@@ -578,6 +583,14 @@ preConfirm: () => {
     .then(res => res.json())
     .then(resp => {
      if (resp.ok) {
+  const empleadoIdGuardado = Number(resp.id_empleado || payload.id_empleado || 0);
+  const contratoIdGuardado = Number(resp.id_contrato || payload.id_contrato || 0);
+  if (empleadoIdGuardado > 0) {
+    sessionStorage.setItem("empleadoSeleccionadoId", String(empleadoIdGuardado));
+  }
+  if (contratoIdGuardado > 0) {
+    sessionStorage.setItem("empleadoSeleccionadoContratoId", String(contratoIdGuardado));
+  }
   Swal.fire({
     icon: "success",
     title: "OK",

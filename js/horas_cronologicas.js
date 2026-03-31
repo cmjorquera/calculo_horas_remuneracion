@@ -88,6 +88,17 @@
     return String(n);
   }
 
+  function setElementContent(el, value) {
+    if (!el) return;
+
+    if ("value" in el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) {
+      el.value = String(value ?? "");
+      return;
+    }
+
+    el.textContent = String(value ?? "");
+  }
+
   function normalizePedNumber(value) {
     const n = parsePedHours(value);
     return formatPedHoursValue(n);
@@ -182,7 +193,7 @@
     const noLectivasInvalid = state.noLectivasPed > state.limitePed || state.totalPed > state.limitePed;
 
     if (jornadaPedEl) {
-      jornadaPedEl.textContent = formatPedHoursValue(state.totalPed);
+      setElementContent(jornadaPedEl, formatPedHoursValue(state.totalPed));
     }
 
     if (lectivasPedEl) {
@@ -290,12 +301,18 @@
       noLectivasPedEl.addEventListener("input", function () {
         recalcularNoLectivas();
       });
+      noLectivasPedEl.addEventListener("change", function () {
+        recalcularNoLectivas();
+      });
       noLectivasPedEl.addEventListener("blur", function () {
         recalcularNoLectivas();
       });
     }
 
     lectivasPedEl.addEventListener("input", function () {
+      recalcularLectivas();
+    });
+    lectivasPedEl.addEventListener("change", function () {
       recalcularLectivas();
     });
 

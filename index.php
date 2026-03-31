@@ -415,6 +415,8 @@ $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosCol
           <td class="cell-opciones" data-col="Opciones" data-value="opciones">
             <div class="cell-actions">
               <button type="button" class="btn-table-icon" title="Cargar horario"
+                data-id-empleado="<?= $idEmpleado ?>"
+                data-id-contrato="<?= $idContrato ?>"
                 data-empleado-nombre="<?= htmlspecialchars($nombre, ENT_QUOTES) ?>"
                 data-empleado-nombres="<?= htmlspecialchars($nombresEmp, ENT_QUOTES) ?>"
                 data-empleado-ap-paterno="<?= htmlspecialchars($apPatEmp, ENT_QUOTES) ?>"
@@ -436,7 +438,7 @@ $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosCol
               </button>
 
               <button type="button" class="btn-table-icon" title="Observación"
-                onclick="verObservacion(<?= $idEmpleado ?>, '<?= htmlspecialchars($nombre, ENT_QUOTES) ?>', '<?= htmlspecialchars($obs, ENT_QUOTES) ?>')">
+                onclick="verObservacion(<?= $idEmpleado ?>, '<?= htmlspecialchars($nombre, ENT_QUOTES) ?>')">
                 <i class="bi bi-file-text"></i>
               </button>
             </div>
@@ -668,6 +670,24 @@ function seleccionarEmpleado(ev, triggerBtn, idEmpleado, idContrato) {
         });
 }
 
+function restaurarEmpleadoSeleccionadoPendiente() {
+    const empleadoId = Number(sessionStorage.getItem("empleadoSeleccionadoId") || "0");
+    if (empleadoId <= 0) return;
+
+    const contratoId = Number(sessionStorage.getItem("empleadoSeleccionadoContratoId") || "0");
+    const triggerBtn = document.querySelector(
+        `.btn-table-icon[title="Cargar horario"][data-id-empleado="${empleadoId}"]`
+    );
+
+    sessionStorage.removeItem("empleadoSeleccionadoId");
+    sessionStorage.removeItem("empleadoSeleccionadoContratoId");
+
+    if (!triggerBtn) return;
+
+    const contratoFinal = Number(triggerBtn.dataset?.idContrato || contratoId || 0);
+    seleccionarEmpleado(null, triggerBtn, empleadoId, contratoFinal);
+}
+
 function verDetalleHorario(idEmpleado, idContrato) {
     const empleadoId = Number(idEmpleado) || 0;
     const contratoId = Number(idContrato) || 0;
@@ -781,19 +801,66 @@ function copiarDato(texto) {
     });
 }
 
-function verObservacion(idEmpleado, nombre, observacion) {
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function verObservacion(idEmpleado, nombre) {
+    const empleadoId = Number(idEmpleado) || 0;
+    if (empleadoId <= 0) {
+        Swal.fire('Error', 'No se pudo identificar al empleado.', 'error');
+        return;
+    }
+
     Swal.fire({
         title: 'Observación',
         html: `
             <div style="text-align: left;">
-                <p style="color: #6b7280; font-size: 14px; margin-bottom: 12px;"><strong>${nombre}</strong></p>
-                <div style="width: 100%; min-height: 150px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; background: #f9fafb; font-family: inherit; font-size: 13px; line-height: 1.5; word-wrap: break-word; white-space: pre-wrap;">${observacion || '<span style="color: #9ca3af;">Sin observación</span>'}</div>
+                <p style="color: #6b7280; font-size: 14px; margin-bottom: 12px;"><strong>${escapeHtml(nombre)}</strong></p>
+                <div id="swalObservacionContenido" style="width: 100%; min-height: 150px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; background: #f9fafb; font-family: inherit; font-size: 13px; line-height: 1.5; word-wrap: break-word; white-space: pre-wrap; display:flex; align-items:center; justify-content:center;">
+                    <div class="spinner-border" role="status" aria-hidden="true"></div>
+                </div>
             </div>
         `,
         confirmButtonText: 'Cerrar',
         customClass: {
             popup: 'swal-seduc',
             confirmButton: 'btn-seduc btn-seduc-primary'
+        },
+        didOpen: () => {
+            const fd = new FormData();
+            fd.append('id_empleado', String(empleadoId));
+
+            fetch('rescatarobservacionFuncionario.php', {
+                    method: 'POST',
+                    body: fd
+                })
+                .then(r => r.json())
+                .then(data => {
+                    const el = document.getElementById('swalObservacionContenido');
+                    if (!el) return;
+
+                    if (!data.ok) {
+                        el.innerHTML = '<span style="color: #dc2626;">No se pudo cargar la observación.</span>';
+                        return;
+                    }
+
+                    const observacion = String(data.observacion || '').trim();
+                    el.style.display = 'block';
+                    el.innerHTML = observacion ?
+                        escapeHtml(observacion).replace(/\n/g, '<br>') :
+                        '<span style="color: #9ca3af;">Sin observación</span>';
+                })
+                .catch(() => {
+                    const el = document.getElementById('swalObservacionContenido');
+                    if (!el) return;
+                    el.innerHTML = '<span style="color: #dc2626;">Error al cargar la observación.</span>';
+                });
         }
     });
 }
@@ -1243,6 +1310,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // 2) Colación fija seleccionada desde BD
     bindColacionFija();
+
+    restaurarEmpleadoSeleccionadoPendiente();
 });
 </script>
 
