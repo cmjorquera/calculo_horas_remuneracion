@@ -245,6 +245,21 @@ function guardarEmpleado() {
     fullName: "",
     ignorePrefilledExisting: !!prefillRunNorm
   };
+  const emailLookupState = {
+    checking: false,
+    exists: false,
+    emailNorm: "",
+    fullName: ""
+  };
+  const colegiosEmpleado = Array.isArray(window.COLEGIOS_EMPLEADO) ? window.COLEGIOS_EMPLEADO : [];
+  const colegiosLogoEmpleado = window.COLEGIOS_LOGO_EMPLEADO || {};
+  const idUsuarioSesion = window.ID_USUARIO_SESION;
+  const esSuperAdminEmpleado = !!window.ES_SUPER_ADMIN_EMPLEADO || idUsuarioSesion == 2 || idUsuarioSesion == 5;
+  const colegioOptionsHtml = colegiosEmpleado.map((colegio) => {
+    const idColegio = Number(colegio.id_colegio || 0);
+    const nombreColegio = String(colegio.nco_colegio || colegio.nom_colegio || `Colegio ${idColegio}`).trim();
+    return `<option value="${idColegio}">${nombreColegio.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;")}</option>`;
+  }).join("");
 
   if (!tieneAlgo) {
     Swal.fire({
@@ -307,69 +322,69 @@ function guardarEmpleado() {
   Swal.fire({
     title: "Registrar empleado",
 html: `
-  <div class="swal-form-modern">
-    <div class="swal-layout-3col">
-      <div class="swal-col-left">
-        <div class="swal-field">
-          <label>Nombres</label>
-          <input id="sw_nombres" class="swal-input-modern" placeholder="Ej: Juan">
-        </div>
-
-        <div class="swal-field">
-          <label>Apellido paterno</label>
-          <input id="sw_ap_paterno" class="swal-input-modern" placeholder="Ej: Pérez">
-        </div>
-
-        <div class="swal-field">
-          <label>Apellido materno</label>
-          <input id="sw_ap_materno" class="swal-input-modern" placeholder="Ej: Soto">
-        </div>
-
-        <div class="swal-field">
-          <label>Género</label>
-          <select id="sw_genero" class="swal-input-modern">
-            <option value="">Selecciona...</option>
-            <option value="1">Hombre</option>
-            <option value="2">Mujer</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="swal-col-mid">
-        <div class="swal-field">
-          <label>RUN</label>
-          <input id="sw_run" class="swal-input-modern" placeholder="12.345.678-9">
-          <small id="sw_run_exists_msg" style="display:block;margin-top:6px;color:#6b7280;"></small>
-        </div>
-
-        <div class="swal-field">
-          <label>Email</label>
-          <input id="sw_email" class="swal-input-modern" placeholder="juan@seduc.cl">
-        </div>
-
-        <div class="swal-field">
-          <label>Teléfono</label>
-          <input id="sw_telefono" class="swal-input-modern" placeholder="+56 9 1234 5678">
-        </div>
-      </div>
-
-      <div class="swal-col-right">
-        <div class="swal-field swal-observacion-field">
-          <label>Observación contrato</label>
-          <textarea id="sw_observacion"
-                    class="swal-input-modern swal-textarea-modern"
-                    rows="12"
-                    placeholder="Ej: Contrato jornada completa, reemplazo, etc."></textarea>
+  <form class="user-create-form employee-create-form" id="employeeCreateForm">
+    <div class="user-create-topbar">
+      <div id="sw_colegio_preview" class="colegio-logo-chip is-hidden" aria-live="polite">
+        <img id="sw_colegio_preview_img" class="colegio-logo-chip-img" src="" alt="">
+        <div class="colegio-logo-chip-copy">
+          <strong id="sw_colegio_preview_nombre">Colegio</strong>
+          <span id="sw_colegio_preview_meta">ID colegio</span>
         </div>
       </div>
     </div>
-  </div>
+    <div class="user-create-grid employee-create-grid">
+      <label class="user-field">
+        <span>Email</span>
+        <input id="sw_email" type="email" maxlength="150" placeholder="correo@colegio.cl">
+      </label>
+      <label class="user-field">
+        <span>Género</span>
+        <select id="sw_genero">
+          <option value="">Selecciona</option>
+          <option value="1">Hombre</option>
+          <option value="2">Mujer</option>
+        </select>
+      </label>
+      <label class="user-field">
+        <span>Nombre</span>
+        <input id="sw_nombres" type="text" maxlength="80" placeholder="Nombre">
+      </label>
+      <label class="user-field">
+        <span>Apellido paterno</span>
+        <input id="sw_ap_paterno" type="text" maxlength="80" placeholder="Apellido paterno">
+      </label>
+      <label class="user-field">
+        <span>Apellido materno</span>
+        <input id="sw_ap_materno" type="text" maxlength="80" placeholder="Apellido materno">
+      </label>
+      <label class="user-field ${esSuperAdminEmpleado ? "" : "is-hidden"}">
+        <span>Colegio</span>
+        <select id="sw_id_colegio">
+          <option value="">Selecciona</option>
+          ${colegioOptionsHtml}
+        </select>
+      </label>
+      <label class="user-field">
+        <span>RUN</span>
+        <input id="sw_run" type="text" maxlength="20" placeholder="12.345.678-9">
+        <small id="sw_run_exists_msg" class="user-field-note is-hidden"></small>
+      </label>
+      <label class="user-field">
+        <span>Teléfono</span>
+        <input id="sw_telefono" type="text" maxlength="25" placeholder="Opcional">
+      </label>
+      <label class="user-field employee-observacion-field">
+        <span>Observación contrato</span>
+        <textarea id="sw_observacion" rows="5" placeholder="Ej: Contrato jornada completa, reemplazo, etc."></textarea>
+      </label>
+    </div>
+  </form>
 `,
 
     showCancelButton: true,
     confirmButtonText: "Guardar",
     cancelButtonText: "Cancelar",
-    width: "1100px",
+    width: 860,
     focusConfirm: false,
             customClass: {
             popup: 'swal-seduc',
@@ -381,10 +396,57 @@ didOpen: () => {
   const apPatInput = document.getElementById("sw_ap_paterno");
   const apMatInput = document.getElementById("sw_ap_materno");
   const runInput = document.getElementById("sw_run");
+  const emailInput = document.getElementById("sw_email");
   const generoInput = document.getElementById("sw_genero");
   const observacionInput = document.getElementById("sw_observacion");
   const runMsg = document.getElementById("sw_run_exists_msg");
+  const colegioInput = document.getElementById("sw_id_colegio");
+  const colegioPreview = document.getElementById("sw_colegio_preview");
+  const colegioPreviewImg = document.getElementById("sw_colegio_preview_img");
+  const colegioPreviewNombre = document.getElementById("sw_colegio_preview_nombre");
+  const colegioPreviewMeta = document.getElementById("sw_colegio_preview_meta");
+  let emailMsg = document.getElementById("sw_email_exists_msg");
   if (!runInput || !runMsg) return;
+
+  if (emailInput && !emailMsg) {
+    emailMsg = document.createElement("small");
+    emailMsg.id = "sw_email_exists_msg";
+    emailMsg.className = "user-field-note is-hidden";
+    emailInput.insertAdjacentElement("afterend", emailMsg);
+  }
+
+  function syncColegioPreview() {
+    if (!colegioInput || !colegioPreview || !colegioPreviewImg || !colegioPreviewNombre || !colegioPreviewMeta) {
+      return;
+    }
+
+    const idColegio = String(colegioInput.value || "");
+    const selectedOption = colegioInput.options[colegioInput.selectedIndex];
+    const nombreColegio = selectedOption ? selectedOption.textContent.trim() : "Colegio";
+    const logoPath = colegiosLogoEmpleado[idColegio] || "";
+
+    if (!idColegio) {
+      colegioPreview.classList.add("is-hidden");
+      colegioPreviewImg.removeAttribute("src");
+      colegioPreviewImg.alt = "";
+      return;
+    }
+
+    colegioPreviewNombre.textContent = nombreColegio;
+    colegioPreviewMeta.textContent = `ID colegio: ${idColegio}`;
+
+    if (logoPath) {
+      colegioPreviewImg.src = logoPath;
+      colegioPreviewImg.alt = `Logo de ${nombreColegio}`;
+      colegioPreviewImg.style.display = "";
+    } else {
+      colegioPreviewImg.removeAttribute("src");
+      colegioPreviewImg.alt = "";
+      colegioPreviewImg.style.display = "none";
+    }
+
+    colegioPreview.classList.remove("is-hidden");
+  }
 
   if (prefill) {
     if (nombresInput) nombresInput.value = String(prefill.nombres || "");
@@ -394,13 +456,75 @@ didOpen: () => {
     if (generoInput) generoInput.value = normalizeGeneroValue(prefill.genero);
     runInput.value = String(prefill.run || "");
     formatearRun(runInput);
+    if (colegioInput) {
+      colegioInput.value = String(prefill.id_colegio || "");
+      colegioInput.disabled = Number(prefill.id_empleado || 0) > 0;
+      syncColegioPreview();
+    }
+  } else if (colegioInput) {
+    colegioInput.value = "";
+    colegioInput.disabled = false;
+    syncColegioPreview();
+  }
+
+  if (colegioInput) {
+    colegioInput.addEventListener("change", syncColegioPreview);
   }
 
   let timer = null;
 
   function setMsg(text, color) {
     runMsg.textContent = text || "";
+    runMsg.classList.remove("is-hidden", "is-error", "is-ok");
+
+    if (!text) {
+      runMsg.classList.add("is-hidden");
+      runMsg.style.color = "";
+      return;
+    }
+
+    if (color === "#166534") {
+      runMsg.classList.add("is-ok");
+      runMsg.style.color = "";
+      return;
+    }
+
+    if (color === "#b91c1c" || color === "#92400e") {
+      runMsg.classList.add("is-error");
+      runMsg.style.color = "";
+      return;
+    }
+
     runMsg.style.color = color || "#6b7280";
+  }
+
+  function setEmailMsg(text, color) {
+    if (!emailMsg) return;
+
+    emailMsg.textContent = text || "";
+    emailMsg.classList.remove("is-hidden", "is-error", "is-ok");
+    if (emailInput) emailInput.classList.remove("is-invalid");
+
+    if (!text) {
+      emailMsg.classList.add("is-hidden");
+      emailMsg.style.color = "";
+      return;
+    }
+
+    if (color === "#166534") {
+      emailMsg.classList.add("is-ok");
+      emailMsg.style.color = "";
+      return;
+    }
+
+    if (color === "#b91c1c" || color === "#92400e") {
+      emailMsg.classList.add("is-error");
+      emailMsg.style.color = "";
+      if (emailInput) emailInput.classList.add("is-invalid");
+      return;
+    }
+
+    emailMsg.style.color = color || "#6b7280";
   }
 
   async function buscarRun() {
@@ -453,6 +577,65 @@ didOpen: () => {
     }
   }
 
+  let emailTimer = null;
+
+  async function buscarEmail() {
+    if (!emailInput) return;
+
+    const emailRaw = emailInput.value.trim();
+    const emailNorm = emailRaw.toLowerCase();
+
+    if (!emailNorm) {
+      emailLookupState.checking = false;
+      emailLookupState.exists = false;
+      emailLookupState.emailNorm = "";
+      emailLookupState.fullName = "";
+      setEmailMsg("");
+      return;
+    }
+
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm);
+    if (!emailOk) {
+      emailLookupState.checking = false;
+      emailLookupState.exists = false;
+      emailLookupState.emailNorm = emailNorm;
+      emailLookupState.fullName = "";
+      setEmailMsg("Email inválido.", "#92400e");
+      return;
+    }
+
+    emailLookupState.checking = true;
+    emailLookupState.exists = false;
+    emailLookupState.emailNorm = emailNorm;
+    emailLookupState.fullName = "";
+    setEmailMsg("Buscando email...", "#6b7280");
+
+    try {
+      const res = await fetch(`modelos/rescatar/empleado_email.php?email=${encodeURIComponent(emailRaw)}`);
+      const resp = await res.json();
+
+      if ((emailInput.value || "").trim().toLowerCase() !== emailNorm) return;
+
+      emailLookupState.checking = false;
+      if (resp && resp.ok && resp.exists) {
+        emailLookupState.exists = true;
+        emailLookupState.fullName = String(resp.nombre_completo || "").trim();
+        const emailTxt = String(resp.email || emailRaw).trim();
+        setEmailMsg(`El email ${emailTxt} existe y está asociado a ${emailLookupState.fullName}.`, "#b91c1c");
+        return;
+      }
+
+      emailLookupState.exists = false;
+      emailLookupState.fullName = "";
+      setEmailMsg("Email disponible.", "#166534");
+    } catch (e) {
+      emailLookupState.checking = false;
+      emailLookupState.exists = false;
+      emailLookupState.fullName = "";
+      setEmailMsg("No se pudo validar el email en este momento.", "#92400e");
+    }
+  }
+
   runInput.addEventListener("input", () => {
     formatearRun(runInput);
     const currentNorm = normalizeRun(runInput.value.trim());
@@ -488,6 +671,17 @@ didOpen: () => {
   if (runInput.value.trim() && !runLookupState.ignorePrefilledExisting) {
     buscarRun();
   }
+
+  if (emailInput) {
+    emailInput.addEventListener("input", () => {
+      if (emailTimer) clearTimeout(emailTimer);
+      emailTimer = setTimeout(buscarEmail, 350);
+    });
+
+    emailInput.addEventListener("blur", () => {
+      buscarEmail();
+    });
+  }
 },
 
 preConfirm: () => {
@@ -499,7 +693,8 @@ preConfirm: () => {
     email: document.getElementById("sw_email")?.value.trim() || "",
     telefono: document.getElementById("sw_telefono")?.value.trim() || "",
     genero: document.getElementById("sw_genero")?.value || "",
-    observacion: document.getElementById("sw_observacion")?.value.trim() || ""
+    observacion: document.getElementById("sw_observacion")?.value.trim() || "",
+    id_colegio: document.getElementById("sw_id_colegio")?.value || ""
   };
 
   if (!data.nombres)    { Swal.showValidationMessage("Nombres es obligatorio."); return false; }
@@ -507,9 +702,18 @@ preConfirm: () => {
   if (!data.ap_materno) { Swal.showValidationMessage("Apellido materno es obligatorio."); return false; }
   if (!data.run)        { Swal.showValidationMessage("RUN es obligatorio."); return false; }
   if (!data.genero)     { Swal.showValidationMessage("Género es obligatorio."); return false; }
+  if (esSuperAdminEmpleado && Number(prefill?.id_empleado || 0) <= 0 && !data.id_colegio) {
+    Swal.showValidationMessage("Debes seleccionar un colegio.");
+    return false;
+  }
 
   if (runLookupState.checking) {
     Swal.showValidationMessage("Espera la validación del RUN.");
+    return false;
+  }
+
+  if (emailLookupState.checking) {
+    Swal.showValidationMessage("Espera la validación del email.");
     return false;
   }
 
@@ -524,6 +728,11 @@ preConfirm: () => {
   if (data.email) {
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email);
     if (!emailOk) { Swal.showValidationMessage("Email inválido."); return false; }
+    if (emailLookupState.exists && data.email.toLowerCase() === emailLookupState.emailNorm) {
+      const nombre = emailLookupState.fullName || "otro funcionario";
+      Swal.showValidationMessage(`El email ${data.email} ya existe y está asociado a ${nombre}.`);
+      return false;
+    }
   }
 
   return data;

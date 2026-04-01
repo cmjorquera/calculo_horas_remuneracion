@@ -8,9 +8,11 @@ if (!isset($_SESSION["id_usuario"])) {
 }
 
 require_once __DIR__ . "/../../class/conexion.php";
+require_once __DIR__ . "/../../class/funciones.php";
 
 // Con tu clase MySQL (mysqli por dentro)
 $db = new MySQL("qaseduc_calculo_horario", "qaseduc_ucomun", "jorquera86;");
+$funciones = new Funciones($db);
 
 function jerr($msg) {
   echo json_encode(["ok" => false, "msg" => $msg]);
@@ -38,6 +40,7 @@ $id_contrato_post = (int)($_POST["id_contrato"] ?? 0);
 $email      = trim($_POST["email"] ?? "");
 $telefono   = trim($_POST["telefono"] ?? "");
 $genero     = trim($_POST["genero"] ?? "");
+$id_colegio_post = (int)($_POST["id_colegio"] ?? 0);
 $horarioJson = $_POST["horario"] ?? "";
 $id_colacion = trim($_POST["id_colacion"] ?? "");
 $horas_semanales_cron = (int)($_POST["horas_semanales_cron"] ?? 0);
@@ -83,8 +86,25 @@ foreach ($horario as $d) {
 // 3) DATOS EXTRA
 // =====================
 $id_colegio = (int)($_SESSION["id_colegio"] ?? 0);
-$es_super_admin = !empty($_SESSION["is_super_admin"]);
+$idUsuarioSesion = (int)($_SESSION["id_usuario"] ?? 0);
+$usuariosConSelectorColegio = [2, 5];
+$es_super_admin = $funciones->usuarioTieneRol($idUsuarioSesion, 1)
+  || in_array($idUsuarioSesion, $usuariosConSelectorColegio, true);
 if ($id_colegio <= 0) jerr("id_colegio no encontrado.");
+
+if ($es_super_admin && $id_empleado_post <= 0 && $id_colegio_post > 0) {
+  $resColegio = $db->consulta("
+    SELECT id_colegio
+    FROM colegio
+    WHERE id_colegio = $id_colegio_post
+    LIMIT 1
+  ");
+  $rowColegio = $db->fetch_assoc($resColegio);
+  if (!$rowColegio) {
+    jerr("El colegio seleccionado no existe.");
+  }
+  $id_colegio = (int)$rowColegio["id_colegio"];
+}
 
 $codigo = "EMP" . date("ymdHis") . rand(100, 999);
 
@@ -133,6 +153,21 @@ $resCheck = $db->consulta($sqlCheck);
 if ($db->fetch_assoc($resCheck)) {
   $db->consulta("ROLLBACK");
   jerr("Ya existe un empleado con ese RUN en este colegio.");
+}
+
+if ($email !== "") {
+  $sqlCheckEmail = "
+    SELECT id_empleado
+    FROM empleados
+    WHERE LOWER(email) = LOWER('".esc($db, $email)."')
+      ".($id_empleado > 0 ? "AND id_empleado <> $id_empleado" : "")."
+    LIMIT 1
+  ";
+  $resCheckEmail = $db->consulta($sqlCheckEmail);
+  if ($db->fetch_assoc($resCheckEmail)) {
+    $db->consulta("ROLLBACK");
+    jerr("Ya existe un empleado con ese email.");
+  }
 }
 
 // 4.3) Insert o update EMPLEADO

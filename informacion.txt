@@ -1,352 +1,500 @@
-BASE DE DATOS: qaseduc_calculo_horario
-======================================
+CALCULADORA DE HORAS CRONOLOGICAS
+DOCUMENTACION TECNICA-FUNCIONAL
+=================================
 
-1. Descripcion general de la base de datos
-------------------------------------------
-La base de datos `qaseduc_calculo_horario` soporta un sistema de calculo horario y gestion administrativa orientado a colegios y personal contratado. El sistema permite registrar establecimientos, empleados, contratos, distribucion de horarios semanales, opciones de colacion, usuarios de acceso, roles de seguridad y permisos de navegacion por menu.
+1. DESCRIPCION GENERAL DEL SISTEMA
+----------------------------------
+La Calculadora de Horas Cronologicas es un sistema orientado a la administracion de funcionarios docentes y sus jornadas semanales de trabajo dentro de distintos colegios. Su foco principal es registrar un funcionamiento laboral vigente por funcionario, distribuirlo por dias de la semana, resumir la carga horaria legal y pedagógica, y permitir su posterior consulta, exportacion y administracion.
 
-Desde la aplicacion se observan cuatro areas funcionales principales:
+El sistema no se limita a guardar tablas aisladas. Su operacion real combina:
 
-- Gestion organizacional: colegios y su contexto institucional.
-- Gestion de personal: empleados, contratos y su carga horaria.
-- Planificacion horaria: horarios semanales por empleado y contrato.
-- Seguridad y navegacion: usuarios, roles y permisos de menu.
+- contexto institucional por colegio
+- acceso por perfil y por colegio
+- registro de funcionarios
+- contratos logicos de funcionamiento
+- carga y validacion de horarios semanales
+- calculo de horas cronologicas, lectivas, no lectivas y colacion
+- administracion de usuarios del sistema
+- permisos de navegacion por menu
 
-El codigo actual utiliza de forma activa las tablas `colegio`, `empleados`, `contratos_empleado`, `horarios_semanales`, `colacion`, `dias_semana`, `usuarios`, `roles`, `usuario_rol_colegio`, `menu_v` y `usuario_menu_v`. Ademas, el esquema heredado considera `menus` y `usuario_menu`, que representan la version previa del modulo de permisos de interfaz.
+Desde la aplicacion se observan dos areas operativas principales:
 
+- modulo principal de funcionarios y horarios, visible en la pantalla inicial
+- modulo de usuarios y permisos, visible para administracion central
 
-2. Tablas principales detectadas
---------------------------------
-
-2.1. Tabla: colegio
--------------------
-Proposito funcional:
-Almacena la informacion base de cada establecimiento educacional. Funciona como entidad organizacional principal para segmentar empleados, usuarios y asignaciones por colegio.
-
-Clave primaria:
-- `id_colegio`
-
-Campos mas relevantes:
-- `id_colegio`
-- `nom_colegio`
-- `nco_colegio`
-- `rza_colegio`
-- `dir_colegio`
-- `rbd_colegio`
-- `rut_colegio`
-- `email_entrevista`
-- `email_comunicaciones`
-- `url_pagina`
-- `identificador`
-
-Relacion con otras tablas:
-- Relacion logica con `empleados.id_colegio`
-- Relacion logica con `usuarios.id_colegio`
-- Relacion logica con `usuario_rol_colegio.id_colegio`
+La base de datos que soporta el sistema es `qaseduc_calculo_horario`, y en el codigo vigente participan principalmente las tablas `colegio`, `empleados`, `contratos_empleado`, `horarios_semanales`, `colacion`, `dias_semana`, `usuarios`, `roles`, `usuario_rol_colegio`, `menu_v` y `usuario_menu_v`.
 
 
-2.2. Tabla: empleados
----------------------
-Proposito funcional:
-Registra al personal asociado a un colegio. Contiene los datos personales y administrativos necesarios para luego asociar contratos y horarios.
-
-Clave primaria:
-- `id_empleado`
-
-Campos mas relevantes:
-- `id_empleado`
-- `codigo`
-- `run`
-- `id_colegio`
-- `nombres`
-- `apellido_paterno`
-- `apellido_materno`
-- `email`
-- `telefono`
-- `activo`
-- `genero`
-- `created_at`
-- `updated_at`
-
-Relacion con otras tablas:
-- Relacion logica con `colegio.id_colegio` mediante `id_colegio`
-- Relacion fisica con `contratos_empleado.id_empleado`
-- Relacion logica con `horarios_semanales.id_empleado`
-
-
-2.3. Tabla: contratos_empleado
-------------------------------
-Proposito funcional:
-Guarda la informacion contractual y la carga horaria resumida del empleado. Desde esta tabla se controla la jornada semanal, las horas lectivas, las horas no lectivas, la colacion diaria y observaciones del contrato.
-
-Clave primaria:
-- `id_contrato`
-
-Campos mas relevantes:
-- `id_contrato`
-- `id_empleado`
-- `fecha_inicio`
-- `fecha_fin`
-- `horas_semanales_cron`
-- `horas_lectivas`
-- `horas_no_lectivas`
-- `min_colacion_diaria`
-- `observacion`
-- `created_at`
-
-Relacion con otras tablas:
-- FK real `id_empleado -> empleados.id_empleado`
-- Relacion logica con `horarios_semanales.id_contrato`
-
-
-2.4. Tabla: horarios_semanales
-------------------------------
-Proposito funcional:
-Distribuye la jornada semanal por dia y por bloque horario. Cada registro representa un dia del empleado dentro de un contrato, con horas de inicio y termino para manana y tarde.
-
-Clave primaria:
-- `id_horario`
-
-Campos mas relevantes:
-- `id_horario`
-- `id_empleado`
-- `id_contrato`
-- `dia`
-- `man_ini`
-- `man_fin`
-- `tar_ini`
-- `tar_fin`
-- `activo`
-- `created_at`
-
-Relacion con otras tablas:
-- Relacion logica con `empleados.id_empleado`
-- Relacion logica con `contratos_empleado.id_contrato`
-- Relacion funcional con `dias_semana`, usada por el sistema para ordenar y presentar los dias de trabajo
-
-Nota tecnica:
-Aunque la aplicacion trata esta tabla como dependiente de empleado y contrato, no se observan claves foraneas formales declaradas para estas columnas en el esquema disponible.
-
-
-2.5. Tabla: colacion
---------------------
-Proposito funcional:
-Tabla catalogo para definir opciones de colacion. La aplicacion la usa para cargar minutos estandarizados y mostrarlos en los formularios del resumen semanal.
-
-Clave primaria:
-- `id_colacion`
-
-Campos mas relevantes:
-- `id_colacion`
-- `hora`
-- `minutos`
-- `activo`
-- `created_at`
-
-Relacion con otras tablas:
-- No se observa FK real directa hacia otras tablas.
-- Su uso funcional se proyecta sobre `contratos_empleado.min_colacion_diaria`, donde se almacena el valor aplicado al contrato.
-
-
-2.6. Tabla: dias_semana
+2. OBJETIVO DEL SISTEMA
 -----------------------
-Proposito funcional:
-Tabla catalogo de dias. Se usa para presentar y ordenar los dias del horario semanal, especialmente de lunes a viernes.
+El objetivo del sistema es centralizar la gestion de horas cronologicas de funcionarios docentes, permitiendo:
 
-Clave primaria:
-- `id_dia`
+- registrar funcionarios por colegio
+- cargar y editar su distribucion horaria semanal de lunes a viernes
+- validar que la configuracion horaria sea consistente
+- resumir jornada cronologica, horas lectivas, horas no lectivas y colacion
+- verificar el cumplimiento de las 40 horas legales informadas por el sistema
+- listar y exportar la informacion consolidada
+- administrar usuarios internos y sus permisos de acceso
 
-Campos mas relevantes:
-- `id_dia`
-- `clave`
-- `nombre`
-- `prefijo`
-- `orden`
-- `activo`
-
-Relacion con otras tablas:
-- No se observa FK real con `horarios_semanales`.
-- Existe relacion funcional por el valor del dia y su orden de presentacion.
+En terminos operativos, el sistema busca que cada funcionario tenga un funcionamiento vigente trazable, editable y exportable, respetando el contexto del colegio asociado y las restricciones del perfil que accede.
 
 
-2.7. Tabla: usuarios
---------------------
-Proposito funcional:
-Almacena las cuentas de acceso al sistema. Contiene datos de identificacion, autenticacion, estado de la cuenta y colegio principal asociado.
+3. PERFILES Y ALCANCE
+---------------------
+El sistema contempla dos perfiles principales:
 
-Clave primaria:
-- `id_usuario`
+3.1. Super admin
+Permite operar con alcance global. Segun la logica funcional definida para este proyecto, cuando el usuario pertenece al contexto administrativo global identificado por `id_colegio = 15`, puede visualizar informacion de todos los colegios. En la implementacion actual, el listado principal utiliza ademas una bandera de sesion equivalente a super administracion para habilitar la vista global.
 
-Campos mas relevantes:
-- `id_usuario`
-- `identificador`
-- `email`
-- `clave_hash`
-- `nombre`
-- `apellido_paterno`
-- `apellido_materno`
-- `run`
-- `telefono`
-- `id_colegio`
-- `estado`
-- `intentos`
-- `ultimo_login`
-- `token_reinicio`
-- `token_reinicio_expira`
-- `created_at`
-- `updated_at`
+Capacidades principales:
 
-Relacion con otras tablas:
-- Relacion logica con `colegio.id_colegio`
-- FK real con `usuario_rol_colegio.id_usuario`
-- FK real con `usuario_menu.id_usuario`
-- FK real con `usuario_menu_v.id_usuario`
+- visualizar funcionarios de todos los colegios
+- ver columna adicional de colegio en el listado principal
+- crear funcionarios asignandolos a un colegio
+- administrar usuarios del sistema
+- administrar permisos de menu por usuario
+- descargar reportes globales si el flujo lo permite
+
+3.2. Administrador hora colegio
+Corresponde al usuario asociado a un colegio especifico distinto del contexto global. Su alcance queda restringido al colegio de su sesion.
+
+Capacidades principales:
+
+- ver solo funcionarios del colegio asociado
+- crear y editar funcionamientos del propio colegio
+- exportar informacion del propio colegio
+- no acceder a la administracion global de usuarios
 
 
-2.8. Tabla: roles
------------------
-Proposito funcional:
-Define los perfiles de acceso del sistema. Se usa para asignar capacidades generales a los usuarios a traves de la tabla intermedia `usuario_rol_colegio`.
-
-Clave primaria:
-- `id_rol`
-
-Campos mas relevantes:
-- `id_rol`
-- `codigo`
-- `nombre`
-- `descripcion`
-
-Relacion con otras tablas:
-- FK real con `usuario_rol_colegio.id_rol`
-
-
-2.9. Tabla: usuario_rol_colegio
+4. LOGICA DE ACCESO POR COLEGIO
 -------------------------------
-Proposito funcional:
-Tabla de asignacion que vincula un usuario con un rol y, opcionalmente, con un colegio especifico. Permite modelar permisos por contexto institucional.
+La segmentacion principal del sistema se basa en `id_colegio`.
 
-Clave primaria:
-- `id`
+Regla funcional principal:
 
-Campos mas relevantes:
-- `id`
-- `id_usuario`
-- `id_rol`
-- `id_colegio`
-- `estado`
-- `created_at`
+- si `id_colegio = 15`, el usuario opera como administrador global y puede consultar todos los colegios
+- si `id_colegio` es distinto de `15`, el usuario queda restringido al colegio asociado a su sesion
 
-Relacion con otras tablas:
-- FK real `id_usuario -> usuarios.id_usuario`
-- FK real `id_rol -> roles.id_rol`
-- Relacion logica `id_colegio -> colegio.id_colegio`
+Esta logica impacta directamente los siguientes procesos:
 
+- carga del listado de funcionarios
+- columna visible de colegio en la tabla principal
+- exportacion a Excel
+- creacion de funcionarios
+- consulta de usuarios
+- permisos y contexto general de visualizacion
 
-2.10. Tabla: menus
-------------------
-Proposito funcional:
-Catalogo heredado de menus de interfaz. Representa la estructura base de opciones de navegacion usada por el esquema anterior al modulo versionado `menu_v`.
+Tablas que participan:
 
-Clave primaria:
-- `id_menu`
+- `usuarios`: mantiene el `id_colegio` principal de la cuenta
+- `colegio`: provee la identidad institucional
+- `empleados`: asocia cada funcionario a un colegio
+- `usuario_rol_colegio`: complementa la asignacion de rol y contexto
 
-Campos mas relevantes:
-- `id_menu`
-- Campos funcionales inferibles de un catalogo de navegacion, como codigo, nombre, ruta o visibilidad
-
-Relacion con otras tablas:
-- FK real con `usuario_menu.id_menu`
-
-Nota tecnica:
-En el codigo actual del proyecto no se observa uso operativo de `menus`; la implementacion vigente trabaja con `menu_v`.
+Observacion tecnica:
+Aunque la regla funcional habla explicitamente de `id_colegio = 15`, el codigo actual tambien usa banderas de sesion para determinar si la vista es global. Por lo tanto, ambas condiciones deben entenderse como parte del mismo comportamiento funcional esperado.
 
 
-2.11. Tabla: menu_v
--------------------
-Proposito funcional:
-Catalogo vigente de menus visibles en la interfaz. La aplicacion actual lo crea y mantiene desde codigo para definir secciones como empleados, graficos y usuarios.
+5. FLUJO DE CREACION DE UN FUNCIONAMIENTO
+-----------------------------------------
+El flujo principal del sistema no parte creando primero al funcionario desde una tabla maestra externa, sino desde la pantalla de horarios.
 
-Clave primaria:
-- `id_menu`
+Secuencia funcional:
 
-Campos mas relevantes:
-- `id_menu`
-- `codigo`
-- `nombre`
-- `url`
-- `icono`
-- `descripcion`
-- `orden`
-- `visible`
-- `created_at`
-- `updated_at`
+1. El usuario abre la pantalla principal.
+2. En la zona superior carga un horario semanal de lunes a viernes.
+3. Completa o deja vacios los bloques de manana y tarde segun corresponda.
+4. El sistema calcula automaticamente el resumen horario.
+5. Si la configuracion es valida, al presionar agregar se abre un modal para ingresar los datos personales del funcionario.
+6. El sistema valida que RUN y email no existan previamente.
+7. Si todo es correcto, se guarda el funcionario con el `id_colegio` de la sesion, o con el colegio seleccionado si el usuario tiene alcance global.
+8. Se crea el contrato logico del funcionario con sus datos de resumen.
+9. Se guarda el detalle diario del horario semanal.
+10. Se muestra una confirmacion y el funcionario aparece en el listado principal.
 
-Relacion con otras tablas:
-- FK real con `usuario_menu_v.id_menu`
+Aspectos importantes del flujo:
 
+- no es obligatorio completar todos los dias para generar el funcionamiento
+- el contrato logico se expresa en la tabla `contratos_empleado`
+- el detalle de dias y tramos horarios se expresa en `horarios_semanales`
+- la observacion del funcionamiento queda asociada al contrato
 
-2.12. Tabla: usuario_menu
--------------------------
-Proposito funcional:
-Tabla heredada de asignacion de permisos de menu por usuario. Modela el enlace entre usuarios y menus en la version anterior del sistema de navegacion.
+Tablas que probablemente participan:
 
-Clave primaria:
-- No se puede confirmar con el codigo disponible, pero por la relacion declarada se identifica al menos `id_usuario` e `id_menu` como columnas estructurales.
-
-Campos mas relevantes:
-- `id_usuario`
-- `id_menu`
-- Posibles campos de estado o permiso asociados al acceso del usuario al menu
-
-Relacion con otras tablas:
-- FK real `id_usuario -> usuarios.id_usuario`
-- FK real `id_menu -> menus.id_menu`
-
-Nota tecnica:
-No se observa uso activo de `usuario_menu` en el flujo actual. La implementacion operativa utiliza `usuario_menu_v`.
+- `empleados`
+- `contratos_empleado`
+- `horarios_semanales`
+- `colacion`
+- `colegio`
 
 
-2.13. Tabla: usuario_menu_v
----------------------------
-Proposito funcional:
-Tabla vigente de permisos de menu por usuario. Permite habilitar o deshabilitar menus de interfaz en forma individual para cada cuenta.
-
-Clave primaria:
-- `id_usuario_menu`
-
-Campos mas relevantes:
-- `id_usuario_menu`
-- `id_usuario`
-- `id_menu`
-- `permitido`
-- `created_at`
-- `updated_at`
-
-Relacion con otras tablas:
-- FK real `id_usuario -> usuarios.id_usuario`
-- FK real `id_menu -> menu_v.id_menu`
-
-
-3. Relaciones de la base de datos
+6. CARGA Y VALIDACION DE HORARIOS
 ---------------------------------
+La carga horaria semanal se organiza por dias habiles de lunes a viernes. El sistema considera que sabado y domingo no forman parte del funcionamiento regular del funcionario.
 
-3.1. Relaciones fisicas reales
+Por cada dia se pueden registrar:
+
+- hora de inicio de manana
+- hora de termino de manana
+- hora de inicio de tarde
+- hora de termino de tarde
+
+Ademas, cada dia puede marcarse como bloqueado o no laborable. Cuando se activa el check de bloqueo, los campos horarios de ese dia deben quedar inhabilitados.
+
+Reglas funcionales observadas:
+
+- el sistema trabaja solo con dias laborales
+- la tarde no puede comenzar en una hora incompatible con el fin de la manana
+- si la jornada de manana termina a una hora determinada, la jornada de tarde no puede empezar antes de ese cierre
+- los valores invalidos deben impedir el avance o marcar el ingreso como inconsistente
+
+Relacion con la implementacion:
+
+- `dias_semana` se utiliza para definir y ordenar los dias
+- `horarios_semanales` persiste el detalle diario
+- la interfaz y los scripts de validacion controlan bloqueos, consistencia de horas y recuentos
+
+Tablas involucradas:
+
+- `dias_semana`
+- `horarios_semanales`
+- `contratos_empleado` como resumen contractual del horario cargado
+
+
+7. CALCULO DE HORAS CRONOLOGICAS
+--------------------------------
+El sistema mantiene dos niveles de informacion horaria:
+
+- detalle diario de tramos trabajados
+- resumen contractual del funcionamiento
+
+7.1. Logica general
+Al completar un dia, el sistema suma automaticamente los minutos trabajados y los expresa como horas cronologicas. El total se refleja en el campo de resumen de la interfaz y luego se persiste en el contrato vigente del funcionario.
+
+En el codigo actual, la suma semanal se obtiene desde los bloques de manana y tarde almacenados en `horarios_semanales`, utilizando diferencias de minutos entre hora de inicio y hora de termino para cada tramo valido.
+
+7.2. Logica del cuadro Resumen
+El cuadro "Resumen" concentra la informacion consolidada del funcionamiento y actualmente trabaja con estos componentes:
+
+- Cronologicas: total semanal derivado del horario cargado
+- Horas lectivas: valor resumido del contrato, con soporte de entrada pedagogica y equivalencia cronologica visible
+- Horas no lectivas: valor resumido del contrato, tambien con soporte de entrada pedagogica y equivalencia cronologica visible
+- Colacion: valor diario estandarizado en minutos
+
+La logica que ya existia en la documentacion anterior y debe conservarse es la siguiente:
+
+- `contratos_empleado` guarda la carga horaria resumida del funcionario
+- `horarios_semanales` descompone esa carga en bloques diarios
+- `colacion` funciona como catalogo de apoyo para seleccionar un valor estandarizado
+- `min_colacion_diaria` se persiste en el contrato como dato aplicado al funcionamiento
+
+7.3. Representacion de horas
+En el listado principal y en las exportaciones, los valores resumidos no siempre se muestran tal como se almacenan. El sistema convierte minutos o acumulados internos a formato visible `HH:MM`.
+
+Eso aplica, al menos, a:
+
+- jornada cronologica
+- horas lectivas
+- horas no lectivas
+
+Tablas involucradas:
+
+- `horarios_semanales`
+- `contratos_empleado`
+- `colacion`
+
+
+8. REGLAS DE VALIDACION LEGAL DE HORAS
+--------------------------------------
+El sistema incorpora una validacion legal asociada a la jornada semanal total.
+
+Regla principal:
+
+- cuando la suma total entre lunes y viernes da 40 horas, el sistema informa que se cumple con las horas legales
+- si el total da menos o mas de 40 horas, se muestra una advertencia visual, actualmente en rojo
+
+Esta regla convive con otras validaciones de consistencia del resumen, por ejemplo las relacionadas con horas lectivas y no lectivas, que en la implementacion actual se controlan separadamente desde la interfaz.
+
+Importante:
+
+- la validacion legal se apoya en el total cronologico semanal
+- la validacion de horas lectivas y no lectivas responde a otra capa del resumen y no debe confundirse con la regla de 40 horas legales
+
+Tablas relacionadas:
+
+- `horarios_semanales`, por ser la fuente del total semanal trabajado
+- `contratos_empleado`, por almacenar el resumen contractual del funcionamiento
+
+
+9. REGISTRO DE FUNCIONARIOS
+---------------------------
+El registro del funcionario ocurre dentro del flujo de creacion del funcionamiento.
+
+Datos del modal de alta:
+
+- nombre
+- apellido paterno
+- apellido materno
+- RUN
+- email
+- sexo
+- telefono
+- observacion
+
+Validaciones funcionales:
+
+- el RUN no puede existir previamente
+- si el RUN ya existe, el sistema informa a quien pertenece y no permite continuar
+- el email tambien debe ser unico
+
+Comportamiento por perfil:
+
+- si el usuario opera en un colegio especifico, el funcionario se guarda con el `id_colegio` de la sesion
+- si el usuario tiene alcance global, se muestra ademas un selector para elegir el colegio
+
+Persistencia esperada:
+
+- `empleados` almacena los datos personales y el `id_colegio`
+- `contratos_empleado` almacena horas resumidas, colacion y observacion
+- `horarios_semanales` almacena la distribucion diaria del funcionamiento
+
+Confirmacion posterior:
+
+- al finalizar, el sistema muestra un modal de confirmacion
+- el funcionario recien creado debe quedar visible inmediatamente en el listado principal, idealmente en primera posicion funcional o al menos accesible sin perder el contexto de trabajo
+
+
+10. ESTRUCTURA DEL LISTADO PRINCIPAL
+------------------------------------
+El listado principal corresponde a la tabla de funcionarios de la pantalla inicial.
+
+Columnas funcionales:
+
+- ID
+- RUN
+- Nombre y apellido
+- Colegio, solo para vista global o super admin
+- Jornada cronologica
+- Colacion
+- Horas no lectivas
+- Horas lectivas
+- Opciones
+
+Comportamiento esperado:
+
+- permite busqueda o filtrado tipo DataTables o buscador equivalente
+- muestra los valores horarios en formato legible
+- si el usuario tiene alcance global, agrega informacion del colegio del funcionario
+
+Logica de visualizacion:
+
+- `contratos_empleado.horas_semanales_cron` representa la referencia contractual
+- `horarios_semanales` permite calcular el total semanal realmente cargado
+- `contratos_empleado.horas_lectivas` y `contratos_empleado.horas_no_lectivas` se transforman a `HH:MM` para el despliegue
+- `contratos_empleado.min_colacion_diaria` se visualiza como minutos
+
+Botones de la columna opciones:
+
+1. Recargar funcionamiento
+Permite cargar nuevamente en el formulario superior el horario y resumen del funcionario, para editarlo o revisarlo.
+
+2. Visualizar horario
+Abre un modal con el detalle del horario y desde ese modal se puede descargar el PDF del funcionamiento.
+
+3. Ver observacion
+Permite abrir un modal con la observacion registrada en el contrato del funcionario.
+
+Tablas implicadas:
+
+- `empleados`
+- `contratos_empleado`
+- `horarios_semanales`
+- `colegio`
+
+
+11. EXPORTACION A EXCEL Y VISUALIZACION EN PDF
+----------------------------------------------
+El sistema contempla dos salidas principales de consulta:
+
+11.1. Excel de funcionarios
+Desde la pantalla principal existe un boton para descargar el listado de funcionarios.
+
+Alcance por perfil:
+
+- si el usuario tiene vista global, descarga todos los funcionarios disponibles segun su sesion
+- si el usuario pertenece a un colegio especifico, descarga solo los funcionarios del colegio asociado
+
+La exportacion toma como base el listado principal, por lo que normalmente cruza:
+
+- `empleados`
+- `colegio`
+- `contratos_empleado`
+- `horarios_semanales`
+
+11.2. PDF del horario
+Desde la visualizacion del horario se puede descargar un PDF con el detalle del funcionamiento.
+
+El PDF considera, al menos:
+
+- identificacion del funcionario
+- colegio
+- resumen horario
+- colacion
+- observacion
+- detalle diario del horario
+
+Tablas involucradas:
+
+- `empleados`
+- `colegio`
+- `contratos_empleado`
+- `horarios_semanales`
+
+
+12. ADMINISTRACION DE USUARIOS
 ------------------------------
-Las siguientes relaciones se identifican como foreign keys reales declaradas en el esquema conocido del sistema:
+La pestaña de usuarios corresponde a un modulo administrativo del sistema.
+
+Disponibilidad:
+
+- solo debe estar disponible para super admin o administracion global
+
+Objetivo:
+
+- crear usuarios internos
+- asociarlos a un colegio
+- asignarles rol
+- controlar su estado
+- administrar los menus visibles para cada cuenta
+
+Columnas del listado de usuarios:
+
+- N°
+- ID
+- identificador
+- nombre apellido
+- email
+- colegio
+- roles
+- estado
+- opcion
+
+12.1. Creacion de usuario
+Al presionar "Agregar usuario" se abre un modal de alta.
+
+Campos funcionales del formulario:
+
+- nombre
+- apellido paterno
+- apellido materno
+- colegio
+- RUN
+- telefono
+- estado
+
+Consideraciones actuales del proyecto:
+
+- el identificador ya no se ingresa manualmente; el sistema puede generarlo a partir del nombre y apellido paterno
+- existe la opcion de asignar un rol inmediatamente
+- el email debe ser unico en `usuarios`
+
+Persistencia esperada:
+
+- `usuarios` almacena la cuenta base
+- `usuario_rol_colegio` almacena el rol asignado y el contexto de colegio
+
+Confirmacion:
+
+- al guardar, el sistema informa que se envio un correo para que el usuario defina su clave
+
+12.2. Estado del usuario
+El estado funcional del usuario depende no solo del campo `estado`, sino tambien del proceso de activacion de clave.
+
+Regla funcional acordada:
+
+- si el usuario aun no define su clave, debe verse como inactivo
+- se muestra un icono de pregunta
+- al hacer clic, se informa que se espera que active su clave
+
+Relacion con la implementacion actual:
+
+- `token_reinicio` se usa como indicador de activacion pendiente
+- cuando la clave aun no se establece, el usuario permanece pendiente de activacion
+- cuando el usuario define su clave, el token se limpia y la cuenta pasa a activa
+
+Tablas involucradas:
+
+- `usuarios`
+- `roles`
+- `usuario_rol_colegio`
+
+
+13. ADMINISTRACION DE PERMISOS POR MENU
+---------------------------------------
+La administracion de permisos por menu forma parte del modulo de usuarios y actualmente opera sobre la estructura versionada del sistema.
+
+Disponibilidad:
+
+- solo para super admin
+
+Funcionamiento:
+
+- desde la columna de opciones del listado de usuarios se abre un modal de permisos
+- el modal lista los menus visibles del sistema
+- cada menu puede activarse o desactivarse con un interruptor
+
+Ejemplos observables:
+
+- Empleados
+- Graficos
+- Usuarios
+
+Logica tecnica vigente:
+
+- `menu_v` define el catalogo activo de menus navegables
+- `usuario_menu_v` guarda si cada menu esta permitido o no por usuario
+- el sistema asegura la existencia de estas tablas y consulta siempre la version `_v`
+
+Consideracion historica:
+
+- `menus` y `usuario_menu` existen como estructura heredada
+- el comportamiento actual del proyecto se apoya en `menu_v` y `usuario_menu_v`
+- por lo tanto, la documentacion funcional debe considerar `menu_v` como la fuente activa del modulo de navegacion
+
+
+14. RELACION CON LA BASE DE DATOS
+---------------------------------
+La operacion del sistema puede entenderse como una cadena funcional soportada por varias tablas relacionadas.
+
+Cadena principal del negocio:
+
+`colegio` -> `empleados` -> `contratos_empleado` -> `horarios_semanales`
+
+Cadena de acceso y administracion:
+
+`usuarios` -> `usuario_rol_colegio` -> `roles`
+
+Cadena de navegacion:
+
+`usuarios` -> `usuario_menu_v` -> `menu_v`
+
+Catalogos de apoyo:
+
+- `colacion`
+- `dias_semana`
+
+Relaciones fisicas detectadas en el esquema:
 
 - `contratos_empleado.id_empleado -> empleados.id_empleado`
-- `usuario_menu.id_menu -> menus.id_menu`
-- `usuario_menu.id_usuario -> usuarios.id_usuario`
-- `usuario_menu_v.id_menu -> menu_v.id_menu`
-- `usuario_menu_v.id_usuario -> usuarios.id_usuario`
-- `usuario_rol_colegio.id_rol -> roles.id_rol`
 - `usuario_rol_colegio.id_usuario -> usuarios.id_usuario`
+- `usuario_rol_colegio.id_rol -> roles.id_rol`
+- `usuario_menu.id_usuario -> usuarios.id_usuario`
+- `usuario_menu.id_menu -> menus.id_menu`
+- `usuario_menu_v.id_usuario -> usuarios.id_usuario`
+- `usuario_menu_v.id_menu -> menu_v.id_menu`
 
-
-3.2. Relaciones logicas detectadas
-----------------------------------
-Las siguientes relaciones son coherentes por nombres de columnas, consultas SQL y flujo funcional del sistema, pero no aparecen formalizadas como foreign key en el esquema disponible:
+Relaciones logicas relevantes no siempre formalizadas como foreign key:
 
 - `empleados.id_colegio -> colegio.id_colegio`
 - `usuarios.id_colegio -> colegio.id_colegio`
@@ -355,125 +503,81 @@ Las siguientes relaciones son coherentes por nombres de columnas, consultas SQL 
 - `horarios_semanales.id_contrato -> contratos_empleado.id_contrato`
 
 
-4. Esquema relacional en texto
-------------------------------
-El siguiente esquema resume la estructura principal y la direccion funcional de las relaciones:
-
-colegio
-  └── empleados
-        └── contratos_empleado
-              └── horarios_semanales
-
-usuarios
-  ├── usuario_menu
-  ├── usuario_menu_v
-  └── usuario_rol_colegio
-         └── roles
-
-menus
-menu_v
-colacion
-dias_semana
-
-Lectura complementaria del modelo:
-- `colegio` agrupa el contexto institucional.
-- `empleados` depende logicamente de `colegio`.
-- `contratos_empleado` depende fisicamente de `empleados`.
-- `horarios_semanales` depende logicamente de `empleados` y `contratos_empleado`.
-- `usuarios` se vincula logicamente a `colegio` y fisicamente con las tablas de seguridad y menus.
-
-
-5. Explicacion por modulos del sistema
---------------------------------------
-
-5.1. Modulo de colegios y personal
-----------------------------------
-Tablas:
-- `colegio`
-- `empleados`
-- `contratos_empleado`
-- `horarios_semanales`
-
-Descripcion:
-Este modulo concentra la operacion principal del sistema. `colegio` define el contexto institucional. `empleados` representa al personal de cada establecimiento. `contratos_empleado` resume la jornada contractual, las horas lectivas, las horas no lectivas y la colacion. `horarios_semanales` descompone esa carga en bloques diarios de trabajo.
-
-Logica funcional:
-- Primero se crea o identifica el colegio.
-- Luego se registra el empleado asociado al colegio.
-- Despues se inserta o actualiza el contrato del empleado.
-- Finalmente se registra la distribucion del horario semanal por dias.
-
-
-5.2. Modulo de apoyo / catalogos
---------------------------------
-Tablas:
-- `colacion`
-- `dias_semana`
-
-Descripcion:
-Son tablas auxiliares que entregan valores estandarizados al sistema. `colacion` define opciones de minutos u horarios de colacion. `dias_semana` ordena y presenta los dias que luego se usan para construir la grilla semanal de horarios.
-
-Logica funcional:
-- `colacion` alimenta el selector de colacion del resumen.
-- `dias_semana` permite listar los dias en orden y combinar dias sin horario cargado mediante `LEFT JOIN`.
-
-
-5.3. Modulo de seguridad y acceso
----------------------------------
-Tablas:
-- `usuarios`
-- `roles`
-- `usuario_rol_colegio`
-
-Descripcion:
-Este modulo administra autenticacion, estado de las cuentas y asignacion de perfiles. `usuarios` contiene la cuenta. `roles` define el perfil. `usuario_rol_colegio` enlaza ambos y agrega el contexto de colegio cuando corresponde.
-
-Logica funcional:
-- Un usuario puede pertenecer a un colegio principal.
-- Un usuario puede tener uno o mas roles segun la tabla de asignacion.
-- El sistema usa estas asignaciones para determinar privilegios generales, por ejemplo acceso administrativo.
-
-
-5.4. Modulo de permisos de interfaz
+15. TABLAS PRINCIPALES INVOLUCRADAS
 -----------------------------------
-Tablas:
-- `menus`
-- `menu_v`
-- `usuario_menu`
-- `usuario_menu_v`
+Resumen funcional por tabla:
 
-Descripcion:
-Este modulo controla la navegacion visible para cada usuario. `menus` y `usuario_menu` corresponden al esquema heredado. `menu_v` y `usuario_menu_v` corresponden a la version activa observada en el codigo actual.
+15.1. `colegio`
+Define el contexto institucional. Sirve para segmentar funcionarios, usuarios y visualizacion de datos.
 
-Logica funcional:
-- `menu_v` define el catalogo vigente de secciones navegables.
-- `usuario_menu_v` almacena si un menu esta permitido o no para un usuario.
-- El proyecto actual inicializa permisos base para menus visibles y otorga el menu de usuarios segun rol.
-- La presencia de tablas con y sin sufijo `_v` sugiere una migracion progresiva del subsistema de menus.
+15.2. `empleados`
+Registra los datos del funcionario y el colegio al que pertenece.
+
+15.3. `contratos_empleado`
+Tabla central del funcionamiento. Guarda horas semanales, horas lectivas, horas no lectivas, colacion diaria y observacion.
+
+15.4. `horarios_semanales`
+Detalla el horario diario por contrato y por funcionario, separando manana y tarde.
+
+15.5. `colacion`
+Catalogo de valores estandarizados de colacion utilizados por el resumen.
+
+15.6. `dias_semana`
+Catalogo de dias utilizado para ordenar y presentar la grilla semanal, especialmente de lunes a viernes.
+
+15.7. `usuarios`
+Almacena cuentas de acceso, datos basicos, colegio asociado, estado y token de activacion o reinicio de clave.
+
+15.8. `roles`
+Define los perfiles principales del sistema.
+
+15.9. `usuario_rol_colegio`
+Relaciona usuario, rol y colegio de contexto.
+
+15.10. `menu_v`
+Catalogo vigente de menus visibles del sistema.
+
+15.11. `usuario_menu_v`
+Asigna permisos de visualizacion de menus por usuario.
+
+15.12. `menus` y `usuario_menu`
+Estructura heredada del subsistema de menus. Se conserva en la base, pero el proyecto actual documentado opera sobre la version `_v`.
 
 
-6. Observaciones tecnicas
--------------------------
-- El esquema presenta mezcla de motores MyISAM e InnoDB, lo que dificulta uniformar integridad referencial y operaciones transaccionales.
-- Algunas relaciones clave existen solo de forma logica y no como foreign key formal.
-- `horarios_semanales` deberia tener constraints formales hacia `empleados` y `contratos_empleado`.
-- `empleados`, `usuarios` y `usuario_rol_colegio` deberian tener FK real hacia `colegio`.
-- El modulo de menus muestra convivencia entre estructuras heredadas (`menus`, `usuario_menu`) y estructuras vigentes (`menu_v`, `usuario_menu_v`).
-- Seria recomendable normalizar mejor ciertas relaciones para evitar duplicidad funcional entre tablas de permisos antiguas y nuevas.
-- Seria recomendable migrar completamente las tablas MyISAM a InnoDB para soportar claves foraneas reales, transacciones y borrados consistentes.
-- Conviene documentar y formalizar la estrategia de versionado del modulo de menus para evitar ambiguedad entre `menus` y `menu_v`.
-- El campo `min_colacion_diaria` se persiste en `contratos_empleado`, mientras `colacion` funciona como catalogo de apoyo; esta decision es valida operativamente, pero deberia documentarse como politica de negocio.
-- Las consultas del sistema muestran que muchas relaciones se resuelven por convencion de nombres y por joins manuales desde la aplicacion, lo que incrementa la dependencia del codigo sobre la consistencia de datos.
+16. OBSERVACIONES TECNICAS
+--------------------------
+- El nucleo funcional del sistema esta bien definido en torno a la cadena colegio -> funcionario -> contrato -> horario.
+- `contratos_empleado` funciona como resumen contractual y `horarios_semanales` como detalle operativo. Esa separacion es correcta y debe mantenerse en la documentacion.
+- `colacion` actua como catalogo, pero el valor aplicado se persiste en `contratos_empleado.min_colacion_diaria`. Esto debe entenderse como una decision de negocio ya instalada.
+- El sistema mezcla relaciones fisicas y relaciones solo logicas. En especial, faltan claves foraneas formales en algunas asociaciones relevantes.
+- La tabla `horarios_semanales` depende funcionalmente de `empleados` y `contratos_empleado`, aunque esa dependencia no esta completamente reforzada por restricciones del esquema.
+- La administracion de menus convive con estructuras heredadas y vigentes. La documentacion tecnica debe distinguirlas claramente para evitar errores de mantenimiento.
+- La implementacion actual usa `menu_v` y `usuario_menu_v` como fuente activa de permisos por menu.
+- La carga de usuarios contempla activacion posterior de clave, por lo que el estado funcional de la cuenta no depende solo del campo `estado`, sino tambien del ciclo de activacion.
+- La visualizacion de horas en pantalla y exportaciones depende de conversiones a formato `HH:MM`, por lo que no siempre coincide directamente con el valor crudo almacenado.
 
 
-7. Conclusion final
--------------------
-La base de datos `qaseduc_calculo_horario` esta separada en cinco bloques conceptuales bien reconocibles:
+17. POSIBLES MEJORAS FUTURAS
+----------------------------
+- formalizar con claves foraneas todas las relaciones hoy resueltas solo por convencion
+- unificar completamente el subsistema de menus y retirar o dejar claramente obsoletas las tablas heredadas
+- documentar de manera formal la regla global de `id_colegio = 15` junto con las banderas de sesion usadas por la aplicacion
+- reforzar validaciones transaccionales al crear funcionario, contrato y horario en una sola operacion atomica
+- registrar auditoria de cambios sobre horarios, resumenes y permisos
+- consolidar en una capa comun las validaciones de horas legales, lectivas y no lectivas
+- definir con mayor precision el orden funcional del listado luego de crear o editar un funcionario
+- complementar esta documentacion con diagramas de flujo y un manual de usuario final
 
-- Estructura organizacional: `colegio`
-- Personal y contratos: `empleados` y `contratos_empleado`
-- Horarios: `horarios_semanales`, con apoyo de `dias_semana` y `colacion`
-- Usuarios y roles: `usuarios`, `roles` y `usuario_rol_colegio`
-- Permisos de navegacion: `menus`, `menu_v`, `usuario_menu` y `usuario_menu_v`
 
-En terminos funcionales, el nucleo del sistema esta en la cadena colegio -> empleado -> contrato -> horario, mientras que el acceso a la aplicacion se controla con usuarios, roles y permisos de menu. La principal mejora pendiente del esquema es fortalecer la integridad referencial formal para que las relaciones que hoy son logicas queden respaldadas tambien a nivel de base de datos.
+18. CONCLUSION
+--------------
+La Calculadora de Horas Cronologicas es un sistema de gestion operativa y administrativa para funcionarios docentes, donde el valor principal no esta solo en almacenar datos, sino en relacionar correctamente colegio, funcionario, contrato, horario y permisos de acceso.
+
+Su comportamiento real se apoya en dos ejes:
+
+- gestion de funcionamientos docentes y resumen horario
+- administracion de usuarios, roles y menus visibles
+
+La documentacion de este proyecto debe seguir entendiendo `contratos_empleado` como el resumen contractual del funcionamiento, `horarios_semanales` como el detalle diario, `usuarios` como la base de acceso, y `menu_v` con `usuario_menu_v` como el subsistema vigente de permisos por menu.
+
+Con esta base, `informacion.txt` queda preparado como punto de partida tanto para documentacion tecnica interna como para la futura elaboracion de un manual de usuario del sistema.

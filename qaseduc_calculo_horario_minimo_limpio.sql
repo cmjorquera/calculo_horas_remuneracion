@@ -14,12 +14,12 @@ DROP TABLE IF EXISTS `colegio`;
 DROP TABLE IF EXISTS `colacion`;
 SET FOREIGN_KEY_CHECKS = 1;
 
-CREATE TABLE `colacion` (`id_colacion` int NOT NULL, `hora` time NOT NULL, `minutos` int NOT NULL, `activo` tinyint DEFAULT 1, `created_at` timestamp NOT NULL DEFAULT current_timestamp()) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+CREATE TABLE `colacion` (`id_colacion` int NOT NULL, `hora` time NOT NULL, `minutos` int NOT NULL) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 INSERT INTO `colacion` VALUES
-(1,'00:00:00',0,1,'2026-02-23 15:18:24'),
-(2,'00:30:00',30,1,'2026-02-23 15:18:24'),
-(3,'00:40:00',40,1,'2026-02-23 15:18:24'),
-(4,'01:00:00',60,1,'2026-02-23 15:18:24');
+(1,'00:00:00',0),
+(2,'00:30:00',30),
+(3,'00:40:00',40),
+(4,'01:00:00',60);
 
 CREATE TABLE `colegio` (`id_colegio` int NOT NULL, `nom_colegio` varchar(60) NOT NULL, `rza_colegio` varchar(50) NOT NULL, `nco_colegio` varchar(150) NOT NULL, `dir_colegio` varchar(50) NOT NULL, `rbd_colegio` varchar(10) NOT NULL, `id_dependencia` int NOT NULL, `id_comuna` int NOT NULL, `tel_colegio` varchar(10) NOT NULL, `web_colegio` varchar(60) NOT NULL, `bd` varchar(30) NOT NULL, `orden` int NOT NULL, `email_entrevista` varchar(100) NOT NULL, `num_r_educacion` int NOT NULL, `ano_r_educacion` int NOT NULL, `ip` varchar(15) NOT NULL, `email_comunicaciones` varchar(100) NOT NULL, `sexo` int NOT NULL DEFAULT 0, `multi_cole` varchar(2) NOT NULL DEFAULT 'no', `identificador` varchar(20) NOT NULL, `rut_colegio` varchar(12) NOT NULL, `correo_contrato` varchar(50) NOT NULL, `url_pagina` varchar(255) DEFAULT NULL) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
 INSERT INTO `colegio` VALUES

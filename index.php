@@ -26,9 +26,38 @@ if (!in_array('empleados', $menusPermitidosActual, true)) {
 }
 $dias = $funciones->obtenerDiasSemana(true); // lunes a viernes
 $colaciones = $funciones->obtenerOpcionesColacion();
-$verTodosColegios = !empty($_SESSION["is_super_admin"]);
+$idUsuarioSesion = (int)($_SESSION["id_usuario"] ?? 0);
+$usuariosConSelectorColegio = [2, 5];
+$esSuperAdminOperativo = $funciones->usuarioTieneRol($idUsuarioSesion, 1)
+    || in_array($idUsuarioSesion, $usuariosConSelectorColegio, true);
+$verTodosColegios = $esSuperAdminOperativo;
 $empleados = $funciones->obtenerEmpleadosConResumen($_SESSION["id_colegio"], $verTodosColegios);
 $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosColegios;
+$colegios = $verTodosColegios ? $funciones->obtenerColegios() : [];
+$colegiosLogoMap = [];
+
+foreach ($colegios as $colegio) {
+    $idColegioLogo = (int)($colegio["id_colegio"] ?? 0);
+    if ($idColegioLogo <= 0) {
+        continue;
+    }
+
+    $logoCandidates = [$idColegioLogo];
+    if ($idColegioLogo === 14 || $idColegioLogo === 15) {
+        $logoCandidates = [15, 14];
+    }
+
+    foreach ($logoCandidates as $logoId) {
+        foreach (["png", "jpg", "jpeg"] as $extLogo) {
+            $logoRelTmp = "imagenes/colegios/colegio_" . $logoId . "." . $extLogo;
+            $logoAbsTmp = __DIR__ . "/" . $logoRelTmp;
+            if (is_file($logoAbsTmp)) {
+                $colegiosLogoMap[(string)$idColegioLogo] = $logoRelTmp;
+                break 2;
+            }
+        }
+    }
+}
 
 ?>
 
@@ -49,6 +78,10 @@ $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosCol
     <title>Calculadora de Horas Cronológicas</title>
     <script>
     const DIAS_LV = <?= json_encode($dias); ?>;
+    const ID_USUARIO_SESION = <?= json_encode($idUsuarioSesion) ?>;
+    const ES_SUPER_ADMIN_EMPLEADO = <?= json_encode($esSuperAdminOperativo) ?>;
+    const COLEGIOS_EMPLEADO = <?= json_encode($colegios, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    const COLEGIOS_LOGO_EMPLEADO = <?= json_encode($colegiosLogoMap, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     </script>
 
 </head>
@@ -73,7 +106,7 @@ $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosCol
         <section class="card">
             <div class="card-head card-head-balanced">
                 <div class="card-head-main">
-                    <h2>Horario semanal</h2>
+                    <h2>Horario semanal ***</h2>
                     <small>Selecciona hora de inicio y término por jornada</small>
                 </div>
                 <div class="card-head-side">
@@ -88,7 +121,15 @@ $mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosCol
                         <tr>
                             <th rowspan="2">Día</th>
                             <th colspan="2">Mañana</th>
-                            <th colspan="2">Tarde</th>
+                            <th colspan="2">
+                                <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
+                                    <span>Tarde</span>
+                                    <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;cursor:pointer;">
+                                        <input type="checkbox" id="repeatScheduleDownToggle" aria-label="Repetir horario hacia abajo">
+                                        <span>Repetir hacia abajo</span>
+                                    </label>
+                                </div>
+                            </th>
                         </tr>
                         <tr>
                             <th>Inicio</th>
@@ -992,6 +1033,70 @@ function timePicker(prefix, bloque, tipo) { //arma el “control” HH : MM
     return wrap;
 }
 
+function getRowTimeValue(tr, prefix, bloque, tipo) {
+    const selH = tr.querySelector(`select[name="${prefix}_${bloque}_${tipo}_h"]`);
+    const selM = tr.querySelector(`select[name="${prefix}_${bloque}_${tipo}_m"]`);
+    return {
+        hh: selH ? selH.value : "00",
+        mm: selM ? selM.value : "00"
+    };
+}
+
+function isRepeatScheduleDownEnabled() {
+    const toggle = document.getElementById("repeatScheduleDownToggle");
+    return !!toggle?.checked;
+}
+
+function setRowTimeValue(tr, prefix, bloque, tipo, hh, mm) {
+    const selH = tr.querySelector(`select[name="${prefix}_${bloque}_${tipo}_h"]`);
+    const selM = tr.querySelector(`select[name="${prefix}_${bloque}_${tipo}_m"]`);
+    if (selH) selH.value = String(hh || "00").padStart(2, "0");
+    if (selM) selM.value = String(mm || "00").padStart(2, "0");
+}
+
+function copiarHorarioHaciaAbajo(prefixOrigen) {
+    if (window.__copiandoHorarioHaciaAbajo) return;
+
+    const filas = Array.from(document.querySelectorAll("#tbodyHorario tr"));
+    const idxOrigen = filas.findIndex((tr) => tr.dataset.dayPrefix === prefixOrigen);
+    if (idxOrigen < 0) return;
+
+    const filaOrigen = filas[idxOrigen];
+    const lockOrigen = filaOrigen.querySelector(".day-lock-check");
+    const origenBloqueado = !!lockOrigen?.checked;
+
+    const horarioOrigen = {
+        manIni: getRowTimeValue(filaOrigen, prefixOrigen, "man", "ini"),
+        manFin: getRowTimeValue(filaOrigen, prefixOrigen, "man", "fin"),
+        tarIni: getRowTimeValue(filaOrigen, prefixOrigen, "tar", "ini"),
+        tarFin: getRowTimeValue(filaOrigen, prefixOrigen, "tar", "fin")
+    };
+
+    window.__copiandoHorarioHaciaAbajo = true;
+    try {
+        for (let i = idxOrigen + 1; i < filas.length; i++) {
+            const filaDestino = filas[i];
+            const prefixDestino = filaDestino.dataset.dayPrefix || "";
+            if (!prefixDestino) continue;
+
+            const lockDestino = filaDestino.querySelector(".day-lock-check");
+            if (lockDestino?.checked !== origenBloqueado) {
+                lockDestino.checked = origenBloqueado;
+                lockDestino.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+
+            setRowTimeValue(filaDestino, prefixDestino, "man", "ini", horarioOrigen.manIni.hh, horarioOrigen.manIni.mm);
+            setRowTimeValue(filaDestino, prefixDestino, "man", "fin", horarioOrigen.manFin.hh, horarioOrigen.manFin.mm);
+            setRowTimeValue(filaDestino, prefixDestino, "tar", "ini", horarioOrigen.tarIni.hh, horarioOrigen.tarIni.mm);
+            setRowTimeValue(filaDestino, prefixDestino, "tar", "fin", horarioOrigen.tarFin.hh, horarioOrigen.tarFin.mm);
+        }
+    } finally {
+        window.__copiandoHorarioHaciaAbajo = false;
+    }
+
+    document.getElementById("tbodyHorario")?.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
 function buildRow(dia) { // arma una fila completa del día (mañana ini/fin, tarde ini/fin).
     const tr = document.createElement("tr");
     tr.dataset.dayPrefix = dia.prefix;
@@ -1186,8 +1291,19 @@ function buildRow(dia) { // arma una fila completa del día (mañana ini/fin, ta
             refreshLockUi(this.checked);
             // dispara recálculo general
             tr.dispatchEvent(new Event("change", { bubbles: true }));
+            if (isRepeatScheduleDownEnabled()) {
+                copiarHorarioHaciaAbajo(dia.prefix);
+            }
         });
     }
+
+    tr.querySelectorAll("select").forEach((sel) => {
+        sel.addEventListener("change", function() {
+            if (window.__copiandoHorarioHaciaAbajo) return;
+            if (!isRepeatScheduleDownEnabled()) return;
+            copiarHorarioHaciaAbajo(dia.prefix);
+        });
+    });
 
     return tr;
 }
@@ -1240,6 +1356,8 @@ function init() {
     document.getElementById("btnLimpiar").addEventListener("click", () => {
         document.querySelectorAll("#tbodyHorario select").forEach(s => s.value = "00");
         document.querySelectorAll(".day-lock-check").forEach(c => c.checked = false);
+        const repeatToggle = document.getElementById("repeatScheduleDownToggle");
+        if (repeatToggle) repeatToggle.checked = false;
         document.querySelectorAll("#tbodyHorario tr").forEach(tr => {
             tr.classList.remove("day-blocked");
             tr.querySelectorAll("select").forEach(s => s.disabled = false);
