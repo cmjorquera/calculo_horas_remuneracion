@@ -87,9 +87,7 @@ foreach ($horario as $d) {
 // =====================
 $id_colegio = (int)($_SESSION["id_colegio"] ?? 0);
 $idUsuarioSesion = (int)($_SESSION["id_usuario"] ?? 0);
-$usuariosConSelectorColegio = [2, 5];
-$es_super_admin = $funciones->usuarioTieneRol($idUsuarioSesion, 1)
-  || in_array($idUsuarioSesion, $usuariosConSelectorColegio, true);
+$es_super_admin = $funciones->usuarioTieneRol($idUsuarioSesion, 1);
 if ($id_colegio <= 0) jerr("id_colegio no encontrado.");
 
 if ($es_super_admin && $id_empleado_post <= 0 && $id_colegio_post > 0) {

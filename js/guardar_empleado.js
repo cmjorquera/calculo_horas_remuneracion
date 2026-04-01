@@ -251,10 +251,10 @@ function guardarEmpleado() {
     emailNorm: "",
     fullName: ""
   };
-  const colegiosEmpleado = Array.isArray(window.COLEGIOS_EMPLEADO) ? window.COLEGIOS_EMPLEADO : [];
-  const colegiosLogoEmpleado = window.COLEGIOS_LOGO_EMPLEADO || {};
-  const idUsuarioSesion = window.ID_USUARIO_SESION;
-  const esSuperAdminEmpleado = !!window.ES_SUPER_ADMIN_EMPLEADO || idUsuarioSesion == 2 || idUsuarioSesion == 5;
+  const colegiosEmpleadoRaw = typeof COLEGIOS_EMPLEADO !== "undefined" ? COLEGIOS_EMPLEADO : window.COLEGIOS_EMPLEADO;
+  const colegiosEmpleado = Array.isArray(colegiosEmpleadoRaw) ? colegiosEmpleadoRaw : [];
+  const colegiosLogoEmpleado = (typeof COLEGIOS_LOGO_EMPLEADO !== "undefined" ? COLEGIOS_LOGO_EMPLEADO : window.COLEGIOS_LOGO_EMPLEADO) || {};
+  const esSuperAdminEmpleado = !!(typeof ES_SUPER_ADMIN_EMPLEADO !== "undefined" ? ES_SUPER_ADMIN_EMPLEADO : window.ES_SUPER_ADMIN_EMPLEADO);
   const colegioOptionsHtml = colegiosEmpleado.map((colegio) => {
     const idColegio = Number(colegio.id_colegio || 0);
     const nombreColegio = String(colegio.nco_colegio || colegio.nom_colegio || `Colegio ${idColegio}`).trim();
@@ -358,7 +358,7 @@ html: `
         <span>Apellido materno</span>
         <input id="sw_ap_materno" type="text" maxlength="80" placeholder="Apellido materno">
       </label>
-      <label class="user-field ${esSuperAdminEmpleado ? "" : "is-hidden"}">
+      <label id="sw_id_colegio_field" class="user-field${esSuperAdminEmpleado ? "" : " is-hidden"}">
         <span>Colegio</span>
         <select id="sw_id_colegio">
           <option value="">Selecciona</option>
@@ -402,6 +402,7 @@ didOpen: () => {
   const observacionInput = document.getElementById("sw_observacion");
   const runMsg = document.getElementById("sw_run_exists_msg");
   const colegioInput = document.getElementById("sw_id_colegio");
+  const colegioField = document.getElementById("sw_id_colegio_field");
   const colegioPreview = document.getElementById("sw_colegio_preview");
   const colegioPreviewImg = document.getElementById("sw_colegio_preview_img");
   const colegioPreviewNombre = document.getElementById("sw_colegio_preview_nombre");
@@ -416,8 +417,25 @@ didOpen: () => {
     emailInput.insertAdjacentElement("afterend", emailMsg);
   }
 
+  function ensureColegioFieldState() {
+    if (!colegioInput || !colegioField) return;
+
+    const tieneOpcionesReales = colegioInput.options.length > 1;
+    const debeMostrarColegio = !!esSuperAdminEmpleado && tieneOpcionesReales;
+    colegioField.classList.toggle("is-hidden", !debeMostrarColegio);
+
+    if (!debeMostrarColegio && colegioPreview) {
+      colegioPreview.classList.add("is-hidden");
+    }
+  }
+
   function syncColegioPreview() {
     if (!colegioInput || !colegioPreview || !colegioPreviewImg || !colegioPreviewNombre || !colegioPreviewMeta) {
+      return;
+    }
+
+    ensureColegioFieldState();
+    if (colegioField?.classList.contains("is-hidden")) {
       return;
     }
 
@@ -460,13 +478,14 @@ didOpen: () => {
     if (colegioInput) {
       colegioInput.value = String(prefill.id_colegio || "");
       colegioInput.disabled = Number(prefill.id_empleado || 0) > 0;
-      syncColegioPreview();
     }
   } else if (colegioInput) {
     colegioInput.value = "";
     colegioInput.disabled = false;
-    syncColegioPreview();
   }
+
+  ensureColegioFieldState();
+  syncColegioPreview();
 
   if (colegioInput) {
     colegioInput.addEventListener("change", syncColegioPreview);

@@ -27,12 +27,10 @@ if (!in_array('empleados', $menusPermitidosActual, true)) {
 $dias = $funciones->obtenerDiasSemana(true); // lunes a viernes
 $colaciones = $funciones->obtenerOpcionesColacion();
 $idUsuarioSesion = (int)($_SESSION["id_usuario"] ?? 0);
-$usuariosConSelectorColegio = [2, 5];
-$esSuperAdminOperativo = $funciones->usuarioTieneRol($idUsuarioSesion, 1)
-    || in_array($idUsuarioSesion, $usuariosConSelectorColegio, true);
+$esSuperAdminOperativo = $funciones->usuarioTieneRol($idUsuarioSesion, 1);
 $verTodosColegios = $esSuperAdminOperativo;
 $empleados = $funciones->obtenerEmpleadosConResumen($_SESSION["id_colegio"], $verTodosColegios);
-$mostrarColumnaColegio = ((int)($_SESSION["id_rol"] ?? 0) === 1) && $verTodosColegios;
+$mostrarColumnaColegio = $esSuperAdminOperativo;
 $colegios = $verTodosColegios ? $funciones->obtenerColegios() : [];
 $colegiosLogoMap = [];
 

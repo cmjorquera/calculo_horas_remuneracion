@@ -17,15 +17,19 @@
   border: 1px solid rgba(148, 163, 184, 0.30) !important;
   width: min(760px, calc(100vw - 32px)) !important;
   overflow: hidden !important;
-  background: #ffffff !important;
+  background:
+    linear-gradient(180deg, #0f6fa1 0%, #0b5e8a 58%, #0a5378 100%) top / 100% 62px no-repeat,
+    #ffffff !important;
 }
 
 .swal-seduc .swal2-header {
   margin: 0 -22px 18px !important;
-  padding: 14px 20px 0 !important;
+  padding: 14px 20px 16px !important;
+  min-height: 62px !important;
+  box-sizing: border-box !important;
   border-radius: 0 !important;
-  background: #ffffff !important;
-  border-bottom: 0 !important;
+  background: linear-gradient(180deg, #0f6fa1 0%, #0b5e8a 58%, #0a5378 100%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
   width: auto !important;
   position: relative !important;
   display: grid !important;
@@ -34,18 +38,6 @@
   align-items: start !important;
   column-gap: 12px;
   row-gap: 12px;
-}
-
-.swal-seduc .swal2-header::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  height: 58px;
-  background: linear-gradient(180deg, #0f6fa1 0%, #0b5e8a 58%, #0a5378 100%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
-  pointer-events: none;
 }
 
 /* Título */
@@ -64,6 +56,10 @@
   grid-column: 1;
   grid-row: 1;
   align-self: start;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  line-height: 1.2 !important;
 }
 
 .swal-seduc .swal2-close {
@@ -98,8 +94,9 @@
   color: #475569 !important;
   font-size: 14px !important;
   line-height: 1.55 !important;
-  margin: 10px 0 0 !important;
+  margin: 0 !important;
   padding: 0 !important;
+  overflow: visible !important;
 }
 
 /* Icono (círculo) */
@@ -221,13 +218,14 @@
 
 .user-create-form {
   text-align: left;
-  padding-top: 8px;
+  padding-top: 4px;
 }
 
 .user-create-topbar {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 10px;
+  min-height: 0;
 }
 
 .user-create-grid {
@@ -316,7 +314,7 @@
 }
 
 .colegio-logo-chip.is-hidden {
-  visibility: hidden;
+  display: none;
 }
 
 .colegio-logo-chip-img {
