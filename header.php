@@ -2,6 +2,12 @@
 $headerTitle = isset($headerTitle) ? (string)$headerTitle : "Calculadora de Horas Cronológicas";
 $nombreColegioHeader = trim((string)($_SESSION["nom_colegio"] ?? $_SESSION["nco_colegio"] ?? "Sin colegio"));
 $idUsuarioHeader = (int)($_SESSION["id_usuario"] ?? 0);
+$idRolHeader = (int)($_SESSION["id_rol"] ?? 0);
+$rolesHeader = [
+    1 => "Super Administrador",
+    2 => "Administrador de Horas colegio"
+];
+$nombreRolHeader = $rolesHeader[$idRolHeader] ?? trim((string)($_SESSION["cabecera_contexto"] ?? "Sin rol"));
 ?>
 <header class="header">
     <div class="brand">
@@ -14,7 +20,7 @@ $idUsuarioHeader = (int)($_SESSION["id_usuario"] ?? 0);
                 <i class="bi bi-person-circle"></i>
                 <span><?= htmlspecialchars($_SESSION["nombre_completo"]) ?></span>
                 <span class="sep">•</span>
-                <span><?= htmlspecialchars($_SESSION["cabecera_contexto"] ?? ($_SESSION["nom_colegio"] ?? "Sin colegio")) ?></span>
+                <span>Rol: <?= $idRolHeader ?> - <?= htmlspecialchars($nombreRolHeader) ?></span>
                 <span class="sep">•</span>
                 <span><?= htmlspecialchars($nombreColegioHeader) ?></span>
                 <span class="sep">•</span>
