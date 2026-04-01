@@ -17,21 +17,35 @@
   border: 1px solid rgba(148, 163, 184, 0.30) !important;
   width: min(760px, calc(100vw - 32px)) !important;
   overflow: hidden !important;
-  background:
-    linear-gradient(180deg, #0f6fa1 0%, #0b5e8a 58%, #0a5378 100%) top / 100% 58px no-repeat,
-    #ffffff !important;
+  background: #ffffff !important;
 }
 
 .swal-seduc .swal2-header {
   margin: 0 -22px 18px !important;
-  padding: 14px 20px !important;
-  min-height: 54px;
+  padding: 14px 20px 0 !important;
   border-radius: 0 !important;
-  background: transparent !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
+  background: #ffffff !important;
+  border-bottom: 0 !important;
   width: auto !important;
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-auto-rows: auto;
+  align-items: start !important;
+  column-gap: 12px;
+  row-gap: 12px;
+}
+
+.swal-seduc .swal2-header::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  height: 58px;
+  background: linear-gradient(180deg, #0f6fa1 0%, #0b5e8a 58%, #0a5378 100%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  pointer-events: none;
 }
 
 /* Título */
@@ -43,19 +57,30 @@
   margin: 0 !important;
   text-align: left !important;
   width: 100%;
-  padding-right: 44px;
+  padding: 2px 0 0 !important;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.10);
+  position: relative;
+  z-index: 1;
+  grid-column: 1;
+  grid-row: 1;
+  align-self: start;
 }
 
 .swal-seduc .swal2-close {
   width: 32px !important;
   height: 32px !important;
-  right: 12px !important;
-  top: 11px !important;
+  position: relative !important;
+  inset: auto !important;
+  margin: 0 !important;
   border-radius: 999px !important;
   color: rgba(255, 255, 255, 0.92) !important;
   background: rgba(255, 255, 255, 0.16) !important;
   transition: background .15s ease, transform .15s ease !important;
+  z-index: 1;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-self: start;
 }
 
 .swal-seduc .swal2-close:hover {
@@ -80,9 +105,18 @@
 /* Icono (círculo) */
 .swal-seduc .swal2-icon {
   transform: scale(0.92);
-  margin: 12px auto 6px !important;
+  margin: 6px auto 6px !important;
   border-color: rgba(11, 94, 138, 0.35) !important;
   color: #0B5E8A !important;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  z-index: 1;
+}
+
+.swal-seduc .swal2-image {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  z-index: 1;
 }
 
 /* Footer de botones */
