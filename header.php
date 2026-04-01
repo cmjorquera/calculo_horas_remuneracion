@@ -1,18 +1,21 @@
 <?php
 $headerTitle = isset($headerTitle) ? (string)$headerTitle : "Calculadora de Horas Cronológicas";
 $nombreColegioHeader = trim((string)($_SESSION["nom_colegio"] ?? $_SESSION["nco_colegio"] ?? "Sin colegio"));
-$idUsuarioHeader = (int)($_SESSION["id_usuario"] ?? 0);
-$idRolHeader = (int)($_SESSION["id_rol"] ?? 0);
-$rolesHeader = [
-    1 => "Super Administrador",
-    2 => "Administrador de Horas colegio"
-];
-$nombreRolHeader = $rolesHeader[$idRolHeader] ?? trim((string)($_SESSION["cabecera_contexto"] ?? "Sin rol"));
+$idColegioHeader = (int)($_SESSION["id_colegio"] ?? 0);
+$logoHeader = "imagenes/logo_2.jpg";
+foreach (["png", "jpg", "jpeg", "webp"] as $extLogoHeader) {
+    $logoRelHeader = "imagenes/colegios/colegio_" . $idColegioHeader . "." . $extLogoHeader;
+    $logoAbsHeader = __DIR__ . "/" . $logoRelHeader;
+    if ($idColegioHeader > 0 && is_file($logoAbsHeader)) {
+        $logoHeader = $logoRelHeader;
+        break;
+    }
+}
 ?>
 <header class="header">
     <div class="brand">
         <div class="logo">
-            <img src="imagenes/logo_2.jpg" alt="Logo" onerror="this.style.display='none'">
+            <img src="<?= htmlspecialchars($logoHeader) ?>" alt="Logo del colegio" onerror="this.src='imagenes/logo_2.jpg'">
         </div>
         <div class="titles">
             <h1><?= htmlspecialchars($headerTitle) ?></h1>
@@ -20,11 +23,7 @@ $nombreRolHeader = $rolesHeader[$idRolHeader] ?? trim((string)($_SESSION["cabece
                 <i class="bi bi-person-circle"></i>
                 <span><?= htmlspecialchars($_SESSION["nombre_completo"]) ?></span>
                 <span class="sep">•</span>
-                <span>Rol: <?= $idRolHeader ?> - <?= htmlspecialchars($nombreRolHeader) ?></span>
-                <span class="sep">•</span>
                 <span><?= htmlspecialchars($nombreColegioHeader) ?></span>
-                <span class="sep">•</span>
-                <span>ID usuario: <?= $idUsuarioHeader ?></span>
             </div>
         </div>
     </div>

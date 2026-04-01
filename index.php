@@ -104,7 +104,7 @@ foreach ($colegios as $colegio) {
         <section class="card">
             <div class="card-head card-head-balanced">
                 <div class="card-head-main">
-                    <h2>Horario semanal ***</h2>
+                    <h2>Horario semanal</h2>
                     <small>Selecciona hora de inicio y término por jornada</small>
                 </div>
                 <div class="card-head-side">

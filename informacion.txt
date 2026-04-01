@@ -182,6 +182,48 @@ El cuadro "Resumen" concentra la informacion consolidada del funcionamiento y ac
 - Horas no lectivas: valor resumido del contrato, tambien con soporte de entrada pedagogica y equivalencia cronologica visible
 - Colacion: valor diario estandarizado en minutos
 
+Calculo funcional visible del resumen:
+
+1. Jornada ordinaria cronologica
+   - por cada dia, el sistema calcula:
+   - tramo manana = hora termino manana - hora inicio manana
+   - tramo tarde = hora termino tarde - hora inicio tarde
+   - jornada diaria = tramo manana + tramo tarde
+   - jornada semanal cronologica = suma de lunes a viernes
+   - ese total se muestra en `Cronologicas` con formato `HH:MM`
+
+2. Jornada ordinaria pedagogica
+   - el cuadro de `Pedagógicas` para la jornada ordinaria refleja la suma de horas lectivas y no lectivas ingresadas por el usuario
+   - por eso el total pedagogico visible corresponde al acumulado de ambos bloques del resumen
+
+3. Horas lectivas
+   - el usuario ingresa el valor en pedagogicas
+   - el sistema convierte automaticamente ese valor a cronologicas
+   - la equivalencia aplicada es:
+   - 1 hora pedagogica = 40 minutos cronologicos
+   - formula: horas pedagogicas x 40 = minutos cronologicos
+   - luego el sistema muestra el resultado en `HH:MM`
+
+4. Horas no lectivas
+   - funciona igual que las horas lectivas
+   - el usuario ingresa pedagogicas
+   - el sistema las convierte automaticamente a cronologicas usando 40 minutos por cada hora pedagogica
+
+5. Colacion
+   - no se calcula por diferencia de horario
+   - se define desde un selector fijo de minutos
+   - el valor elegido se aplica como colacion diaria del funcionamiento
+
+Ejemplo operativo:
+
+- si en un dia se registra manana de `08:00` a `12:00`, el sistema suma 4 horas
+- si ademas se registra tarde de `13:00` a `17:00`, el sistema suma otras 4 horas
+- la jornada diaria queda en 8 horas cronologicas
+- si eso mismo se replica en 5 dias, la jornada semanal cronologica sera `40:00`
+- si el usuario informa 30 horas pedagogicas lectivas y 14 no lectivas, la jornada ordinaria pedagogica visible sera 44
+- esas 30 pedagogicas lectivas se convierten a `20:00` cronologicas
+- esas 14 pedagogicas no lectivas se convierten a `09:20` cronologicas
+
 La logica que ya existia en la documentacion anterior y debe conservarse es la siguiente:
 
 - `contratos_empleado` guarda la carga horaria resumida del funcionario
