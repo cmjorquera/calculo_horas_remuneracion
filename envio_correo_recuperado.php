@@ -62,14 +62,14 @@ function plantillaBienvenidaHtml(array $data)
             <td style="background:linear-gradient(135deg,#0b5e8a,#0e6e9d);padding:28px 32px;text-align:center;">
               {$logoBlock}
               <div style="font-size:28px;font-weight:800;color:#ffffff;letter-spacing:-.3px;">Bienvenido al sistema</div>
-              <div style="font-size:15px;color:rgba(255,255,255,.86);margin-top:8px;">Calculo de Horas</div>
+              <div style="font-size:15px;color:rgba(255,255,255,.86);margin-top:8px;">Calculo de Horas Pedagogicas y Cronologicas</div>
             </td>
           </tr>
           <tr>
             <td style="padding:32px;">
               <p style="margin:0 0 14px 0;font-size:16px;line-height:1.6;">Hola <strong>{$nombre}</strong>,</p>
               <p style="margin:0 0 14px 0;font-size:15px;line-height:1.7;color:#334155;">
-                Te damos la bienvenida al sistema de Calculo de Horas. Ya fue creada tu cuenta corporativa para incorporarte a la plataforma y gestionar tu acceso.
+                Te damos la bienvenida al sistema de Calculo de Horas Pegagogicas y Cronologicas. Ya fue creada tu cuenta corporativa para incorporarte a la plataforma y gestionar tu acceso.
               </p>
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:18px 0;background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;">
                 <tr>
@@ -77,7 +77,6 @@ function plantillaBienvenidaHtml(array $data)
                     <div style="font-size:13px;color:#64748b;margin-bottom:6px;">Resumen de tu cuenta</div>
                     <div style="font-size:14px;line-height:1.8;color:#0f172a;">
                       <strong>Nombre:</strong> {$nombre}<br>
-                      <strong>Identificador:</strong> {$identificador}<br>
                       <strong>Colegio:</strong> {$colegio}
                     </div>
                   </td>
@@ -106,7 +105,7 @@ function plantillaBienvenidaHtml(array $data)
           </tr>
           <tr>
             <td style="padding:18px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:12px;line-height:1.7;color:#64748b;text-align:center;">
-              Sistema Calculo de Horas · Seduc
+              Sistema Calculo de Horas Pedagogicas Y Cronologicas · Seduc
             </td>
           </tr>
         </table>
@@ -300,7 +299,7 @@ function enviarCorreoRecuperacionClave(array $data)
         $mail->setFrom($config['from_email'], $config['from_name']);
         $mail->addAddress((string)$data['email'], $nombre !== '' ? $nombre : 'Usuario');
         $mail->isHTML(true);
-        $mail->Subject = 'Recuperacion de clave - Calculo de Horas';
+        $mail->Subject = 'Recuperacion de clave - Sistema calculo de horas Pedagogicas y Cronologicas';
         $mail->Body = plantillaCorreoAccesoHtml([
             'titulo' => 'Recuperacion de clave',
             'saludo' => 'Hola ' . ($nombre !== '' ? $nombre : 'Usuario') . ',',

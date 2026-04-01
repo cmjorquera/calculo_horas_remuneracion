@@ -67,6 +67,7 @@ if (!empty($estadoVista["usuario"])) {
 
 $mensajeAlerta = "";
 $tipoAlerta = "danger";
+$iconoAlerta = "bi-exclamation-triangle-fill";
 
 if ($mensajeCodigo === "campos_vacios") {
     $mensajeAlerta = "Completa todos los campos obligatorios.";
@@ -79,8 +80,11 @@ if ($mensajeCodigo === "campos_vacios") {
 } elseif ($mensajeCodigo === "solicitud_ok") {
     $mensajeAlerta = "Se envio un enlace de recuperacion a tu correo.";
     $tipoAlerta = "success";
+    $iconoAlerta = "bi-check-circle-fill";
 } elseif ($mensajeCodigo === "clave_corta") {
     $mensajeAlerta = "La clave debe tener al menos 8 caracteres.";
+} elseif ($mensajeCodigo === "clave_formato") {
+    $mensajeAlerta = "La nueva clave solo permite numeros.";
 } elseif ($mensajeCodigo === "clave_distinta") {
     $mensajeAlerta = "Las claves ingresadas no coinciden.";
 } elseif ($mensajeCodigo === "token_invalido") {
@@ -97,6 +101,40 @@ if ($mensajeCodigo === "campos_vacios") {
   <title>Recuperar clave | Calculo de Horas</title>
   <link rel="stylesheet" type="text/css" href="css/login.css?v=<?= filemtime(__DIR__ . '/css/login.css') ?>">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    .alert-box{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin:12px 0 14px;
+      padding:12px 14px;
+      border-radius:999px;
+      border:1px solid #d95c67;
+      background:linear-gradient(90deg, rgba(191, 47, 62, .16), rgba(191, 47, 62, .05));
+      color:#8f1e29;
+      font-weight:800;
+      box-shadow:0 10px 24px rgba(191, 47, 62, .12);
+    }
+    .alert-box i{
+      font-size:16px;
+      flex-shrink:0;
+    }
+    .alert-box-success{
+      border-color:#3ba86c;
+      background:linear-gradient(90deg, rgba(59, 168, 108, .14), rgba(59, 168, 108, .05));
+      color:#1f6b42;
+    }
+    .field-hint{
+      margin-top:6px;
+      font-size:12px;
+      color:rgba(15,23,42,.62);
+      line-height:1.4;
+    }
+    .input-error{
+      border-color:#bf2f3e !important;
+      box-shadow:0 0 0 5px rgba(191, 47, 62, .12) !important;
+    }
+  </style>
 </head>
 <body>
   <div class="wrap">
@@ -115,7 +153,10 @@ if ($mensajeCodigo === "campos_vacios") {
       <div class="subtitle"><?= htmlspecialchars($estadoVista["subtitle"]) ?></div>
 
       <?php if ($mensajeAlerta !== ""): ?>
-        <div class="alert alert-<?= htmlspecialchars($tipoAlerta) ?>" style="margin:12px 0; border-radius:14px;"><?= htmlspecialchars($mensajeAlerta) ?></div>
+        <div class="alert-box <?= $tipoAlerta === "success" ? "alert-box-success" : "" ?>" role="alert">
+          <i class="bi <?= htmlspecialchars($iconoAlerta) ?>"></i>
+          <span><?= htmlspecialchars($mensajeAlerta) ?></span>
+        </div>
       <?php endif; ?>
 
       <?php if ($estadoVista["modo"] === "solicitud"): ?>
@@ -131,10 +172,7 @@ if ($mensajeCodigo === "campos_vacios") {
           <div class="label">Cuenta</div>
           <input class="input" type="text" value="<?= htmlspecialchars($nombreCompleto) ?>" readonly>
         </div>
-        <div class="field">
-          <div class="label">Identificador</div>
-          <input class="input" type="text" value="<?= htmlspecialchars((string)($estadoVista["usuario"]["identificador"] ?? "")) ?>" readonly>
-        </div>
+       
         <div class="field">
           <div class="label">Correo</div>
           <input class="input" type="text" value="<?= htmlspecialchars((string)($estadoVista["usuario"]["email"] ?? "")) ?>" readonly>
@@ -144,9 +182,13 @@ if ($mensajeCodigo === "campos_vacios") {
           <input class="input" type="text" value="<?= htmlspecialchars((string)($estadoVista["usuario"]["colegio"] ?? "Seduc")) ?>" readonly>
         </div>
 
-        <form method="post" action="modelos/guardar/establecer_clave.php" autocomplete="off">
+        <form method="post" action="modelos/guardar/establecer_clave.php" autocomplete="off" id="formNuevaClave" novalidate>
           <input type="hidden" name="token" value="<?= htmlspecialchars($token, ENT_QUOTES) ?>">
           <input type="hidden" name="origen" value="recuperacion">
+          <div id="passwordAlert" class="alert-box" role="alert" style="display:none;">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span id="passwordAlertText"></span>
+          </div>
           <div class="field">
             <div class="label">Nueva clave</div>
             <div class="pw-wrap">
@@ -155,6 +197,7 @@ if ($mensajeCodigo === "campos_vacios") {
                 <i class="bi bi-eye-fill"></i>
               </button>
             </div>
+            <div class="field-hint">Usa al menos 8 caracteres y solo numeros.</div>
           </div>
           <div class="field">
             <div class="label">Confirmar clave</div>
@@ -219,6 +262,76 @@ if ($mensajeCodigo === "campos_vacios") {
 
     bindToggle("togglePw", "pw");
     bindToggle("togglePw2", "pw2");
+
+    const formNuevaClave = document.getElementById("formNuevaClave");
+    const passwordAlert = document.getElementById("passwordAlert");
+    const passwordAlertText = document.getElementById("passwordAlertText");
+    const pw = document.getElementById("pw");
+    const pw2 = document.getElementById("pw2");
+
+    function mostrarErrorClave(message, invalidFields) {
+      if (!passwordAlert || !passwordAlertText) return;
+      passwordAlertText.textContent = message;
+      passwordAlert.style.display = "flex";
+      invalidFields.forEach((field) => field && field.classList.add("input-error"));
+    }
+
+    function limpiarErrorClave() {
+      if (passwordAlert) {
+        passwordAlert.style.display = "none";
+      }
+      [pw, pw2].forEach((field) => field && field.classList.remove("input-error"));
+    }
+
+    function validarClave() {
+      if (!pw || !pw2) return true;
+
+      const clave = pw.value.trim();
+      const confirmacion = pw2.value.trim();
+
+      limpiarErrorClave();
+
+      if (clave === "" || confirmacion === "") {
+        mostrarErrorClave("Completa la nueva clave y su confirmacion.", [pw, pw2]);
+        return false;
+      }
+
+      if (clave.length < 8) {
+        mostrarErrorClave("La nueva clave debe tener al menos 8 caracteres.", [pw]);
+        return false;
+      }
+
+      if (!/^\d+$/.test(clave)) {
+        mostrarErrorClave("La nueva clave solo permite numeros.", [pw]);
+        return false;
+      }
+
+      if (clave !== confirmacion) {
+        mostrarErrorClave("La confirmacion no coincide con la nueva clave.", [pw, pw2]);
+        return false;
+      }
+
+      return true;
+    }
+
+    if (formNuevaClave) {
+      formNuevaClave.addEventListener("submit", (event) => {
+        if (!validarClave()) {
+          event.preventDefault();
+        }
+      });
+
+      [pw, pw2].forEach((field) => {
+        if (!field) return;
+        field.addEventListener("input", () => {
+          if (passwordAlert && passwordAlert.style.display !== "none") {
+            validarClave();
+          } else {
+            field.classList.remove("input-error");
+          }
+        });
+      });
+    }
   </script>
 </body>
 </html>

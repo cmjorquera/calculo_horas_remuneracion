@@ -35,6 +35,9 @@ if ($clave === '' || $claveConfirmacion === '') {
 if (mb_strlen($clave, 'UTF-8') < 8) {
     redirigirError($token, 'clave_corta');
 }
+if (!preg_match('/^\d+$/', $clave)) {
+    redirigirError($token, 'clave_formato');
+}
 if ($clave !== $claveConfirmacion) {
     redirigirError($token, 'clave_distinta');
 }
