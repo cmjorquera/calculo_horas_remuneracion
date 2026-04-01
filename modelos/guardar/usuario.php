@@ -106,6 +106,11 @@ $idRol = (int)($_POST["id_rol"] ?? 0);
 $idColegio = (int)($_POST["id_colegio"] ?? 0);
 $estado = (int)($_POST["estado"] ?? 1);
 $colegioNombre = trim((string)($_POST["colegio_nombre"] ?? ""));
+$idUsuarioSesion = (int)($_SESSION["id_usuario"] ?? 0);
+
+if ($idUsuarioSesion !== 2) {
+    $idRol = 2;
+}
 
 if ($email === "") salirError("El email es obligatorio.");
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) salirError("El email no es válido.");

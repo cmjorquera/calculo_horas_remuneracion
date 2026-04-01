@@ -251,6 +251,8 @@ function estadoUsuarioDetalle(array $usuario)
 const ROLES_USUARIO = <?= json_encode($roles, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 const COLEGIOS_USUARIO = <?= json_encode($colegios, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 const COLEGIOS_LOGO_USUARIO = <?= json_encode($colegiosLogoMap, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+const ID_USUARIO_ACTUAL = <?= (int)($_SESSION["id_usuario"] ?? 0) ?>;
+const ID_ROL_ADMIN_COLEGIO = 2;
 const SWAL_SEDUC_CONFIG = {
     buttonsStyling: false,
     reverseButtons: true,
@@ -282,6 +284,9 @@ function updateHeaderDateTime() {
 }
 
 function mostrarCrearUsuario() {
+    const puedeElegirRol = ID_USUARIO_ACTUAL === 2;
+    const rolAdminColegio = ROLES_USUARIO.find((rol) => Number(rol.id_rol) === ID_ROL_ADMIN_COLEGIO);
+    const nombreRolAdminColegio = escapeHtml(rolAdminColegio?.nombre || "Administrador de colegios");
     const html = `
         <form class="user-create-form" id="userCreateForm">
             <div class="user-create-topbar">
@@ -301,10 +306,18 @@ function mostrarCrearUsuario() {
                 </label>
                 <label class="user-field">
                     <span>Rol</span>
+                    ${puedeElegirRol ? `
                     <select id="nuevoRol">
                         <option value="">Selecciona</option>
                         ${ROLES_USUARIO.map((rol) => `<option value="${Number(rol.id_rol)}">${escapeHtml(rol.nombre || rol.codigo || "Rol")}</option>`).join("")}
                     </select>
+                    ` : `
+                    <div class="user-field-note user-field-note-static">
+                        Usted solo tiene permisos para crear rol de administrador de colegios.
+                    </div>
+                    <input id="nuevoRol" type="hidden" value="${ID_ROL_ADMIN_COLEGIO}">
+                    <input type="text" value="${nombreRolAdminColegio}" disabled>
+                    `}
                 </label>
                 <label class="user-field">
                     <span>Nombre</span>

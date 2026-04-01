@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost:3306
--- Tiempo de generación: 01-04-2026 a las 08:56:39
+-- Tiempo de generación: 01-04-2026 a las 16:19:03
 -- Versión del servidor: 10.6.19-MariaDB
 -- Versión de PHP: 8.1.34
 
@@ -600,20 +600,22 @@ CREATE TABLE `usuarios` (
 
 INSERT INTO `usuarios` (`id_usuario`, `identificador`, `email`, `clave_hash`, `nombre`, `apellido_paterno`, `apellido_materno`, `run`, `telefono`, `id_colegio`, `token_reinicio`, `token_reinicio_expira`, `estado`, `intentos`, `ultimo_login`, `created_at`, `updated_at`) VALUES
 (1, 'mgutierrez', 'mgutierrez@seduc.cl', '123456', 'Manuel', 'Gutierrez', 'Gutierrez', NULL, NULL, 15, NULL, NULL, 1, 0, '2026-03-11 09:42:21', '2026-02-12 12:34:20', '2026-03-11 09:42:21'),
-(2, 'cjorquera', 'cjorquera@seduc.cl', '123456', 'Cristian', 'Jorquera', 'Gonzalez', NULL, NULL, 15, NULL, NULL, 1, 0, '2026-04-01 08:35:29', '2026-02-12 12:34:20', '2026-03-31 14:45:53'),
+(2, 'cjorquera', 'cjorquera@seduc.cl', '123456', 'Cristian', 'Jorquera', 'Gonzalez', NULL, NULL, 15, 'af60dc9f79c914b5323b5dbc9400ef62b17e7e517f415519c8f03ab4892949d0', '2026-04-04 14:42:07', 1, 1, '2026-04-01 14:47:30', '2026-02-12 12:34:20', '2026-04-01 14:42:07'),
 (3, 'roliva', 'roliva@seduc.cl', '123456', 'Ramon', 'Oliva', 'Zenteno', NULL, NULL, 15, NULL, NULL, 1, 0, '2026-03-10 22:08:01', '2026-02-12 12:34:20', '2026-03-10 22:08:01'),
 (4, 'arojas', 'arojas@seduc.cl', '123456', 'Alejandro', 'Rojas', 'Schweitzer', NULL, NULL, 15, NULL, NULL, 1, 0, '2026-03-31 15:27:17', '2026-02-12 12:34:20', '2026-03-31 15:27:17'),
-(5, 'fvalenzuela', 'fvalenzuela@seduc.cl', '123456', 'Francisco ', 'Valenzuela', 'Valenzuela', NULL, NULL, 15, NULL, NULL, 1, 0, '2026-04-01 08:39:41', '2026-03-02 08:50:25', '2026-03-31 15:45:34'),
-(14, 'GJorquera', 'cm.jorquerag@gmail.com', '0dd07896ea07', 'CRISTIAN', 'jorquera', 'caicedo', NULL, '988302735', 15, '0342527a3023655194fb3eb09b242785999f6e2a3fef271b6ce14da1c32b1bcf', '2026-03-14 15:29:00', 1, 0, NULL, '2026-03-11 15:29:00', '2026-03-11 15:29:00'),
+(5, 'fvalenzuela', 'fvalenzuela@seduc.cl', '123456', 'Francisco ', 'Valenzuela', 'Valenzuela', NULL, NULL, 15, NULL, NULL, 1, 0, '2026-04-01 14:19:36', '2026-03-02 08:50:25', '2026-03-31 15:45:34'),
+(14, 'GJorquera', 'cm.jorquerag@gmail.com', 'Ingeniero1986#', 'CRISTIAN', 'jorquera', 'caicedo', NULL, '988302735', 15, '58b1c242f24a9eb0522fd81f4c11953577d9faf2aef615c990ca0098a5c66d7b', '2026-04-04 14:39:28', 1, 0, '2026-04-01 09:45:51', '2026-03-11 15:29:00', '2026-04-01 14:39:28'),
 (15, 'admin_c1', 'admin_c1@demo.cl', '123456', 'Admin', 'Cordillera', 'Demo', NULL, '910000015', 1, NULL, NULL, 1, 0, '2026-03-31 18:48:06', '2026-03-31 18:00:00', NULL),
 (16, 'admin_c8', 'admin_c8@demo.cl', '123456', 'Admin', 'Tabancura', 'Demo', NULL, '910000016', 8, NULL, NULL, 1, 0, NULL, '2026-03-31 18:00:00', NULL),
 (17, 'admin_c9', 'admin_c9@demo.cl', '123456', 'Admin', 'LosAndes', 'Demo', NULL, '910000017', 9, NULL, NULL, 1, 0, NULL, '2026-03-31 18:00:00', NULL),
-(18, 'admin_c10', 'admin_c10@demo.cl', '123456', 'Admin', 'LosAlerces', 'Demo', NULL, '910000018', 10, NULL, NULL, 1, 0, '2026-03-31 22:53:14', '2026-03-31 18:00:00', NULL),
+(18, 'admin_c10', 'admin_c10@demo.cl', '123456', 'Admin', 'LosAlerces', 'Demo', NULL, '910000018', 10, NULL, NULL, 1, 0, '2026-04-01 09:59:21', '2026-03-31 18:00:00', NULL),
 (19, 'admin_c11', 'admin_c11@demo.cl', '123456', 'Admin', 'Huelen', 'Demo', NULL, '910000019', 11, NULL, NULL, 1, 0, NULL, '2026-03-31 18:00:00', NULL),
 (20, 'admin_c12', 'admin_c12@demo.cl', '123456', 'Admin', 'Cantagallo', 'Demo', NULL, '910000020', 12, NULL, NULL, 1, 0, NULL, '2026-03-31 18:00:00', NULL),
 (21, 'admin_c13', 'admin_c13@demo.cl', '123456', 'Admin', 'Huinganal', 'Demo', NULL, '910000021', 13, NULL, NULL, 1, 0, NULL, '2026-03-31 18:00:00', NULL),
 (22, 'admin_c17', 'admin_c17@demo.cl', '123456', 'Admin', 'ValleAlegre', 'Demo', NULL, '910000022', 17, NULL, NULL, 1, 0, '2026-03-31 23:45:40', '2026-03-31 18:00:00', NULL),
-(24, 'rrojas', 'cr.jorquerag@duocuc.cl', '12345678', 'rene', 'rojas', 'rojas', NULL, NULL, 1, NULL, NULL, 1, 0, '2026-03-31 19:02:49', '2026-03-31 19:01:53', '2026-03-31 19:02:26');
+(24, 'rrojas', 'cr.jorqueeeerag@duocuc.cl', '12345678', 'rene', 'rojas', 'rojas', NULL, NULL, 1, '4b6372fffb4c6e5529a3474f6e5bb9caa03dbb0564114b9eb859432111614c34', '2026-04-04 09:03:37', 1, 0, '2026-04-01 14:46:13', '2026-03-31 19:01:53', '2026-04-01 09:03:37'),
+(25, 'fvalenzuela1', 'fvalenzuelaopazo@gmail.com', '12345678', 'Francisco', 'Valenzuela', 'opazo', NULL, '988302735', 8, NULL, NULL, 1, 0, '2026-04-01 14:26:38', '2026-04-01 14:21:40', '2026-04-01 14:25:15'),
+(26, 'xxxx', 'cr.jorquerag@duocuc.cl', 'b569cb1e5d99', 'xxx', 'xxx', 'xxx', NULL, NULL, 13, '9b58772e56bdde134567863624ac34a5eb618cc4097578c18cfb797612547283', '2026-04-04 14:48:59', 0, 0, NULL, '2026-04-01 14:48:59', '2026-04-01 14:48:59');
 
 -- --------------------------------------------------------
 
@@ -4271,7 +4273,13 @@ INSERT INTO `usuario_menu_v` (`id_usuario_menu`, `id_usuario`, `id_menu`, `permi
 (4651, 14, 222, 0, '2026-03-31 23:32:06', '2026-03-31 23:32:06'),
 (4652, 1, 222, 0, '2026-03-31 23:32:06', '2026-03-31 23:32:06'),
 (4653, 3, 222, 0, '2026-03-31 23:32:06', '2026-03-31 23:32:06'),
-(4654, 24, 222, 0, '2026-03-31 23:32:06', '2026-03-31 23:32:06');
+(4654, 24, 222, 0, '2026-03-31 23:32:06', '2026-03-31 23:32:06'),
+(4736, 25, 1, 1, '2026-04-01 17:21:40', '2026-04-01 17:21:40'),
+(4737, 25, 2, 1, '2026-04-01 17:21:40', '2026-04-01 17:21:40'),
+(4738, 25, 3, 0, '2026-04-01 17:21:40', '2026-04-01 17:21:40'),
+(4739, 26, 1, 1, '2026-04-01 17:48:59', '2026-04-01 17:48:59'),
+(4740, 26, 2, 1, '2026-04-01 17:48:59', '2026-04-01 17:48:59'),
+(4741, 26, 3, 0, '2026-04-01 17:48:59', '2026-04-01 17:48:59');
 
 -- --------------------------------------------------------
 
@@ -4308,7 +4316,9 @@ INSERT INTO `usuario_rol_colegio` (`id`, `id_usuario`, `id_rol`, `id_colegio`, `
 (21, 21, 2, 13, 1, '2026-03-31 18:00:00'),
 (22, 22, 2, 17, 1, '2026-03-31 18:00:00'),
 (23, 23, 2, 1, 1, '2026-03-31 18:52:12'),
-(24, 24, 2, 1, 1, '2026-03-31 19:01:53');
+(24, 24, 2, 1, 1, '2026-03-31 19:01:53'),
+(25, 25, 2, 8, 1, '2026-04-01 14:21:40'),
+(26, 26, 2, 13, 1, '2026-04-01 14:48:59');
 
 --
 -- Índices para tablas volcadas
@@ -4450,7 +4460,7 @@ ALTER TABLE `menus`
 -- AUTO_INCREMENT de la tabla `menu_v`
 --
 ALTER TABLE `menu_v`
-  MODIFY `id_menu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=229;
+  MODIFY `id_menu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=238;
 
 --
 -- AUTO_INCREMENT de la tabla `roles`
@@ -4462,7 +4472,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT de la tabla `usuario_menu`
@@ -4474,13 +4484,13 @@ ALTER TABLE `usuario_menu`
 -- AUTO_INCREMENT de la tabla `usuario_menu_v`
 --
 ALTER TABLE `usuario_menu_v`
-  MODIFY `id_usuario_menu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4736;
+  MODIFY `id_usuario_menu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4742;
 
 --
 -- AUTO_INCREMENT de la tabla `usuario_rol_colegio`
 --
 ALTER TABLE `usuario_rol_colegio`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- Restricciones para tablas volcadas
