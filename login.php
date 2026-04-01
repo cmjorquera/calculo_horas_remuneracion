@@ -25,11 +25,11 @@
           <img src="imagenes/logo_1.jpg" alt="Logo Cálculo de Horas">
         </div>
           <h1>Cálculo de Horas</h1>
-          <p>Sistema de jornada, colación y resumen</p>
+          <!-- <p>Sistema de jornada, colación y resumen</p> -->
         </div>
 
       <div class="title">Iniciar sesión</div>
-      <div class="subtitle">Ingresa tus credenciales para continuar.</div>
+      <!-- <div class="subtitle">Ingresa tus credenciales para continuar.</div> -->
       <!-- Validar mensajes de error (ej: ?m=usuario_no_existe) -->
 <?php
           $msg = isset($_GET["m"]) ? $_GET["m"] : "";
@@ -68,6 +68,14 @@
           if ($msg === "clave_creada") {
             alerta("Tu clave fue creada correctamente. Ya puedes iniciar sesión con tu identificador o correo.", "success");
           }
+
+          if ($msg === "enlace_recuperacion_enviado") {
+            alerta("Se envio un enlace de recuperacion a tu correo. Revisa tu bandeja de entrada para continuar.", "success");
+          }
+
+          if ($msg === "clave_actualizada") {
+            alerta("Tu clave fue actualizada correctamente. Ya puedes iniciar sesión.", "success");
+          }
 ?>
 
       <form method="post" action="validaciones.php" autocomplete="off">
@@ -91,7 +99,7 @@
             <input type="checkbox" name="remember" value="1">
             Mantener sesión
           </label>
-          <a class="link" href="#" onclick="return false;">¿Olvidaste tu contraseña?</a>
+          <a class="link" href="recuperar_pass.php">¿Olvidaste tu contraseña?</a>
         </div>
 
         <button class="btn" type="submit">
@@ -108,10 +116,9 @@
     <div class="panel info-panel">
       <div class="info-inner">
         <div>
-          <div class="badge">
-            <i class="bi bi-shield-check"></i>
-            <!-- Acceso seguro -->
-          </div>
+          <a class="badge badge-download" href="manual_usuario.docx" download title="Descargar manual de usuario" aria-label="Descargar manual de usuario">
+            <i class="bi bi-download"></i>
+          </a>
 
           <div class="info-title">
             Todo tu cálculo de jornada<br>en un solo lugar.

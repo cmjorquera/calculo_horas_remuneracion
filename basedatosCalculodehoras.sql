@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost:3306
--- Tiempo de generación: 31-03-2026 a las 21:34:48
+-- Tiempo de generación: 01-04-2026 a las 08:56:39
 -- Versión del servidor: 10.6.19-MariaDB
 -- Versión de PHP: 8.1.34
 
@@ -34,7 +34,6 @@ CREATE TABLE `colacion` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
---
 -- Volcado de datos para la tabla `colacion`
 --
 
@@ -43,6 +42,8 @@ INSERT INTO `colacion` (`id_colacion`, `hora`, `minutos`) VALUES
 (2, '00:30:00', 30),
 (3, '00:40:00', 40),
 (4, '01:00:00', 60);
+
+-- --------------------------------------------------------
 
 --
 -- Estructura de tabla para la tabla `colegio`
@@ -154,7 +155,8 @@ INSERT INTO `contratos_empleado` (`id_contrato`, `id_empleado`, `fecha_inicio`, 
 (3038, 2038, '2026-03-31', NULL, 2400, 1800, 600, 60, 'Contrato jornada completa VAL 003', '2026-03-31 21:00:00'),
 (3039, 2039, '2026-03-31', NULL, 2400, 1800, 600, 60, 'Contrato jornada completa VAL 004', '2026-03-31 21:00:00'),
 (3040, 2040, '2026-03-31', NULL, 2400, 1800, 600, 60, 'Contrato jornada completa VAL 005', '2026-03-31 21:00:00'),
-(3041, 2041, '2026-03-31', NULL, 2400, 400, 400, 30, 'ingrese a Guadalupe Jorquera . \n- hay que cambiar diseño del modal de advertencia\n\n-El button de verObservacion  tiene como parametro todo el text (muy malo ) deberia ir por ajaz a resctar ese dato\n\n- Al modificar debería mantener os datos del que se ha m', '2026-03-31 20:54:31');
+(3041, 2041, '2026-03-31', NULL, 2400, 400, 400, 30, 'ingrese a Guadalupe Jorquera . \n- hay que cambiar diseño del modal de advertencia\n\n-El button de verObservacion  tiene como parametro todo el text (muy malo ) deberia ir por ajaz a resctar ese dato\n\n- Al modificar debería mantener os datos del que se ha m', '2026-03-31 20:54:31'),
+(3042, 2042, '2026-03-31', NULL, 2700, 0, 0, 40, 'dddddddd', '2026-04-01 02:02:11');
 
 -- --------------------------------------------------------
 
@@ -252,7 +254,8 @@ INSERT INTO `empleados` (`id_empleado`, `codigo`, `run`, `id_colegio`, `nombres`
 (2038, 'VAL17_003', '20001703-0', 17, 'Pedro', 'Munoz', 'Tapia', 'pedro.munoz.val17_003@demo.cl', '900002038', 1, '2026-03-31 21:00:00', NULL, NULL, 1),
 (2039, 'VAL17_004', '20001704-1', 17, 'Ana', 'Vera', 'Contreras', 'ana.vera.val17_004@demo.cl', '900002039', 1, '2026-03-31 21:00:00', NULL, NULL, 2),
 (2040, 'VAL17_005', '20001705-2', 17, 'Luis', 'Torres', 'Salinas', 'luis.torres.val17_005@demo.cl', '900002040', 1, '2026-03-31 21:00:00', NULL, NULL, 1),
-(2041, 'EMP260331175431519', '16.423.446-0', 1, 'GUADALUPE', 'jorquera', 'caicedo', 'guadalupe@seduc.cl', '', 1, '2026-03-31 20:54:31', '2026-03-31 21:22:56', NULL, 2);
+(2041, 'EMP260331175431519', '16.423.446-0', 1, 'GUADALUPE', 'jorquera', 'caicedo', 'cm.jorqu222erag@gmail.com', '988302735', 1, '2026-03-31 20:54:31', '2026-04-01 01:50:18', NULL, 2),
+(2042, 'EMP260331230211607', '13.457.812-3', 15, 'xxxx', 'xxxx', 'xxxx', 'xxxxx@xxx.cl', '988602735', 1, '2026-04-01 02:02:11', '2026-04-01 02:02:11', NULL, 2);
 
 -- --------------------------------------------------------
 
@@ -478,11 +481,16 @@ INSERT INTO `horarios_semanales` (`id_horario`, `id_empleado`, `id_contrato`, `d
 (4378, 2040, 3040, 'MIE', '08:00:00', '13:00:00', '14:00:00', '17:00:00', 1, '2026-03-31 19:55:15'),
 (4379, 2040, 3040, 'JUE', '08:00:00', '13:00:00', '14:00:00', '17:00:00', 1, '2026-03-31 19:55:15'),
 (4380, 2040, 3040, 'VIE', '08:00:00', '13:00:00', '14:00:00', '17:00:00', 1, '2026-03-31 19:55:15'),
-(4440, 2041, 3041, 'VIE', '08:00:00', '13:00:00', '13:00:00', '13:00:00', 1, '2026-03-31 21:22:56'),
-(4439, 2041, 3041, 'JUE', '08:00:00', '13:00:00', '14:00:00', '18:00:00', 1, '2026-03-31 21:22:56'),
-(4438, 2041, 3041, 'MIE', '08:00:00', '13:00:00', '14:00:00', '17:00:00', 1, '2026-03-31 21:22:56'),
-(4437, 2041, 3041, 'MAR', '08:00:00', '13:00:00', '14:00:00', '18:00:00', 1, '2026-03-31 21:22:56'),
-(4436, 2041, 3041, 'LUN', '08:00:00', '13:00:00', '14:00:00', '18:00:00', 1, '2026-03-31 21:22:56');
+(4445, 2041, 3041, 'VIE', '08:00:00', '13:00:00', '13:00:00', '13:00:00', 1, '2026-04-01 01:50:18'),
+(4444, 2041, 3041, 'JUE', '08:00:00', '13:00:00', '14:00:00', '18:00:00', 1, '2026-04-01 01:50:18'),
+(4443, 2041, 3041, 'MIE', '08:00:00', '13:00:00', '14:00:00', '17:00:00', 1, '2026-04-01 01:50:18'),
+(4442, 2041, 3041, 'MAR', '08:00:00', '13:00:00', '14:00:00', '18:00:00', 1, '2026-04-01 01:50:18'),
+(4441, 2041, 3041, 'LUN', '08:00:00', '13:00:00', '14:00:00', '18:00:00', 1, '2026-04-01 01:50:18'),
+(4446, 2042, 3042, 'LUN', '09:00:00', '16:00:00', '16:00:00', '18:00:00', 1, '2026-04-01 02:02:11'),
+(4447, 2042, 3042, 'MAR', '09:00:00', '16:00:00', '16:00:00', '18:00:00', 1, '2026-04-01 02:02:11'),
+(4448, 2042, 3042, 'MIE', '09:00:00', '16:00:00', '16:00:00', '18:00:00', 1, '2026-04-01 02:02:11'),
+(4449, 2042, 3042, 'JUE', '09:00:00', '16:00:00', '16:00:00', '18:00:00', 1, '2026-04-01 02:02:11'),
+(4450, 2042, 3042, 'VIE', '09:00:00', '16:00:00', '16:00:00', '18:00:00', 1, '2026-04-01 02:02:11');
 
 -- --------------------------------------------------------
 
@@ -592,19 +600,19 @@ CREATE TABLE `usuarios` (
 
 INSERT INTO `usuarios` (`id_usuario`, `identificador`, `email`, `clave_hash`, `nombre`, `apellido_paterno`, `apellido_materno`, `run`, `telefono`, `id_colegio`, `token_reinicio`, `token_reinicio_expira`, `estado`, `intentos`, `ultimo_login`, `created_at`, `updated_at`) VALUES
 (1, 'mgutierrez', 'mgutierrez@seduc.cl', '123456', 'Manuel', 'Gutierrez', 'Gutierrez', NULL, NULL, 15, NULL, NULL, 1, 0, '2026-03-11 09:42:21', '2026-02-12 12:34:20', '2026-03-11 09:42:21'),
-(2, 'cjorquera', 'cjorquera@seduc.cl', '123456', 'Cristian', 'Jorquera', 'Gonzalez', NULL, NULL, 15, NULL, NULL, 1, 0, '2026-03-31 18:56:46', '2026-02-12 12:34:20', '2026-03-31 14:45:53'),
+(2, 'cjorquera', 'cjorquera@seduc.cl', '123456', 'Cristian', 'Jorquera', 'Gonzalez', NULL, NULL, 15, NULL, NULL, 1, 0, '2026-04-01 08:35:29', '2026-02-12 12:34:20', '2026-03-31 14:45:53'),
 (3, 'roliva', 'roliva@seduc.cl', '123456', 'Ramon', 'Oliva', 'Zenteno', NULL, NULL, 15, NULL, NULL, 1, 0, '2026-03-10 22:08:01', '2026-02-12 12:34:20', '2026-03-10 22:08:01'),
 (4, 'arojas', 'arojas@seduc.cl', '123456', 'Alejandro', 'Rojas', 'Schweitzer', NULL, NULL, 15, NULL, NULL, 1, 0, '2026-03-31 15:27:17', '2026-02-12 12:34:20', '2026-03-31 15:27:17'),
-(5, 'fvalenzuela', 'fvalenzuela@seduc.cl', '123456', 'Francisco ', 'Valenzuela', 'Valenzuela', NULL, NULL, 15, NULL, NULL, 1, 0, '2026-03-31 20:08:09', '2026-03-02 08:50:25', '2026-03-31 15:45:34'),
+(5, 'fvalenzuela', 'fvalenzuela@seduc.cl', '123456', 'Francisco ', 'Valenzuela', 'Valenzuela', NULL, NULL, 15, NULL, NULL, 1, 0, '2026-04-01 08:39:41', '2026-03-02 08:50:25', '2026-03-31 15:45:34'),
 (14, 'GJorquera', 'cm.jorquerag@gmail.com', '0dd07896ea07', 'CRISTIAN', 'jorquera', 'caicedo', NULL, '988302735', 15, '0342527a3023655194fb3eb09b242785999f6e2a3fef271b6ce14da1c32b1bcf', '2026-03-14 15:29:00', 1, 0, NULL, '2026-03-11 15:29:00', '2026-03-11 15:29:00'),
 (15, 'admin_c1', 'admin_c1@demo.cl', '123456', 'Admin', 'Cordillera', 'Demo', NULL, '910000015', 1, NULL, NULL, 1, 0, '2026-03-31 18:48:06', '2026-03-31 18:00:00', NULL),
 (16, 'admin_c8', 'admin_c8@demo.cl', '123456', 'Admin', 'Tabancura', 'Demo', NULL, '910000016', 8, NULL, NULL, 1, 0, NULL, '2026-03-31 18:00:00', NULL),
 (17, 'admin_c9', 'admin_c9@demo.cl', '123456', 'Admin', 'LosAndes', 'Demo', NULL, '910000017', 9, NULL, NULL, 1, 0, NULL, '2026-03-31 18:00:00', NULL),
-(18, 'admin_c10', 'admin_c10@demo.cl', '123456', 'Admin', 'LosAlerces', 'Demo', NULL, '910000018', 10, NULL, NULL, 1, 0, NULL, '2026-03-31 18:00:00', NULL),
+(18, 'admin_c10', 'admin_c10@demo.cl', '123456', 'Admin', 'LosAlerces', 'Demo', NULL, '910000018', 10, NULL, NULL, 1, 0, '2026-03-31 22:53:14', '2026-03-31 18:00:00', NULL),
 (19, 'admin_c11', 'admin_c11@demo.cl', '123456', 'Admin', 'Huelen', 'Demo', NULL, '910000019', 11, NULL, NULL, 1, 0, NULL, '2026-03-31 18:00:00', NULL),
 (20, 'admin_c12', 'admin_c12@demo.cl', '123456', 'Admin', 'Cantagallo', 'Demo', NULL, '910000020', 12, NULL, NULL, 1, 0, NULL, '2026-03-31 18:00:00', NULL),
 (21, 'admin_c13', 'admin_c13@demo.cl', '123456', 'Admin', 'Huinganal', 'Demo', NULL, '910000021', 13, NULL, NULL, 1, 0, NULL, '2026-03-31 18:00:00', NULL),
-(22, 'admin_c17', 'admin_c17@demo.cl', '123456', 'Admin', 'ValleAlegre', 'Demo', NULL, '910000022', 17, NULL, NULL, 1, 0, NULL, '2026-03-31 18:00:00', NULL),
+(22, 'admin_c17', 'admin_c17@demo.cl', '123456', 'Admin', 'ValleAlegre', 'Demo', NULL, '910000022', 17, NULL, NULL, 1, 0, '2026-03-31 23:45:40', '2026-03-31 18:00:00', NULL),
 (24, 'rrojas', 'cr.jorquerag@duocuc.cl', '12345678', 'rene', 'rojas', 'rojas', NULL, NULL, 1, NULL, NULL, 1, 0, '2026-03-31 19:02:49', '2026-03-31 19:01:53', '2026-03-31 19:02:26');
 
 -- --------------------------------------------------------
@@ -4285,7 +4293,7 @@ CREATE TABLE `usuario_rol_colegio` (
 --
 
 INSERT INTO `usuario_rol_colegio` (`id`, `id_usuario`, `id_rol`, `id_colegio`, `estado`, `created_at`) VALUES
-(1, 2, 1, 8, 1, '2026-02-12 12:42:44'),
+(1, 2, 1, 15, 1, '2026-02-12 12:42:44'),
 (2, 1, 2, 8, 1, '2026-02-12 12:42:44'),
 (3, 3, 2, 8, 1, '2026-02-12 12:42:44'),
 (4, 4, 2, 8, 1, '2026-02-12 12:42:44'),
@@ -4356,7 +4364,8 @@ ALTER TABLE `menus`
 -- Indices de la tabla `menu_v`
 --
 ALTER TABLE `menu_v`
-  ADD PRIMARY KEY (`id_menu`);
+  ADD PRIMARY KEY (`id_menu`),
+  ADD UNIQUE KEY `uk_menu_v_codigo` (`codigo`);
 
 --
 -- Indices de la tabla `roles`
@@ -4382,7 +4391,8 @@ ALTER TABLE `usuario_menu`
 -- Indices de la tabla `usuario_menu_v`
 --
 ALTER TABLE `usuario_menu_v`
-  ADD PRIMARY KEY (`id_usuario_menu`);
+  ADD PRIMARY KEY (`id_usuario_menu`),
+  ADD UNIQUE KEY `uk_usuario_menu_v` (`id_usuario`,`id_menu`);
 
 --
 -- Indices de la tabla `usuario_rol_colegio`
@@ -4398,7 +4408,7 @@ ALTER TABLE `usuario_rol_colegio`
 -- AUTO_INCREMENT de la tabla `colacion`
 --
 ALTER TABLE `colacion`
-  MODIFY `id_colacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=353;
+  MODIFY `id_colacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=489;
 
 --
 -- AUTO_INCREMENT de la tabla `colegio`
@@ -4410,7 +4420,7 @@ ALTER TABLE `colegio`
 -- AUTO_INCREMENT de la tabla `contratos_empleado`
 --
 ALTER TABLE `contratos_empleado`
-  MODIFY `id_contrato` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3042;
+  MODIFY `id_contrato` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3043;
 
 --
 -- AUTO_INCREMENT de la tabla `dias_semana`
@@ -4422,13 +4432,13 @@ ALTER TABLE `dias_semana`
 -- AUTO_INCREMENT de la tabla `empleados`
 --
 ALTER TABLE `empleados`
-  MODIFY `id_empleado` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2042;
+  MODIFY `id_empleado` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2043;
 
 --
 -- AUTO_INCREMENT de la tabla `horarios_semanales`
 --
 ALTER TABLE `horarios_semanales`
-  MODIFY `id_horario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4441;
+  MODIFY `id_horario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4451;
 
 --
 -- AUTO_INCREMENT de la tabla `menus`
@@ -4440,7 +4450,7 @@ ALTER TABLE `menus`
 -- AUTO_INCREMENT de la tabla `menu_v`
 --
 ALTER TABLE `menu_v`
-  MODIFY `id_menu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=223;
+  MODIFY `id_menu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=229;
 
 --
 -- AUTO_INCREMENT de la tabla `roles`
@@ -4464,7 +4474,7 @@ ALTER TABLE `usuario_menu`
 -- AUTO_INCREMENT de la tabla `usuario_menu_v`
 --
 ALTER TABLE `usuario_menu_v`
-  MODIFY `id_usuario_menu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4673;
+  MODIFY `id_usuario_menu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4736;
 
 --
 -- AUTO_INCREMENT de la tabla `usuario_rol_colegio`
@@ -4486,4 +4496,3 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-

@@ -429,6 +429,47 @@ Tablas involucradas:
 - `roles`
 - `usuario_rol_colegio`
 
+12.3. Recuperacion de clave
+El login incorpora recuperacion de contraseña mediante el enlace `¿Olvidaste tu contraseña?`, que redirige a `recuperar_pass.php`.
+
+Flujo funcional:
+
+1. Desde `login.php`, el usuario hace clic en `¿Olvidaste tu contraseña?`.
+2. El sistema abre `recuperar_pass.php` en modo solicitud y pide el correo registrado.
+3. Al enviar el formulario, `modelos/guardar/solicitar_reinicio_clave.php` valida que el correo no este vacio, tenga formato valido y exista en `usuarios`.
+4. Si el correo existe, se genera un nuevo `token_reinicio`, se actualiza `token_reinicio_expira` a 3 dias y se guarda el cambio en la cuenta.
+5. Luego `envio_correo_recuperado.php` construye y envia un correo de recuperacion con un enlace a `recuperar_pass.php?token=...`.
+6. Al abrir el enlace, `recuperar_pass.php` cambia a modo restablecer, busca el token, valida su vigencia y muestra los datos visibles de la cuenta.
+7. El usuario ingresa la nueva clave y su confirmacion.
+8. El formulario se envia a `modelos/guardar/establecer_clave.php` con el origen `recuperacion`.
+9. Ese archivo vuelve a validar token, expiracion, largo minimo y coincidencia exacta de ambas claves.
+10. Si todo es correcto, se actualiza `clave_hash`, se limpian `token_reinicio` y `token_reinicio_expira`, se reinician los intentos fallidos, la cuenta queda activa y se redirige a `login.php?m=clave_actualizada`.
+
+Validaciones funcionales del flujo:
+
+- el correo es obligatorio
+- el correo debe tener formato valido
+- el correo debe existir en `usuarios`
+- el enlace debe existir y no estar vencido
+- la nueva clave debe ingresarse dos veces
+- la nueva clave debe tener al menos 8 caracteres
+- ambas claves deben coincidir exactamente
+
+Mensajes y comportamiento visible:
+
+- si el correo no existe, la pantalla informa que no hay una cuenta registrada con ese email
+- si el correo es valido y el envio se completa, `login.php` muestra el mensaje `Se envio un enlace de recuperacion a tu correo`
+- si el enlace es invalido o expiro, `recuperar_pass.php` informa que debe solicitarse uno nuevo
+- si la clave se actualiza correctamente, `login.php` muestra el mensaje `Tu clave fue actualizada correctamente`
+
+Archivos involucrados:
+
+- `login.php`
+- `recuperar_pass.php`
+- `modelos/guardar/solicitar_reinicio_clave.php`
+- `modelos/guardar/establecer_clave.php`
+- `envio_correo_recuperado.php`
+
 
 13. ADMINISTRACION DE PERMISOS POR MENU
 ---------------------------------------
@@ -526,7 +567,7 @@ Catalogo de valores estandarizados de colacion utilizados por el resumen.
 Catalogo de dias utilizado para ordenar y presentar la grilla semanal, especialmente de lunes a viernes.
 
 15.7. `usuarios`
-Almacena cuentas de acceso, datos basicos, colegio asociado, estado y token de activacion o reinicio de clave.
+Almacena cuentas de acceso, datos basicos, colegio asociado, estado, contador de intentos y token temporal de activacion o reinicio de clave.
 
 15.8. `roles`
 Define los perfiles principales del sistema.
@@ -554,6 +595,7 @@ Estructura heredada del subsistema de menus. Se conserva en la base, pero el pro
 - La administracion de menus convive con estructuras heredadas y vigentes. La documentacion tecnica debe distinguirlas claramente para evitar errores de mantenimiento.
 - La implementacion actual usa `menu_v` y `usuario_menu_v` como fuente activa de permisos por menu.
 - La carga de usuarios contempla activacion posterior de clave, por lo que el estado funcional de la cuenta no depende solo del campo `estado`, sino tambien del ciclo de activacion.
+- La recuperacion de clave reutiliza `token_reinicio` y `token_reinicio_expira`, por lo que esos campos sirven tanto para incorporacion inicial como para cambio de contraseña mediante correo.
 - La visualizacion de horas en pantalla y exportaciones depende de conversiones a formato `HH:MM`, por lo que no siempre coincide directamente con el valor crudo almacenado.
 
 

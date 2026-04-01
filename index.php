@@ -122,10 +122,10 @@ foreach ($colegios as $colegio) {
                             <th colspan="2">
                                 <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
                                     <span>Tarde</span>
-                                    <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;cursor:pointer;">
+                                    <!-- <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;cursor:pointer;">
                                         <input type="checkbox" id="repeatScheduleDownToggle" aria-label="Repetir horario hacia abajo">
                                         <span>Repetir hacia abajo</span>
-                                    </label>
+                                    </label> -->
                                 </div>
                             </th>
                         </tr>

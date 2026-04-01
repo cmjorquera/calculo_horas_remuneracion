@@ -3,10 +3,16 @@ session_start();
 require_once __DIR__ . "/../../class/conexion.php";
 
 $db = new MySQL("qaseduc_calculo_horario", "qaseduc_ucomun", "jorquera86;");
+$origen = trim((string)($_POST["origen"] ?? "incorporacion"));
 
 function redirigirError($token, $mensaje)
 {
-    $destino = "../../incorporacion.php";
+    global $origen;
+
+    $destino = $origen === "recuperacion"
+        ? "../../recuperar_pass.php"
+        : "../../incorporacion.php";
+
     if ($token !== '') {
         $destino .= "?token=" . rawurlencode($token) . "&m=" . rawurlencode($mensaje);
     } else {
@@ -66,6 +72,11 @@ $db->consulta("
     WHERE id_usuario = {$idUsuario}
     LIMIT 1
 ");
+
+if ($origen === "recuperacion") {
+    header("Location: ../../login.php?m=clave_actualizada");
+    exit;
+}
 
 header("Location: ../../login.php?m=clave_creada");
 exit;
