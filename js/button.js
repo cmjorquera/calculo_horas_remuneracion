@@ -19,6 +19,7 @@ function copiarHoras(){
 function confirmarSalir() {
     Swal.fire({
         title: '¿Salir del sistema?',
+        showCloseButton: true,
         html: `
       <div>
         Se cerrará tu sesión por seguridad.<br>

@@ -768,6 +768,7 @@ function verDetalleHorario(idEmpleado, idContrato) {
 
     Swal.fire({
         title: 'Detalle de horario',
+        showCloseButton: true,
         html: `
       <div style="display:flex;align-items:center;gap:10px;justify-content:center;padding:10px 0;">
         <div class="spinner-border" role="status" aria-hidden="true"></div>
@@ -818,7 +819,16 @@ function verDetalleHorario(idEmpleado, idContrato) {
 function descargarHorario(idContrato) {
     const contrato = Number(idContrato) || 0;
     if (contrato <= 0) {
-        Swal.fire('Error', 'No se pudo identificar el contrato para descargar el PDF.', 'error');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo identificar el contrato para descargar el PDF.',
+            showCloseButton: true,
+            customClass: {
+                popup: 'swal-seduc',
+                confirmButton: 'btn-seduc btn-seduc-primary'
+            }
+        });
         return;
     }
     window.location.assign('descarga/horario_empleado.php?id_contrato=' + encodeURIComponent(contrato));
@@ -833,6 +843,7 @@ function copiarDato(texto) {
             text: texto,
             timer: 900,
             showConfirmButton: false,
+            showCloseButton: true,
             customClass: {
                 popup: 'swal-seduc',
                 confirmButton: 'btn-seduc btn-seduc-primary',
@@ -854,12 +865,22 @@ function escapeHtml(value) {
 function verObservacion(idEmpleado, nombre) {
     const empleadoId = Number(idEmpleado) || 0;
     if (empleadoId <= 0) {
-        Swal.fire('Error', 'No se pudo identificar al empleado.', 'error');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo identificar al empleado.',
+            showCloseButton: true,
+            customClass: {
+                popup: 'swal-seduc',
+                confirmButton: 'btn-seduc btn-seduc-primary'
+            }
+        });
         return;
     }
 
     Swal.fire({
         title: 'Observación',
+        showCloseButton: true,
         html: `
             <div style="text-align: left;">
                 <p style="color: #6b7280; font-size: 14px; margin-bottom: 12px;"><strong>${escapeHtml(nombre)}</strong></p>
@@ -914,6 +935,7 @@ function copiarDato(texto) {
             text: texto,
             timer: 900,
             showConfirmButton: false,
+            showCloseButton: true,
             customClass: {
                 popup: 'swal-seduc',
                 confirmButton: 'btn-seduc btn-seduc-primary',
@@ -992,6 +1014,7 @@ function showHorarioWarning(message) {
             icon: "warning",
             title: "Horario inválido",
             text: message,
+            showCloseButton: true,
             customClass: {
                 popup: 'swal-seduc',
                 confirmButton: 'btn-seduc btn-seduc-primary'

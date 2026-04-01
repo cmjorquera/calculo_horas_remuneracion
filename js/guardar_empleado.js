@@ -321,6 +321,7 @@ function guardarEmpleado() {
   // 2) Modal para datos del empleado
   Swal.fire({
     title: "Registrar empleado",
+    showCloseButton: true,
 html: `
   <form class="user-create-form employee-create-form" id="employeeCreateForm">
     <div class="user-create-topbar">
@@ -749,13 +750,31 @@ preConfirm: () => {
     // 3) Payload final: empleado + horario + resumen
     const resumenLectivo = validarResumenLectivo();
     if (!resumenLectivo.isValid) {
-      Swal.fire("Horas lectivas inválidas", resumenLectivo.errors.join("\n"), "warning");
+      Swal.fire({
+        icon: "warning",
+        title: "Horas lectivas inválidas",
+        text: resumenLectivo.errors.join("\n"),
+        showCloseButton: true,
+        customClass: {
+          popup: "swal-seduc",
+          confirmButton: "btn-seduc btn-seduc-primary"
+        }
+      });
       return;
     }
 
     const resumen = recolectarResumen();
     if (!resumen.colacionId) {
-      Swal.fire("Falta colación", "Selecciona una colación antes de guardar.", "warning");
+      Swal.fire({
+        icon: "warning",
+        title: "Falta colación",
+        text: "Selecciona una colación antes de guardar.",
+        showCloseButton: true,
+        customClass: {
+          popup: "swal-seduc",
+          confirmButton: "btn-seduc btn-seduc-primary"
+        }
+      });
       return;
     }
 
@@ -806,6 +825,7 @@ preConfirm: () => {
     text: resp.msg,
     timer: 3000,
     showConfirmButton: false,
+    showCloseButton: true,
     customClass: {
       popup: 'swal-seduc'
     }
@@ -813,11 +833,29 @@ preConfirm: () => {
     location.reload(); // recarga la página
   });
 } else {
-        Swal.fire("Error", resp.msg, "error");
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: resp.msg,
+          showCloseButton: true,
+          customClass: {
+            popup: "swal-seduc",
+            confirmButton: "btn-seduc btn-seduc-primary"
+          }
+        });
       }
     })
     .catch(err => {
-      Swal.fire("Error", "Error de servidor", "error");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Error de servidor",
+        showCloseButton: true,
+        customClass: {
+          popup: "swal-seduc",
+          confirmButton: "btn-seduc btn-seduc-primary"
+        }
+      });
     });
 
   });

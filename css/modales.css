@@ -17,6 +17,9 @@
   border: 1px solid rgba(148, 163, 184, 0.30) !important;
   width: min(760px, calc(100vw - 32px)) !important;
   overflow: hidden !important;
+  background:
+    linear-gradient(180deg, #0f6fa1 0%, #0b5e8a 58%, #0a5378 100%) top / 100% 58px no-repeat,
+    #ffffff !important;
 }
 
 .swal-seduc .swal2-header {
@@ -24,10 +27,11 @@
   padding: 14px 20px !important;
   min-height: 54px;
   border-radius: 0 !important;
-  background: linear-gradient(180deg, #0e6e9d 0%, #0b5e8a 100%) !important;
+  background: transparent !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
   align-items: center !important;
   justify-content: flex-start !important;
+  width: auto !important;
 }
 
 /* Título */
@@ -40,6 +44,7 @@
   text-align: left !important;
   width: 100%;
   padding-right: 44px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.10);
 }
 
 .swal-seduc .swal2-close {
@@ -68,7 +73,7 @@
   color: #475569 !important;
   font-size: 14px !important;
   line-height: 1.55 !important;
-  margin: 8px 0 0 !important;
+  margin: 10px 0 0 !important;
   padding: 0 !important;
 }
 

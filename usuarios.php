@@ -254,6 +254,7 @@ const COLEGIOS_LOGO_USUARIO = <?= json_encode($colegiosLogoMap, JSON_UNESCAPED_U
 const SWAL_SEDUC_CONFIG = {
     buttonsStyling: false,
     reverseButtons: true,
+    showCloseButton: true,
     backdrop: "rgba(15, 23, 42, .35)",
     customClass: {
         popup: "swal-seduc",
@@ -526,7 +527,13 @@ async function abrirPermisosUsuario(idUsuario, nombreUsuario, identificador) {
     const data = await respuesta.json();
 
     if (!data.ok) {
-        Swal.fire("Permisos", data.msg || "No se pudieron cargar los permisos.", "error");
+        Swal.fire({
+            ...SWAL_SEDUC_CONFIG,
+            title: "Permisos",
+            text: data.msg || "No se pudieron cargar los permisos.",
+            icon: "error",
+            confirmButtonText: "Aceptar"
+        });
         return;
     }
 
@@ -589,7 +596,13 @@ async function abrirPermisosUsuario(idUsuario, nombreUsuario, identificador) {
     });
 
     if (resultado && resultado.isConfirmed) {
-        Swal.fire("Permisos actualizados", "Los menús del usuario fueron guardados.", "success");
+        Swal.fire({
+            ...SWAL_SEDUC_CONFIG,
+            title: "Permisos actualizados",
+            text: "Los menús del usuario fueron guardados.",
+            icon: "success",
+            confirmButtonText: "Aceptar"
+        });
     }
 }
 
