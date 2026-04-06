@@ -66,7 +66,9 @@ $mensajeAlerta = "";
 if ($mensajeCodigo === "campos_vacios") {
     $mensajeAlerta = "Completa ambos campos de clave.";
 } elseif ($mensajeCodigo === "clave_corta") {
-    $mensajeAlerta = "La clave debe tener al menos 8 caracteres.";
+    $mensajeAlerta = "La clave debe tener exactamente 8 numeros.";
+} elseif ($mensajeCodigo === "clave_formato") {
+    $mensajeAlerta = "La clave solo debe contener numeros.";
 } elseif ($mensajeCodigo === "clave_distinta") {
     $mensajeAlerta = "La confirmacion de clave no coincide.";
 } elseif ($mensajeCodigo === "token_vencido") {
@@ -83,6 +85,31 @@ if ($mensajeCodigo === "campos_vacios") {
   <title>Incorporacion | Calculo de Horas</title>
   <link rel="stylesheet" type="text/css" href="css/login.css?v=<?= filemtime(__DIR__ . '/css/login.css') ?>">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    .alert-box{
+      margin:12px 0;
+      border-radius:14px;
+      border:1px solid rgba(191, 47, 62, .45);
+      background:linear-gradient(90deg, rgba(191, 47, 62, .12), rgba(191, 47, 62, .04));
+      color:#a12836;
+      padding:10px 14px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:700;
+      line-height:1.4;
+    }
+    .field-hint{
+      margin-top:6px;
+      font-size:12px;
+      color:rgba(15,23,42,.62);
+      line-height:1.4;
+    }
+    .input-error{
+      border-color:#bf2f3e !important;
+      box-shadow:0 0 0 5px rgba(191, 47, 62, .12) !important;
+    }
+  </style>
 </head>
 <body>
   <div class="wrap">
@@ -100,19 +127,15 @@ if ($mensajeCodigo === "campos_vacios") {
       <div class="title"><?= htmlspecialchars($estadoVista["titulo"]) ?></div>
       <div class="subtitle"><?= htmlspecialchars($estadoVista["mensaje"]) ?></div>
 
-      <?php if ($mensajeAlerta !== ""): ?>
-        <div class="alert alert-danger" style="margin:12px 0; border-radius:14px;"><?= htmlspecialchars($mensajeAlerta) ?></div>
-      <?php endif; ?>
-
       <?php if ($estadoVista["valido"]): ?>
         <div class="field">
           <div class="label">Cuenta</div>
           <input class="input" type="text" value="<?= htmlspecialchars($nombreCompleto) ?>" readonly>
         </div>
-        <div class="field">
+        <!-- <div class="field">
           <div class="label">Identificador</div>
           <input class="input" type="text" value="<?= htmlspecialchars((string)($estadoVista["usuario"]["identificador"] ?? "")) ?>" readonly>
-        </div>
+        </div> -->
         <div class="field">
           <div class="label">Correo</div>
           <input class="input" type="text" value="<?= htmlspecialchars((string)($estadoVista["usuario"]["email"] ?? "")) ?>" readonly>
@@ -122,21 +145,26 @@ if ($mensajeCodigo === "campos_vacios") {
           <input class="input" type="text" value="<?= htmlspecialchars((string)($estadoVista["usuario"]["colegio"] ?? "Seduc")) ?>" readonly>
         </div>
 
-        <form method="post" action="modelos/guardar/establecer_clave.php" autocomplete="off">
+        <form method="post" action="modelos/guardar/establecer_clave.php" autocomplete="off" id="formNuevaClave" novalidate>
           <input type="hidden" name="token" value="<?= htmlspecialchars($token, ENT_QUOTES) ?>">
+          <div id="passwordAlert" class="alert-box" role="alert" style="<?= $mensajeAlerta !== '' ? '' : 'display:none;' ?>">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span id="passwordAlertText"><?= htmlspecialchars($mensajeAlerta) ?></span>
+          </div>
           <div class="field">
             <div class="label">Nueva clave</div>
             <div class="pw-wrap">
-              <input class="input" id="pw" type="password" name="clave" minlength="8" maxlength="100" placeholder="Minimo 8 caracteres" required>
+              <input class="input" id="pw" type="password" name="clave" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" placeholder="8 numeros" required>
               <button class="pw-btn" type="button" id="togglePw" aria-label="Mostrar clave">
                 <i class="bi bi-eye-fill"></i>
               </button>
             </div>
+            <div class="field-hint">La clave debe tener exactamente 8 numeros.</div>
           </div>
           <div class="field">
             <div class="label">Confirmar clave</div>
             <div class="pw-wrap">
-              <input class="input" id="pw2" type="password" name="clave_confirmacion" minlength="8" maxlength="100" placeholder="Repite la clave" required>
+              <input class="input" id="pw2" type="password" name="clave_confirmacion" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" placeholder="Repite la clave" required>
               <button class="pw-btn" type="button" id="togglePw2" aria-label="Mostrar confirmacion">
                 <i class="bi bi-eye-fill"></i>
               </button>
@@ -189,6 +217,114 @@ if ($mensajeCodigo === "campos_vacios") {
 
     bindToggle("togglePw", "pw");
     bindToggle("togglePw2", "pw2");
+
+    const formNuevaClave = document.getElementById("formNuevaClave");
+    const passwordAlert = document.getElementById("passwordAlert");
+    const passwordAlertText = document.getElementById("passwordAlertText");
+    const pw = document.getElementById("pw");
+    const pw2 = document.getElementById("pw2");
+
+    function mostrarErrorClave(message, invalidFields) {
+      if (!passwordAlert || !passwordAlertText) return;
+      passwordAlertText.textContent = message;
+      passwordAlert.style.display = "flex";
+      invalidFields.forEach((field) => field && field.classList.add("input-error"));
+    }
+
+    function limpiarErrorClave() {
+      if (passwordAlert) {
+        passwordAlert.style.display = "none";
+      }
+      [pw, pw2].forEach((field) => field && field.classList.remove("input-error"));
+    }
+
+    function soloNumeros(input) {
+      if (!input) return;
+      const valorOriginal = input.value;
+      const valorLimpio = valorOriginal.replace(/\D/g, "").slice(0, 8);
+      const ingresoInvalido = valorOriginal !== valorLimpio;
+      input.value = valorLimpio;
+      return ingresoInvalido;
+    }
+
+    function validarClave() {
+      if (!pw || !pw2) return true;
+
+      const clave = pw.value.trim();
+      const confirmacion = pw2.value.trim();
+
+      limpiarErrorClave();
+
+      if (clave === "" || confirmacion === "") {
+        mostrarErrorClave("Completa la nueva clave y su confirmacion.", [pw, pw2]);
+        return false;
+      }
+
+      if (!/^\d+$/.test(clave)) {
+        mostrarErrorClave("La clave solo debe contener numeros.", [pw]);
+        return false;
+      }
+
+      if (clave.length !== 8) {
+        mostrarErrorClave("La clave debe tener exactamente 8 numeros.", [pw]);
+        return false;
+      }
+
+      if (!/^\d+$/.test(confirmacion)) {
+        mostrarErrorClave("La confirmacion solo debe contener numeros.", [pw2]);
+        return false;
+      }
+
+      if (confirmacion.length !== 8) {
+        mostrarErrorClave("La confirmacion debe tener exactamente 8 numeros.", [pw2]);
+        return false;
+      }
+
+      if (clave !== confirmacion) {
+        mostrarErrorClave("La confirmacion de clave no coincide.", [pw, pw2]);
+        return false;
+      }
+
+      return true;
+    }
+
+    if (pw) {
+      pw.addEventListener("input", () => {
+        const ingresoInvalido = soloNumeros(pw);
+        if (ingresoInvalido) {
+          mostrarErrorClave("No es permitido letras, solo datos numericos.", [pw]);
+          return;
+        }
+        if (passwordAlert && passwordAlert.style.display !== "none") {
+          validarClave();
+        } else {
+          pw.classList.remove("input-error");
+        }
+      });
+    }
+
+    if (pw2) {
+      pw2.addEventListener("input", () => {
+        const ingresoInvalido = soloNumeros(pw2);
+        if (ingresoInvalido) {
+          mostrarErrorClave("No es permitido letras, solo datos numericos.", [pw2]);
+          return;
+        }
+        if (passwordAlert && passwordAlert.style.display !== "none") {
+          validarClave();
+        } else {
+          pw2.classList.remove("input-error");
+        }
+      });
+    }
+
+    if (formNuevaClave) {
+      formNuevaClave.addEventListener("submit", (event) => {
+        if (!validarClave()) {
+          event.preventDefault();
+        }
+      });
+    }
   </script>
 </body>
 </html>

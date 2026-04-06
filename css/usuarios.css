@@ -360,10 +360,20 @@
     gap: 6px;
 }
 
-.user-field span {
+.user-field-with-help {
+    position: relative;
+}
+
+.user-field > span {
     color: #0f172a;
     font-size: 12px;
     font-weight: 800;
+}
+
+.user-field-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .user-field-note {

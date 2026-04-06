@@ -304,17 +304,24 @@ function mostrarCrearUsuario() {
                     <input id="nuevoEmail" type="email" maxlength="150" placeholder="correo@colegio.cl">
                     <small id="nuevoEmailEstado" class="user-field-note is-hidden"></small>
                 </label>
-                <label class="user-field">
-                    <span>Rol</span>
+                <label class="user-field user-field-with-help">
+                    <span class="user-field-label">
+                        <span>Rol</span>
+                        ${puedeElegirRol ? "" : `
+                        <button type="button" id="nuevoRolAyudaBtn" class="status-help-btn" aria-label="Información sobre permisos de rol">
+                            <i class="bi bi-question-circle-fill"></i>
+                        </button>
+                        <div id="nuevoRolAyudaPopover" class="status-popover">
+                            Usted solo tiene permisos para crear rol de administrador de colegios.
+                        </div>
+                        `}
+                    </span>
                     ${puedeElegirRol ? `
                     <select id="nuevoRol">
                         <option value="">Selecciona</option>
                         ${ROLES_USUARIO.map((rol) => `<option value="${Number(rol.id_rol)}">${escapeHtml(rol.nombre || rol.codigo || "Rol")}</option>`).join("")}
                     </select>
                     ` : `
-                    <div class="user-field-note user-field-note-static">
-                        Usted solo tiene permisos para crear rol de administrador de colegios.
-                    </div>
                     <input id="nuevoRol" type="hidden" value="${ID_ROL_ADMIN_COLEGIO}">
                     <input type="text" value="${nombreRolAdminColegio}" disabled>
                     `}
@@ -349,14 +356,6 @@ function mostrarCrearUsuario() {
                     <span>Teléfono</span>
                     <input id="nuevoTelefono" type="text" maxlength="25" placeholder="Opcional">
                 </label>
-                <label class="user-field">
-                    <span>Estado</span>
-                    <select id="nuevoEstado">
-                        <option value="1" selected>Activo</option>
-                        <option value="0">Inactivo</option>
-                        <option value="2">Bloqueado</option>
-                    </select>
-                </label>
             </div>
         </form>
     `;
@@ -378,6 +377,8 @@ function mostrarCrearUsuario() {
             const logoMeta = document.getElementById("nuevoColegioLogoMeta");
             const emailInput = document.getElementById("nuevoEmail");
             const emailEstado = document.getElementById("nuevoEmailEstado");
+            const rolAyudaBtn = document.getElementById("nuevoRolAyudaBtn");
+            const rolAyudaPopover = document.getElementById("nuevoRolAyudaPopover");
 
             const syncColegioLogo = () => {
                 if (!colegioSelect || !logoWrap || !logoImg || !logoNombre || !logoMeta) {
@@ -473,6 +474,18 @@ function mostrarCrearUsuario() {
                 lastEmailResult = null;
                 setEmailEstado("", "");
             });
+            if (rolAyudaBtn && rolAyudaPopover) {
+                rolAyudaBtn.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const willOpen = !rolAyudaPopover.classList.contains("is-open");
+                    rolAyudaPopover.classList.toggle("is-open", willOpen);
+                });
+
+                document.addEventListener("click", () => {
+                    rolAyudaPopover.classList.remove("is-open");
+                });
+            }
             syncColegioLogo();
         },
         preConfirm: async () => {
@@ -485,7 +498,6 @@ function mostrarCrearUsuario() {
                 id_colegio: document.getElementById("nuevoColegio").value,
                 run: document.getElementById("nuevoRun").value.trim(),
                 telefono: document.getElementById("nuevoTelefono").value.trim(),
-                estado: document.getElementById("nuevoEstado").value,
                 colegio_nombre: document.getElementById("nuevoColegio").options[document.getElementById("nuevoColegio").selectedIndex]?.text?.trim() || ""
             };
 

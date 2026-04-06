@@ -104,7 +104,6 @@ $run = trim((string)($_POST["run"] ?? ""));
 $telefono = trim((string)($_POST["telefono"] ?? ""));
 $idRol = (int)($_POST["id_rol"] ?? 0);
 $idColegio = (int)($_POST["id_colegio"] ?? 0);
-$estado = (int)($_POST["estado"] ?? 1);
 $colegioNombre = trim((string)($_POST["colegio_nombre"] ?? ""));
 $idUsuarioSesion = (int)($_SESSION["id_usuario"] ?? 0);
 
@@ -118,7 +117,6 @@ if ($nombre === "") salirError("El nombre es obligatorio.");
 if ($apellidoPaterno === "") salirError("El apellido paterno es obligatorio.");
 if ($idRol <= 0) salirError("Debes seleccionar un rol.");
 if ($idColegio <= 0) salirError("Debes seleccionar un colegio.");
-if (!in_array($estado, [0, 1, 2], true)) salirError("Estado inválido.");
 
 $identificador = generarIdentificadorUsuario($db, $nombre, $apellidoPaterno);
 $estadoCreacion = 0;

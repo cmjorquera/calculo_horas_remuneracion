@@ -192,17 +192,17 @@ if ($mensajeCodigo === "campos_vacios") {
           <div class="field">
             <div class="label">Nueva clave</div>
             <div class="pw-wrap">
-              <input class="input" id="pw" type="password" name="clave" minlength="8" maxlength="100" placeholder="Minimo 8 caracteres" required>
+              <input class="input" id="pw" type="password" name="clave" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" placeholder="8 numeros" required>
               <button class="pw-btn" type="button" id="togglePw" aria-label="Mostrar clave">
                 <i class="bi bi-eye-fill"></i>
               </button>
             </div>
-            <div class="field-hint">Usa al menos 8 caracteres y solo numeros.</div>
+            <div class="field-hint">La clave debe tener exactamente 8 numeros.</div>
           </div>
           <div class="field">
             <div class="label">Confirmar clave</div>
             <div class="pw-wrap">
-              <input class="input" id="pw2" type="password" name="clave_confirmacion" minlength="8" maxlength="100" placeholder="Repite la clave" required>
+              <input class="input" id="pw2" type="password" name="clave_confirmacion" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" placeholder="Repite la clave" required>
               <button class="pw-btn" type="button" id="togglePw2" aria-label="Mostrar confirmacion">
                 <i class="bi bi-eye-fill"></i>
               </button>
@@ -283,6 +283,15 @@ if ($mensajeCodigo === "campos_vacios") {
       [pw, pw2].forEach((field) => field && field.classList.remove("input-error"));
     }
 
+    function soloNumeros(input) {
+      if (!input) return false;
+      const valorOriginal = input.value;
+      const valorLimpio = valorOriginal.replace(/\D/g, "").slice(0, 8);
+      const ingresoInvalido = valorOriginal !== valorLimpio;
+      input.value = valorLimpio;
+      return ingresoInvalido;
+    }
+
     function validarClave() {
       if (!pw || !pw2) return true;
 
@@ -296,13 +305,23 @@ if ($mensajeCodigo === "campos_vacios") {
         return false;
       }
 
-      if (clave.length < 8) {
-        mostrarErrorClave("La nueva clave debe tener al menos 8 caracteres.", [pw]);
+      if (clave.length !== 8) {
+        mostrarErrorClave("La nueva clave debe tener exactamente 8 numeros.", [pw]);
         return false;
       }
 
       if (!/^\d+$/.test(clave)) {
         mostrarErrorClave("La nueva clave solo permite numeros.", [pw]);
+        return false;
+      }
+
+      if (!/^\d+$/.test(confirmacion)) {
+        mostrarErrorClave("La confirmacion solo permite numeros.", [pw2]);
+        return false;
+      }
+
+      if (confirmacion.length !== 8) {
+        mostrarErrorClave("La confirmacion debe tener exactamente 8 numeros.", [pw2]);
         return false;
       }
 
@@ -324,6 +343,11 @@ if ($mensajeCodigo === "campos_vacios") {
       [pw, pw2].forEach((field) => {
         if (!field) return;
         field.addEventListener("input", () => {
+          const ingresoInvalido = soloNumeros(field);
+          if (ingresoInvalido) {
+            mostrarErrorClave("No es permitido letras, solo datos numericos.", [field]);
+            return;
+          }
           if (passwordAlert && passwordAlert.style.display !== "none") {
             validarClave();
           } else {

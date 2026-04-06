@@ -32,10 +32,13 @@ if ($token === '') {
 if ($clave === '' || $claveConfirmacion === '') {
     redirigirError($token, 'campos_vacios');
 }
-if (mb_strlen($clave, 'UTF-8') < 8) {
+if (mb_strlen($clave, 'UTF-8') !== 8) {
     redirigirError($token, 'clave_corta');
 }
-if (!preg_match('/^\d+$/', $clave)) {
+if (!preg_match('/^\d{8}$/', $clave)) {
+    redirigirError($token, 'clave_formato');
+}
+if (!preg_match('/^\d{8}$/', $claveConfirmacion)) {
     redirigirError($token, 'clave_formato');
 }
 if ($clave !== $claveConfirmacion) {
