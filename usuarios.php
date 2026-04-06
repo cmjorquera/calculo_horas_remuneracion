@@ -38,6 +38,14 @@ $verTodosColegios = true;
 $usuarios = $funciones->obtenerUsuarios($_SESSION["id_colegio"], $verTodosColegios);
 $roles = $funciones->obtenerRoles();
 $colegios = $funciones->obtenerColegios();
+$colegiosModal = $colegios;
+$idUsuarioActual = (int)($_SESSION["id_usuario"] ?? 0);
+
+if ($idUsuarioActual !== 2) {
+    $colegiosModal = array_values(array_filter($colegiosModal, static function ($colegio) {
+        return (int)($colegio["id_colegio"] ?? 0) !== 15;
+    }));
+}
 $colegiosLogoMap = [];
 
 foreach ($colegios as $colegio) {
@@ -135,7 +143,7 @@ function estadoUsuarioDetalle(array $usuario)
 <div class="page">
     <?php include __DIR__ . "/menu_lateral.php"; ?>
     <!-- Menu lateral -->
-     <?php $headerTitle = "Calculadora de Horas Cronológicas"; ?>
+     <?php $headerTitle = "Calculadora de Horas Pedagogicas y Cronológicas"; ?>
     <?php include __DIR__ . "/header.php"; ?>
 
 
@@ -163,8 +171,6 @@ function estadoUsuarioDetalle(array $usuario)
                     <thead>
                         <tr>
                             <th class="sortable" data-type="number">N° <i class="bi bi-arrow-down-up sort-ico"></i></th>
-                            <th class="sortable" data-type="number">ID <i class="bi bi-arrow-down-up sort-ico"></i></th>
-                            <th class="sortable" data-type="text">Identificador <i class="bi bi-arrow-down-up sort-ico"></i></th>
                             <th class="sortable" data-type="text">Nombre - Apellidos <i class="bi bi-arrow-down-up sort-ico"></i></th>
                             <th class="sortable" data-type="text">Email <i class="bi bi-arrow-down-up sort-ico"></i></th>
                             <th class="sortable" data-type="text">Colegio <i class="bi bi-arrow-down-up sort-ico"></i></th>
@@ -187,10 +193,6 @@ function estadoUsuarioDetalle(array $usuario)
                         ?>
                         <tr>
                             <td class="cell-num" data-value="<?= $contadorUsuarios ?>"><?= $contadorUsuarios ?></td>
-                            <td class="cell-center" data-value="<?= (int)$usuario["id_usuario"] ?>"><?= (int)$usuario["id_usuario"] ?></td>
-                            <td class="cell-run" data-value="<?= htmlspecialchars($usuario["identificador"] ?? "", ENT_QUOTES) ?>">
-                                <?= htmlspecialchars($usuario["identificador"] ?? "") ?>
-                            </td>
                             <td class="cell-nombre" data-value="<?= htmlspecialchars($nombreCompleto, ENT_QUOTES) ?>">
                                 <?= htmlspecialchars($nombreCompleto) ?>
                             </td>
@@ -230,7 +232,10 @@ function estadoUsuarioDetalle(array $usuario)
                                         onclick="abrirPermisosUsuario(
                                             <?= (int)$usuario['id_usuario'] ?>,
                                             <?= htmlspecialchars(json_encode($nombreCompleto), ENT_QUOTES) ?>,
-                                            <?= htmlspecialchars(json_encode($usuario['identificador'] ?? ''), ENT_QUOTES) ?>
+                                            <?= htmlspecialchars(json_encode($usuario['email'] ?? ''), ENT_QUOTES) ?>,
+                                            <?= htmlspecialchars(json_encode($nombreColegioUsuario), ENT_QUOTES) ?>,
+                                            <?= htmlspecialchars(json_encode($logoColegioUsuario), ENT_QUOTES) ?>,
+                                            <?= (int)$idColegioUsuario ?>
                                         )">
                                         <i class="bi bi-sliders2"></i>
                                     </button>
@@ -249,9 +254,9 @@ function estadoUsuarioDetalle(array $usuario)
 
 <script>
 const ROLES_USUARIO = <?= json_encode($roles, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
-const COLEGIOS_USUARIO = <?= json_encode($colegios, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+const COLEGIOS_USUARIO = <?= json_encode($colegiosModal, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 const COLEGIOS_LOGO_USUARIO = <?= json_encode($colegiosLogoMap, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
-const ID_USUARIO_ACTUAL = <?= (int)($_SESSION["id_usuario"] ?? 0) ?>;
+const ID_USUARIO_ACTUAL = <?= $idUsuarioActual ?>;
 const ID_ROL_ADMIN_COLEGIO = 2;
 const SWAL_SEDUC_CONFIG = {
     buttonsStyling: false,
@@ -547,7 +552,7 @@ function mostrarCrearUsuario() {
     });
 }
 
-async function abrirPermisosUsuario(idUsuario, nombreUsuario, identificador) {
+async function abrirPermisosUsuario(idUsuario, nombreUsuario, emailUsuario, nombreColegio, logoColegio, idColegio) {
     const respuesta = await fetch(`modelos/rescatar/usuario_menu.php?id_usuario=${encodeURIComponent(idUsuario)}`);
     const data = await respuesta.json();
 
@@ -563,11 +568,21 @@ async function abrirPermisosUsuario(idUsuario, nombreUsuario, identificador) {
     }
 
     const permisos = Array.isArray(data.permisos) ? data.permisos : [];
+    const nombreColegioSeguro = nombreColegio || "Sin colegio";
+    const logoColegioHtml = logoColegio
+        ? `<img class="colegio-avatar" src="${escapeHtml(logoColegio)}" alt="${escapeHtml(nombreColegioSeguro)}">`
+        : `<span class="colegio-avatar colegio-avatar-fallback">${Number(idColegio) > 0 ? Number(idColegio) : "-"}</span>`;
     const html = `
         <div class="menu-permisos-modal">
             <div class="menu-permisos-head">
-                <strong>${escapeHtml(nombreUsuario || "Usuario")}</strong>
-                <span>${escapeHtml(identificador || "Sin identificador")} · Activa o bloquea cada menú del sistema.</span>
+                <div class="menu-permisos-head-copy">
+                    <strong>${escapeHtml(nombreUsuario || "Usuario")}</strong>
+                    <span>${escapeHtml(emailUsuario || "Sin email")} · Activa o bloquea cada menú del sistema.</span>
+                </div>
+                <div class="menu-permisos-head-colegio">
+                    ${logoColegioHtml}
+                    <span class="colegio-nombre">${escapeHtml(nombreColegioSeguro)}</span>
+                </div>
             </div>
             <div class="menu-permisos-grid">
                 ${permisos.map((menu) => `

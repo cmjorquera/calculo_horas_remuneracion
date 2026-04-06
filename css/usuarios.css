@@ -236,11 +236,20 @@
 }
 
 .menu-permisos-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
     margin-bottom: 16px;
     padding: 14px 16px;
     border: 1px solid rgba(0, 78, 140, 0.12);
     border-radius: 14px;
     background: linear-gradient(180deg, rgba(0, 78, 140, 0.08), rgba(255, 255, 255, 0.95));
+}
+
+.menu-permisos-head-copy {
+    min-width: 0;
+    flex: 1 1 auto;
 }
 
 .menu-permisos-head strong {
@@ -253,6 +262,29 @@
 .menu-permisos-head span {
     color: #64748b;
     font-size: 12px;
+}
+
+.menu-permisos-head-colegio {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 240px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    flex: 0 0 auto;
+}
+
+@media (max-width: 640px) {
+    .menu-permisos-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .menu-permisos-head-colegio {
+        max-width: 100%;
+    }
 }
 
 .menu-permisos-grid {

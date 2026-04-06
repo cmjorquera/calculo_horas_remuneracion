@@ -1,5 +1,5 @@
 <?php
-$headerTitle = isset($headerTitle) ? (string)$headerTitle : "Calculadora de Horas Cronológicas";
+$headerTitle = isset($headerTitle) ? (string)$headerTitle : "Calculadora de Horas Pedagogicas y Cronológicas";
 $nombreColegioHeader = trim((string)($_SESSION["nom_colegio"] ?? $_SESSION["nco_colegio"] ?? "Sin colegio"));
 $idColegioHeader = (int)($_SESSION["id_colegio"] ?? 0);
 $logoHeader = "imagenes/logo_2.jpg";

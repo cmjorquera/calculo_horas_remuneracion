@@ -58,10 +58,11 @@ $activoUsuarios = $paginaActual === "usuarios.php";
             onclick="window.location.href='index.php'">
             <i class="bi bi-people-fill"></i>
         </button>
-        <!-- ejemplo badge (si quieres mostrar total) -->
+        <?php if ((int)$totalEmpleados > 0): ?>
         <div class="side-badge" id="badgeEmpleados" title="Total empleados">
             <?= $totalEmpleados ?>
         </div>
+        <?php endif; ?>
     </div>
     <?php endif; ?>
 
@@ -89,9 +90,11 @@ $activoUsuarios = $paginaActual === "usuarios.php";
             onclick="window.location.href='usuarios.php'">
             <i class="bi bi-person-plus-fill"></i>
         </button>
+        <?php if ((int)$totalUsuarios > 0): ?>
         <div class="side-badge" id="badgeUsuarios" title="Total usuarios">
             <?= $totalUsuarios ?>
         </div>
+        <?php endif; ?>
     </div>
     <?php endif; ?>
     <!--SALIR -->
