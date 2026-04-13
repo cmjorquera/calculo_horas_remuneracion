@@ -62,7 +62,7 @@ function plantillaBienvenidaHtml(array $data)
             <td style="background:linear-gradient(135deg,#0b5e8a,#0e6e9d);padding:28px 32px;text-align:center;">
               {$logoBlock}
               <div style="font-size:28px;font-weight:800;color:#ffffff;letter-spacing:-.3px;">Bienvenido al sistema</div>
-              <div style="font-size:15px;color:rgba(255,255,255,.86);margin-top:8px;">Calculo de Horas Pedagogicas y Cronologicas</div>
+              <div style="font-size:15px;color:rgba(255,255,255,.86);margin-top:8px;">Calculo de Horas Pedagógicas y Cronologicas</div>
             </td>
           </tr>
           <tr>
@@ -105,7 +105,7 @@ function plantillaBienvenidaHtml(array $data)
           </tr>
           <tr>
             <td style="padding:18px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:12px;line-height:1.7;color:#64748b;text-align:center;">
-              Sistema Calculo de Horas Pedagogicas Y Cronologicas · Seduc
+              Sistema Calculo de Horas Pedagógicas Y Cronologicas · Seduc
             </td>
           </tr>
         </table>
@@ -299,7 +299,7 @@ function enviarCorreoRecuperacionClave(array $data)
         $mail->setFrom($config['from_email'], $config['from_name']);
         $mail->addAddress((string)$data['email'], $nombre !== '' ? $nombre : 'Usuario');
         $mail->isHTML(true);
-        $mail->Subject = 'Recuperacion de clave - Sistema calculo de horas Pedagogicas y Cronologicas';
+        $mail->Subject = 'Recuperacion de clave - Sistema calculo de horas Pedagógicas y Cronologicas';
         $mail->Body = plantillaCorreoAccesoHtml([
             'titulo' => 'Recuperacion de clave',
             'saludo' => 'Hola ' . ($nombre !== '' ? $nombre : 'Usuario') . ',',

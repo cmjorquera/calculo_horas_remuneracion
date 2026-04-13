@@ -73,7 +73,7 @@ foreach ($colegios as $colegio) {
     <link rel="stylesheet" type="text/css" href="css/index.css?v=<?= filemtime(__DIR__ . '/css/index.css') ?>">
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Calculadora de Horas Cronológicas</title>
+    <title>Calculadora de Horas Pedagógicas y  Cronológicas</title>
     <script>
     const DIAS_LV = <?= json_encode($dias); ?>;
     const ID_USUARIO_SESION = <?= json_encode($idUsuarioSesion) ?>;
@@ -95,7 +95,7 @@ foreach ($colegios as $colegio) {
 <div class="page">
     <?php include __DIR__ . "/menu_lateral.php"; ?>
     <!-- Menu lateral -->
-    <?php $headerTitle = "Calculadora de Horas Cronológicas"; ?>
+    <?php $headerTitle = "Calculadora de Horas Pedagógicas y Cronológicas"; ?>
     <?php include __DIR__ . "/header.php"; ?>
 
 

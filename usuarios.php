@@ -143,7 +143,7 @@ function estadoUsuarioDetalle(array $usuario)
 <div class="page">
     <?php include __DIR__ . "/menu_lateral.php"; ?>
     <!-- Menu lateral -->
-     <?php $headerTitle = "Calculadora de Horas Pedagogicas y Cronológicas"; ?>
+     <?php $headerTitle = "Calculadora de Horas Pedagógicas y Cronológicas"; ?>
     <?php include __DIR__ . "/header.php"; ?>
 
 

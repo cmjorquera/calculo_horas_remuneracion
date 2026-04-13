@@ -197,16 +197,16 @@ Calculo funcional visible del resumen:
    - por eso el total pedagogico visible corresponde al acumulado de ambos bloques del resumen
 
 3. Horas lectivas
-   - el usuario ingresa el valor en pedagogicas
+   - el usuario ingresa el valor en Pedagógicas
    - el sistema convierte automaticamente ese valor a cronologicas
    - la equivalencia aplicada es:
    - 1 hora pedagogica = 40 minutos cronologicos
-   - formula: horas pedagogicas x 40 = minutos cronologicos
+   - formula: horas Pedagógicas x 40 = minutos cronologicos
    - luego el sistema muestra el resultado en `HH:MM`
 
 4. Horas no lectivas
    - funciona igual que las horas lectivas
-   - el usuario ingresa pedagogicas
+   - el usuario ingresa Pedagógicas
    - el sistema las convierte automaticamente a cronologicas usando 40 minutos por cada hora pedagogica
 
 5. Colacion
@@ -220,9 +220,9 @@ Ejemplo operativo:
 - si ademas se registra tarde de `13:00` a `17:00`, el sistema suma otras 4 horas
 - la jornada diaria queda en 8 horas cronologicas
 - si eso mismo se replica en 5 dias, la jornada semanal cronologica sera `40:00`
-- si el usuario informa 30 horas pedagogicas lectivas y 14 no lectivas, la jornada ordinaria pedagogica visible sera 44
-- esas 30 pedagogicas lectivas se convierten a `20:00` cronologicas
-- esas 14 pedagogicas no lectivas se convierten a `09:20` cronologicas
+- si el usuario informa 30 horas Pedagógicas lectivas y 14 no lectivas, la jornada ordinaria pedagogica visible sera 44
+- esas 30 Pedagógicas lectivas se convierten a `20:00` cronologicas
+- esas 14 Pedagógicas no lectivas se convierten a `09:20` cronologicas
 
 La logica que ya existia en la documentacion anterior y debe conservarse es la siguiente:
 
