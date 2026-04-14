@@ -130,12 +130,13 @@
     .content{
       margin-top: var(--gap);
       display:grid;
-      grid-template-columns: minmax(0, 1fr) 400px;
-      gap: 12px;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 10px;
       align-items:stretch;
     }
     .content > .card{
       height: 100%;
+      min-width: 0;
     }
     .content > aside.card{
       display: flex;
@@ -154,7 +155,48 @@
     .content > aside.card .actions{
       margin-top: auto;
     }
-    @media (max-width: 980px){
+    @media (max-width: 1400px){
+      .content{
+        grid-template-columns: minmax(0, 1fr) 280px;
+      }
+      tbody th{
+        width: 116px;
+      }
+      tbody td, tbody th{
+        padding: 8px 6px;
+      }
+      .time{
+        gap: 3px;
+        padding: 3px 5px;
+      }
+      select{
+        width: 54px;
+        padding: 5px 4px;
+        font-size: 11px;
+      }
+      .sel-min{
+        width: 56px;
+      }
+      .sum-row{
+        padding: 8px;
+        grid-template-columns: 1fr 84px 84px;
+      }
+      .sum-row .name{
+        font-size: 12px;
+      }
+      .sum-row .hint{
+        font-size: 10px;
+      }
+      .box{
+        min-height: 72px;
+        padding: 7px;
+        font-size: 15px;
+      }
+      .box small{
+        font-size: 10px;
+      }
+    }
+    @media (max-width: 1120px){
       .content{
         grid-template-columns: 1fr;
         align-items: start;
@@ -174,7 +216,7 @@
     }
 
     .card-head{
-      padding: 10px 12px;
+      padding: 8px 10px;
       border-bottom: 1px solid var(--line);
       background: var(--head);
       display:flex;
@@ -188,8 +230,8 @@
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
-      gap: 14px;
-      min-height: 86px;
+      gap: 10px;
+      min-height: 74px;
     }
     .card-head-main{
       min-width: 0;
@@ -213,22 +255,22 @@
     }
     .card-head h2{
       margin:0;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 900;
       letter-spacing: .2px;
     }
     .card-head small{
-      font-size: 12px;
+      font-size: 11px;
       color: var(--muted);
     }
     .empleado-seleccionado-info{
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       color: #334155;
       background: rgba(0,111,173,.08);
       border: 1px solid rgba(0,111,173,.18);
       border-radius: 999px;
-      padding: 4px 10px;
+      padding: 4px 8px;
       max-width: 100%;
       white-space: nowrap;
       overflow: hidden;
@@ -245,9 +287,9 @@
       }
     }
 
-    /* ===== Tabla (SIN barra desplazadora) ===== */
+    /* ===== Tabla horario ===== */
     .table-wrap{
-      overflow: visible; /* clave para no mostrar scroll */
+      overflow: visible;
     }
 
     .jornada-legal-msg{
@@ -255,7 +297,7 @@
       padding: 10px 12px;
       border: 1px solid var(--line);
       border-radius: 10px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       background: #fff;
       color: var(--text);
@@ -283,7 +325,7 @@
       padding: 10px 12px;
       border: 1px solid rgba(245, 158, 11, .45);
       border-radius: 10px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       background: rgba(245, 158, 11, .08);
       color: #92400e;
@@ -296,7 +338,7 @@
       padding: 12px 14px;
       border: 1px solid rgba(220, 38, 38, .28);
       border-radius: 12px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       background: rgba(220, 38, 38, .06);
       color: #991b1b;
@@ -314,13 +356,13 @@
     table{
       width: 100%;
       border-collapse: collapse;
-      min-width: 0; /* clave para no forzar scroll */
+      min-width: 0;
     }
     thead th{
       background: var(--head);
       border-bottom: 1px solid var(--line);
-      font-size: 13px;
-      padding: 9px 8px;
+      font-size: 12px;
+      padding: 8px 6px;
       text-align:center;
       white-space: nowrap;
     }
@@ -335,6 +377,7 @@
       text-align:left;
       background:#fbfbfb;
       font-weight: 800;
+      font-size: 12px;
     }
 
     .slot{
@@ -355,6 +398,7 @@
       font-weight: 900;
       color: var(--muted);
       user-select: none;
+      font-size: 12px;
     }
     select{
       border: 1px solid var(--line);
@@ -362,12 +406,12 @@
       padding: 6px 8px;
       background:#fff;
       font-family: inherit;
-      font-size: 13px;
+      font-size: 12px;
       outline:none;
-      width: 64px;
+      width: 60px;
       text-align: center;
     }
-    .sel-min{ width: 70px; }
+    .sel-min{ width: 64px; }
 
     select:focus{
       border-color: rgba(255,177,0,.7);
@@ -376,29 +420,29 @@
 
     /* ===== Resumen ===== */
     .summary{
-      padding: 12px;
+      padding: 10px;
     }
     .summary-grid{
       display:grid;
-      gap: 10px;
+      gap: 8px;
     }
     .sum-row{
       display:grid;
-      grid-template-columns: 1fr 120px 120px;
-      gap: 10px;
+      grid-template-columns: 1fr 96px 96px;
+      gap: 8px;
       align-items:center;
       border: 1px solid var(--line);
       border-radius: 12px;
-      padding: 10px;
+      padding: 8px;
       background: #fbfbfb;
     }
     .sum-row .name{
       font-weight: 900;
-      font-size: 13px;
+      font-size: 12px;
       line-height: 1.1;
     }
     .sum-row .hint{
-      font-size: 11px;
+      font-size: 10px;
       color: var(--muted);
       margin-top: 2px;
     }
@@ -406,22 +450,22 @@
       border: 1px solid var(--line);
       border-radius: 12px;
       background: #fff;
-      padding: 10px;
-      min-height: 94px;
+      padding: 8px;
+      min-height: 76px;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 6px;
+      gap: 4px;
       text-align:center;
       font-weight: 900;
-      font-size: 20px;
+      font-size: 16px;
       line-height: 1.1;
     }
     .box small{
       display:block;
       font-weight: 700;
       color: var(--muted);
-      font-size: 11px;
+      font-size: 10px;
       margin-bottom: 3px;
     }
 
@@ -479,19 +523,19 @@
     /* ===== Inputs editables (HH:MM) dentro de boxes ===== */
 .sum-input{
   width: 100%;
-  height: 56px;
-  min-height: 56px;
+  height: 46px;
+  min-height: 46px;
   box-sizing: border-box;
   display: block;
   border: 1px dashed rgba(15, 23, 42, .25);
   background: rgba(255,255,255,.55);
-  border-radius: 14px;
+  border-radius: 12px;
   text-align: center;
   font-weight: 900;
-  font-size: 20px;
+  font-size: 16px;
   line-height: 1.1;
   color: #0f172a;
-  padding: 0 14px;
+  padding: 0 10px;
   cursor: text;
   transition: box-shadow .15s ease, border-color .15s ease, transform .05s ease;
 }
@@ -501,14 +545,14 @@ select.sum-input{
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  padding-right: 36px;
+  padding-right: 30px;
   background-image:
     linear-gradient(45deg, transparent 50%, #0f172a 50%),
     linear-gradient(135deg, #0f172a 50%, transparent 50%);
   background-position:
-    calc(100% - 22px) calc(50% - 3px),
-    calc(100% - 16px) calc(50% - 3px);
-  background-size: 6px 6px, 6px 6px;
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
 }
 
