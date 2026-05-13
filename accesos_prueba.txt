@@ -1,0 +1,44 @@
+ACCESOS DE PRUEBA
+=================
+
+Clave comun para cuentas demo:
+- 123456
+
+Administradores por colegio:
+
+- Usuario: admin_c1
+  Correo: admin_c1@demo.cl
+  Colegio: 1 - Colegio Cordillera
+
+- Usuario: admin_c8
+  Correo: admin_c8@demo.cl
+  Colegio: 8 - Colegio Tabancura
+
+- Usuario: admin_c9
+  Correo: admin_c9@demo.cl
+  Colegio: 9 - Colegio Los Andes
+
+- Usuario: admin_c10
+  Correo: admin_c10@demo.cl
+  Colegio: 10 - Colegio Los Alerces
+
+- Usuario: admin_c11
+  Correo: admin_c11@demo.cl
+  Colegio: 11 - Colegio Huelen
+
+- Usuario: admin_c12
+  Correo: admin_c12@demo.cl
+  Colegio: 12 - Colegio Cantagallo
+
+- Usuario: admin_c13
+  Correo: admin_c13@demo.cl
+  Colegio: 13 - Colegio Huinganal
+
+- Usuario: admin_c17
+  Correo: admin_c17@demo.cl
+  Colegio: 17 - Valle Alegre
+
+Permisos de estas cuentas:
+- Acceso a Empleados
+- Acceso a Graficos
+- Sin acceso a Usuarios

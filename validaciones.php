@@ -30,7 +30,22 @@ SELECT
     u.estado,
     u.intentos,
     u.id_colegio,
-    c.nom_colegio
+    c.nom_colegio,
+    (
+      SELECT urc.id_rol
+      FROM usuario_rol_colegio urc
+      WHERE urc.id_usuario = u.id_usuario
+        AND urc.estado = 1
+      ORDER BY CASE WHEN urc.id_rol = 1 THEN 0 ELSE 1 END, urc.id_rol ASC
+      LIMIT 1
+    ) AS id_rol,
+    EXISTS (
+      SELECT 1
+      FROM usuario_rol_colegio urc
+      WHERE urc.id_usuario = u.id_usuario
+        AND urc.estado = 1
+        AND urc.id_rol = 1
+    ) AS is_super_admin
 FROM usuarios u
 LEFT JOIN colegio c ON c.id_colegio = u.id_colegio
 WHERE u.email = '$usuarioEsc' OR u.identificador = '$usuarioEsc'
@@ -87,7 +102,12 @@ $_SESSION["id_usuario"]        = (int)$u["id_usuario"];
 $_SESSION["identificador"]     = $u["identificador"];
 $_SESSION["nombre_completo"]    = $u["nombre"]." ".$u["apellido_paterno"]." ".$u["apellido_materno"];
 $_SESSION["id_colegio"]      = $u["id_colegio"];
+$_SESSION["id_rol"]          = (int)($u["id_rol"] ?? 0);
+$_SESSION["is_super_admin"]  = ((int)($u["is_super_admin"] ?? 0) === 1);
 $_SESSION["nom_colegio"]     = $u["nom_colegio"] ?? "Sin colegio";
+$_SESSION["cabecera_contexto"] = ($_SESSION["id_rol"] === 1)
+    ? "Administrador de sistema"
+    : $_SESSION["nom_colegio"];
 
 
 // Redirigir al sistema

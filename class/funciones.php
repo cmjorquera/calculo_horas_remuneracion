@@ -1,7 +1,10 @@
 <?php
+require_once __DIR__ . "/helpers.php";
+
 class Funciones
 {
     private $db;
+    private $menuSchemaReady = false;
 
     public function __construct(MySQL $db)
     {
@@ -33,13 +36,14 @@ class Funciones
 
         return $dias;
     }
-    public function obtenerEmpleadosConContratoVigente($id_colegio)
+    public function obtenerEmpleadosConContratoVigente($id_colegio, $verTodosColegios = false)
     {
         $id_colegio = (int)$id_colegio;
+        $whereColegio = $verTodosColegios ? "1=1" : "e.id_colegio = {$id_colegio}";
 
 $sql = "
   SELECT
-    e.id_empleado, e.codigo, e.run, e.nombres, e.apellido_paterno, e.apellido_materno, e.genero, e.activo,
+    e.id_empleado, e.id_colegio, co.nco_colegio, e.codigo, e.run, e.nombres, e.apellido_paterno, e.apellido_materno, e.genero, e.activo,
     c.id_contrato, c.horas_semanales_cron, c.horas_lectivas, c.horas_no_lectivas, c.min_colacion_diaria, c.observacion,
 
     COALESCE(SUM(
@@ -59,15 +63,17 @@ $sql = "
     ), 0) AS trabajadas_min
 
   FROM empleados e
+  LEFT JOIN colegio co
+    ON co.id_colegio = e.id_colegio
   LEFT JOIN contratos_empleado c
     ON c.id_empleado = e.id_empleado AND c.fecha_fin IS NULL
   LEFT JOIN horarios_semanales hs
     ON hs.id_contrato = c.id_contrato AND hs.activo = 1
 
-  WHERE e.id_colegio = {$id_colegio}
+  WHERE {$whereColegio}
 
   GROUP BY
-    e.id_empleado, e.codigo, e.run, e.nombres, e.apellido_paterno, e.apellido_materno, e.genero, e.activo,
+    e.id_empleado, e.id_colegio, co.nco_colegio, e.codigo, e.run, e.nombres, e.apellido_paterno, e.apellido_materno, e.genero, e.activo,
     c.id_contrato, c.horas_semanales_cron, c.horas_lectivas, c.horas_no_lectivas, c.min_colacion_diaria, c.observacion
 
   ORDER BY e.apellido_paterno, e.apellido_materno, e.nombres
@@ -86,10 +92,7 @@ $sql = "
 
     private function minutosAHHMM($totalMin)
     {
-        $totalMin = max(0, (int)$totalMin);
-        $h = floor($totalMin / 60);
-        $m = $totalMin % 60;
-        return str_pad((string)$h, 2, '0', STR_PAD_LEFT) . ":" . str_pad((string)$m, 2, '0', STR_PAD_LEFT);
+        return minutosAHHMM($totalMin);
     }
 
     public function calcularHorasSemanales($id_contrato)
@@ -125,9 +128,9 @@ $sql = "
     }
 
 
-    public function obtenerEmpleadosConResumen($id_colegio)
+    public function obtenerEmpleadosConResumen($id_colegio, $verTodosColegios = false)
 {
-    $empleados = $this->obtenerEmpleadosConContratoVigente($id_colegio);
+    $empleados = $this->obtenerEmpleadosConContratoVigente($id_colegio, $verTodosColegios);
 
     foreach ($empleados as &$e) {
         $contrato = (int)($e['horas_semanales_cron'] ?? 0);
@@ -150,65 +153,436 @@ $sql = "
 
     public function obtenerOpcionesColacion()
     {
-        $this->db->consulta("
-            CREATE TABLE IF NOT EXISTS colacion (
-                id_colacion INT AUTO_INCREMENT PRIMARY KEY,
-                hora TIME NOT NULL,
-                minutos INT NOT NULL UNIQUE,
-                activo TINYINT(1) NOT NULL DEFAULT 1,
-                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE KEY uk_colacion_hora (hora)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-        ");
+        $opciones = [];
 
-        $resHasHora = $this->db->consulta("
+        $resExiste = $this->db->consulta("
             SELECT COUNT(*) AS t
-            FROM INFORMATION_SCHEMA.COLUMNS
+            FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_SCHEMA = DATABASE()
               AND TABLE_NAME = 'colacion'
-              AND COLUMN_NAME = 'hora'
         ");
-        $hasHora = (int)($this->db->fetch_assoc($resHasHora)['t'] ?? 0) > 0;
+        $existeTabla = (int)($this->db->fetch_assoc($resExiste)["t"] ?? 0) > 0;
 
-        if ($hasHora) {
-            $this->db->consulta("
-                INSERT IGNORE INTO colacion (hora, minutos, activo) VALUES
-                ('00:00:00', 0, 1),
-                ('00:30:00', 30, 1),
-                ('00:40:00', 40, 1),
-                ('01:00:00', 60, 1)
+        if ($existeTabla) {
+            $resHasHora = $this->db->consulta("
+                SELECT COUNT(*) AS t
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = 'colacion'
+                  AND COLUMN_NAME = 'hora'
             ");
+            $hasHora = (int)($this->db->fetch_assoc($resHasHora)['t'] ?? 0) > 0;
 
-            $res = $this->db->consulta("
-                SELECT id_colacion, TIME_FORMAT(hora, '%H:%i') AS hora_hhmm, minutos
-                FROM colacion
-                WHERE activo = 1
-                ORDER BY hora ASC
-            ");
-        } else {
-            $this->db->consulta("
-                INSERT IGNORE INTO colacion (minutos, activo) VALUES
-                (0, 1), (30, 1), (40, 1), (60, 1)
-            ");
+            if ($hasHora) {
+                $res = $this->db->consulta("
+                    SELECT
+                        MIN(id_colacion) AS id_colacion,
+                        TIME_FORMAT(MIN(hora), '%H:%i') AS hora_hhmm,
+                        minutos
+                    FROM colacion
+                    GROUP BY minutos
+                    ORDER BY minutos ASC
+                ");
+            } else {
+                $res = $this->db->consulta("
+                    SELECT
+                        MIN(id_colacion) AS id_colacion,
+                        DATE_FORMAT(SEC_TO_TIME(minutos * 60), '%H:%i') AS hora_hhmm,
+                        minutos
+                    FROM colacion
+                    GROUP BY minutos
+                    ORDER BY minutos ASC
+                ");
+            }
 
-            $res = $this->db->consulta("
-                SELECT id_colacion, DATE_FORMAT(SEC_TO_TIME(minutos * 60), '%H:%i') AS hora_hhmm, minutos
-                FROM colacion
-                WHERE activo = 1
-                ORDER BY minutos ASC
-            ");
+            while ($row = $this->db->fetch_assoc($res)) {
+                $opciones[] = [
+                    "id_colacion" => (int)$row["id_colacion"],
+                    "hora" => $row["hora_hhmm"],
+                    "minutos" => (int)$row["minutos"]
+                ];
+            }
         }
 
-        $opciones = [];
-        while ($row = $this->db->fetch_assoc($res)) {
-            $opciones[] = [
-                "id_colacion" => (int)$row["id_colacion"],
-                "hora" => $row["hora_hhmm"],
-                "minutos" => (int)$row["minutos"]
-            ];
+        if (count($opciones) === 0) {
+            foreach ([0, 30, 40, 60] as $minutos) {
+                $opciones[] = [
+                    "id_colacion" => $minutos,
+                    "hora" => minutosAHHMM($minutos),
+                    "minutos" => $minutos
+                ];
+            }
         }
 
         return $opciones;
+    }
+
+    public function obtenerRoles()
+    {
+        $sql = "
+            SELECT id_rol, codigo, nombre, descripcion
+            FROM roles
+            ORDER BY id_rol ASC
+        ";
+
+        $res = $this->db->consulta($sql);
+        $roles = [];
+        while ($row = $this->db->fetch_assoc($res)) {
+            $roles[] = $row;
+        }
+
+        return $roles;
+    }
+
+    public function obtenerColegios()
+    {
+        $sql = "
+            SELECT
+                id_colegio,
+                nom_colegio,
+                nco_colegio
+            FROM colegio
+            ORDER BY COALESCE(NULLIF(nco_colegio, ''), nom_colegio) ASC, id_colegio ASC
+        ";
+
+        $res = $this->db->consulta($sql);
+        $colegios = [];
+        while ($row = $this->db->fetch_assoc($res)) {
+            $colegios[] = $row;
+        }
+
+        return $colegios;
+    }
+
+    public function usuarioTieneRol($idUsuario, $idRol)
+    {
+        $idUsuario = (int)$idUsuario;
+        $idRol = (int)$idRol;
+        if ($idUsuario <= 0 || $idRol <= 0) {
+            return false;
+        }
+
+        $res = $this->db->consulta("
+            SELECT 1
+            FROM usuario_rol_colegio
+            WHERE id_usuario = {$idUsuario}
+              AND id_rol = {$idRol}
+              AND estado = 1
+            LIMIT 1
+        ");
+
+        return (bool)$this->db->fetch_assoc($res);
+    }
+
+    public function obtenerUsuarios($id_colegio, $verTodosColegios = false)
+    {
+        $id_colegio = (int)$id_colegio;
+        $whereColegio = $verTodosColegios ? "1=1" : "COALESCE(u.id_colegio, urc.id_colegio, 0) = {$id_colegio}";
+
+        $sql = "
+            SELECT
+                u.id_usuario,
+                u.identificador,
+                u.email,
+                u.nombre,
+                u.apellido_paterno,
+                u.apellido_materno,
+                u.run,
+                u.telefono,
+                u.id_colegio,
+                u.estado,
+                u.token_reinicio,
+                u.intentos,
+                u.ultimo_login,
+                u.created_at,
+                c.nco_colegio,
+                GROUP_CONCAT(DISTINCT r.nombre ORDER BY r.id_rol SEPARATOR ', ') AS roles_asignados
+            FROM usuarios u
+            LEFT JOIN colegio c
+                ON c.id_colegio = u.id_colegio
+            LEFT JOIN usuario_rol_colegio urc
+                ON urc.id_usuario = u.id_usuario
+               AND urc.estado = 1
+            LEFT JOIN roles r
+                ON r.id_rol = urc.id_rol
+            WHERE {$whereColegio}
+            GROUP BY
+                u.id_usuario,
+                u.identificador,
+                u.email,
+                u.nombre,
+                u.apellido_paterno,
+                u.apellido_materno,
+                u.run,
+                u.telefono,
+                u.id_colegio,
+                u.estado,
+                u.token_reinicio,
+                u.intentos,
+                u.ultimo_login,
+                u.created_at,
+                c.nco_colegio
+            ORDER BY u.nombre ASC, u.apellido_paterno ASC, u.apellido_materno ASC
+        ";
+
+        $res = $this->db->consulta($sql);
+        $usuarios = [];
+        while ($row = $this->db->fetch_assoc($res)) {
+            $usuarios[] = $row;
+        }
+
+        return $usuarios;
+    }
+
+    public function obtenerUsuarioRolColegio($id_colegio, $verTodosColegios = false)
+    {
+        $id_colegio = (int)$id_colegio;
+        $whereColegio = $verTodosColegios ? "1=1" : "COALESCE(urc.id_colegio, u.id_colegio, 0) = {$id_colegio}";
+
+        $sql = "
+            SELECT
+                urc.id,
+                urc.id_usuario,
+                urc.id_rol,
+                urc.id_colegio,
+                urc.estado,
+                urc.created_at,
+                u.identificador,
+                CONCAT_WS(' ', u.nombre, u.apellido_paterno, u.apellido_materno) AS usuario_nombre,
+                u.email,
+                r.codigo AS rol_codigo,
+                r.nombre AS rol_nombre,
+                c.nco_colegio
+            FROM usuario_rol_colegio urc
+            INNER JOIN usuarios u
+                ON u.id_usuario = urc.id_usuario
+            INNER JOIN roles r
+                ON r.id_rol = urc.id_rol
+            LEFT JOIN colegio c
+                ON c.id_colegio = urc.id_colegio
+            WHERE {$whereColegio}
+            ORDER BY urc.id DESC
+        ";
+
+        $res = $this->db->consulta($sql);
+        $asignaciones = [];
+        while ($row = $this->db->fetch_assoc($res)) {
+            $asignaciones[] = $row;
+        }
+
+        return $asignaciones;
+    }
+
+    private function asegurarEsquemaMenus()
+    {
+        if ($this->menuSchemaReady) {
+            return;
+        }
+
+        $this->db->consulta("
+            CREATE TABLE IF NOT EXISTS menu_v (
+                id_menu INT AUTO_INCREMENT PRIMARY KEY,
+                codigo VARCHAR(50) NOT NULL,
+                nombre VARCHAR(100) NOT NULL,
+                url VARCHAR(255) NOT NULL,
+                icono VARCHAR(100) DEFAULT NULL,
+                descripcion VARCHAR(255) DEFAULT NULL,
+                orden INT NOT NULL DEFAULT 0,
+                visible TINYINT(1) NOT NULL DEFAULT 1,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY uk_menu_v_codigo (codigo)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+
+        $this->db->consulta("
+            CREATE TABLE IF NOT EXISTS usuario_menu_v (
+                id_usuario_menu INT AUTO_INCREMENT PRIMARY KEY,
+                id_usuario INT NOT NULL,
+                id_menu INT NOT NULL,
+                permitido TINYINT(1) NOT NULL DEFAULT 1,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY uk_usuario_menu_v (id_usuario, id_menu),
+                KEY idx_usuario_menu_v_usuario (id_usuario),
+                KEY idx_usuario_menu_v_menu (id_menu),
+                KEY idx_usuario_menu_v_permitido (permitido)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+
+        $this->normalizarMenusVersionados();
+
+        $this->menuSchemaReady = true;
+    }
+
+    private function existeIndice($tabla, $indice)
+    {
+        $tablaEsc = $this->db->escape_string($tabla);
+        $indiceEsc = $this->db->escape_string($indice);
+        $res = $this->db->consulta("
+            SELECT COUNT(*) AS total
+            FROM INFORMATION_SCHEMA.STATISTICS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = '{$tablaEsc}'
+              AND INDEX_NAME = '{$indiceEsc}'
+        ");
+
+        return (int)($this->db->fetch_assoc($res)["total"] ?? 0) > 0;
+    }
+
+    private function normalizarMenusVersionados()
+    {
+        $this->db->consulta("
+            UPDATE usuario_menu_v um
+            INNER JOIN (
+                SELECT codigo, MIN(id_menu) AS id_menu_canonico
+                FROM menu_v
+                GROUP BY codigo
+            ) canon
+                ON canon.codigo = (
+                    SELECT m2.codigo
+                    FROM menu_v m2
+                    WHERE m2.id_menu = um.id_menu
+                    LIMIT 1
+                )
+            SET um.id_menu = canon.id_menu_canonico
+            WHERE um.id_menu <> canon.id_menu_canonico
+        ");
+
+        $this->db->consulta("
+            DELETE um1
+            FROM usuario_menu_v um1
+            INNER JOIN usuario_menu_v um2
+                ON um1.id_usuario = um2.id_usuario
+               AND um1.id_menu = um2.id_menu
+               AND um1.id_usuario_menu > um2.id_usuario_menu
+        ");
+
+        $this->db->consulta("
+            DELETE m1
+            FROM menu_v m1
+            INNER JOIN menu_v m2
+                ON m1.codigo = m2.codigo
+               AND m1.id_menu > m2.id_menu
+        ");
+
+        if (!$this->existeIndice("menu_v", "uk_menu_v_codigo")) {
+            $this->db->consulta("
+                ALTER TABLE menu_v
+                ADD UNIQUE KEY uk_menu_v_codigo (codigo)
+            ");
+        }
+
+        if (!$this->existeIndice("usuario_menu_v", "uk_usuario_menu_v")) {
+            $this->db->consulta("
+                ALTER TABLE usuario_menu_v
+                ADD UNIQUE KEY uk_usuario_menu_v (id_usuario, id_menu)
+            ");
+        }
+    }
+
+    public function obtenerMenusSistema()
+    {
+        $this->asegurarEsquemaMenus();
+
+        $res = $this->db->consulta("
+            SELECT MIN(id_menu) AS id_menu, codigo, nombre, url, icono, descripcion, orden, visible
+            FROM menu_v
+            WHERE visible = 1
+            GROUP BY codigo, nombre, url, icono, descripcion, orden, visible
+            ORDER BY orden ASC, id_menu ASC
+        ");
+
+        $menus = [];
+        while ($row = $this->db->fetch_assoc($res)) {
+            $menus[] = $row;
+        }
+
+        return $menus;
+    }
+
+    public function obtenerPermisosMenuUsuario($idUsuario)
+    {
+        $this->asegurarEsquemaMenus();
+        $idUsuario = (int)$idUsuario;
+
+        $res = $this->db->consulta("
+            SELECT
+                m.id_menu,
+                m.codigo,
+                m.nombre,
+                m.url,
+                m.icono,
+                m.orden,
+                m.descripcion,
+                COALESCE(MAX(um.permitido), 0) AS permitido
+            FROM (
+                SELECT MIN(id_menu) AS id_menu, codigo, nombre, url, icono, orden, descripcion
+                FROM menu_v
+                WHERE visible = 1
+                GROUP BY codigo, nombre, url, icono, orden, descripcion
+            ) m
+            LEFT JOIN usuario_menu_v um
+                ON um.id_menu = m.id_menu
+               AND um.id_usuario = {$idUsuario}
+            GROUP BY
+                m.id_menu,
+                m.codigo,
+                m.nombre,
+                m.url,
+                m.icono,
+                m.orden,
+                m.descripcion
+            ORDER BY m.orden ASC, m.id_menu ASC
+        ");
+
+        $permisos = [];
+        while ($row = $this->db->fetch_assoc($res)) {
+            $row["permitido"] = (int)($row["permitido"] ?? 0);
+            $permisos[] = $row;
+        }
+
+        return $permisos;
+    }
+
+    public function obtenerCodigosMenusPermitidosUsuario($idUsuario)
+    {
+        $permisos = $this->obtenerPermisosMenuUsuario($idUsuario);
+        $codigos = [];
+
+        foreach ($permisos as $permiso) {
+            if ((int)($permiso["permitido"] ?? 0) === 1) {
+                $codigos[] = (string)$permiso["codigo"];
+            }
+        }
+
+        return $codigos;
+    }
+
+    public function guardarPermisosMenuUsuario($idUsuario, array $menusPermitidos)
+    {
+        $this->asegurarEsquemaMenus();
+        $idUsuario = (int)$idUsuario;
+
+        $menus = $this->obtenerMenusSistema();
+        $permitidosMap = [];
+        foreach ($menusPermitidos as $codigo) {
+            $permitidosMap[(string)$codigo] = true;
+        }
+
+        foreach ($menus as $menu) {
+            $idMenu = (int)$menu["id_menu"];
+            $codigo = (string)$menu["codigo"];
+            $permitido = isset($permitidosMap[$codigo]) ? 1 : 0;
+
+            $this->db->consulta("
+                INSERT INTO usuario_menu_v (id_usuario, id_menu, permitido)
+                VALUES ({$idUsuario}, {$idMenu}, {$permitido})
+                ON DUPLICATE KEY UPDATE
+                    permitido = VALUES(permitido),
+                    updated_at = CURRENT_TIMESTAMP
+            ");
+        }
     }
 
 }

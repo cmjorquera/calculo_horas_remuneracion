@@ -8,28 +8,55 @@ if (!isset($_SESSION["id_usuario"])) {
 
 require_once __DIR__ . "/class/conexion.php";
 require_once __DIR__ . "/class/funciones.php";
+require_once __DIR__ . "/class/helpers.php";
 
 $db = new MySQL("qaseduc_calculo_horario", "qaseduc_ucomun", "jorquera86;");
 
 $funciones = new Funciones($db);
+$menusPermitidosActual = $funciones->obtenerCodigosMenusPermitidosUsuario((int)($_SESSION["id_usuario"] ?? 0));
+if (!in_array('empleados', $menusPermitidosActual, true)) {
+    if (in_array('graficos', $menusPermitidosActual, true)) {
+        header("Location: grafico.php");
+    } elseif (in_array('usuarios', $menusPermitidosActual, true)) {
+        header("Location: usuarios.php");
+    } else {
+        header("Location: logout.php");
+    }
+    exit;
+}
 $dias = $funciones->obtenerDiasSemana(true); // lunes a viernes
 $colaciones = $funciones->obtenerOpcionesColacion();
-$empleados = $funciones->obtenerEmpleadosConResumen($_SESSION["id_colegio"]);
+$idUsuarioSesion = (int)($_SESSION["id_usuario"] ?? 0);
+$esSuperAdminOperativo = $funciones->usuarioTieneRol($idUsuarioSesion, 1);
+$verTodosColegios = $esSuperAdminOperativo;
+$empleados = $funciones->obtenerEmpleadosConResumen($_SESSION["id_colegio"], $verTodosColegios);
+$mostrarColumnaColegio = $esSuperAdminOperativo;
+$colegios = $verTodosColegios ? $funciones->obtenerColegios() : [];
+$colegiosLogoMap = [];
 
+foreach ($colegios as $colegio) {
+    $idColegioLogo = (int)($colegio["id_colegio"] ?? 0);
+    if ($idColegioLogo <= 0) {
+        continue;
+    }
 
-function hhmm($hoursFloat){
-  $totalMin = (int)round($hoursFloat * 60);
-  $h = floor($totalMin/60);
-  $m = $totalMin % 60;
-  return str_pad($h,2,'0',STR_PAD_LEFT).":".str_pad($m,2,'0',STR_PAD_LEFT);
+    $logoCandidates = [$idColegioLogo];
+    if ($idColegioLogo === 14 || $idColegioLogo === 15) {
+        $logoCandidates = [15, 14];
+    }
+
+    foreach ($logoCandidates as $logoId) {
+        foreach (["png", "jpg", "jpeg"] as $extLogo) {
+            $logoRelTmp = "imagenes/colegios/colegio_" . $logoId . "." . $extLogo;
+            $logoAbsTmp = __DIR__ . "/" . $logoRelTmp;
+            if (is_file($logoAbsTmp)) {
+                $colegiosLogoMap[(string)$idColegioLogo] = $logoRelTmp;
+                break 2;
+            }
+        }
+    }
 }
 
-function minutosAHHMM($totalMin){
-  $totalMin = max(0, (int)$totalMin);
-  $h = floor($totalMin / 60);
-  $m = $totalMin % 60;
-  return str_pad($h, 2, '0', STR_PAD_LEFT).":".str_pad($m, 2, '0', STR_PAD_LEFT);
-}
 ?>
 
 
@@ -40,14 +67,19 @@ function minutosAHHMM($totalMin){
 <html lang="es">
 
 <head>
-    <link rel="stylesheet" type="text/css" href="css/principal.css">
-    <link rel="stylesheet" type="text/css" href="css/menu_lateral.css">
-    <link rel="stylesheet" type="text/css" href="css/modales.css">
+    <link rel="stylesheet" type="text/css" href="css/principal.css?v=<?= filemtime(__DIR__ . '/css/principal.css') ?>">
+    <link rel="stylesheet" type="text/css" href="css/menu_lateral.css?v=<?= filemtime(__DIR__ . '/css/menu_lateral.css') ?>">
+    <link rel="stylesheet" type="text/css" href="css/modales.css?v=<?= filemtime(__DIR__ . '/css/modales.css') ?>">
+    <link rel="stylesheet" type="text/css" href="css/index.css?v=<?= filemtime(__DIR__ . '/css/index.css') ?>">
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Calculadora de Horas Cronológicas</title>
+    <title>Calculadora de Horas Pedagógicas y  Cronológicas</title>
     <script>
     const DIAS_LV = <?= json_encode($dias); ?>;
+    const ID_USUARIO_SESION = <?= json_encode($idUsuarioSesion) ?>;
+    const ES_SUPER_ADMIN_EMPLEADO = <?= json_encode($esSuperAdminOperativo) ?>;
+    const COLEGIOS_EMPLEADO = <?= json_encode($colegios, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    const COLEGIOS_LOGO_EMPLEADO = <?= json_encode($colegiosLogoMap, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     </script>
 
 </head>
@@ -56,222 +88,28 @@ function minutosAHHMM($totalMin){
 <link rel="icon" type="image/png" href="imagenes/logo_1.jpg" />
 <script src="js/funciones.js"></script>
 <script src="js/button.js"></script>
-<script src="js/guardar_empleado.js"></script>
+<script src="js/guardar_empleado.js?v=<?= filemtime(__DIR__ . '/js/guardar_empleado.js') ?>"></script>
 <script src="js/tabla_dinamicas.js"></script>
-<script src="js/horas_cronologicas.js"></script>
+<script src="js/horas_cronologicas.js?v=<?= filemtime(__DIR__ . '/js/horas_cronologicas.js') ?>"></script>
 
-<style>
-/* input| */
-/* CONTENEDOR */
-.swal-form-modern {
-    width: 100%;
-    padding-top: 5px;
-}
-
-/* GRID 2 COLUMNAS */
-.swal-grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px 18px;
-}
-
-/* CAMPOS */
-.swal-field {
-    display: flex;
-    flex-direction: column;
-    text-align: left;
-}
-
-.swal-field label {
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: #374151;
-}
-
-/* INPUTS MODERNOS */
-.swal-input-modern {
-    height: 40px;
-    border-radius: 10px;
-    border: 1px solid #d1d5db;
-    padding: 0 12px;
-    font-size: 14px;
-    transition: all 0.2s ease;
-    background: #f9fafb;
-}
-
-.swal-input-modern:focus {
-    border-color: #2563eb;
-    background: #ffffff;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
-}
-
-/* Día bloqueado en horario semanal */
-#tbodyHorario tr.day-blocked {
-    opacity: 0.55;
-}
-
-#tbodyHorario tr.day-blocked th {
-    text-decoration: line-through;
-}
-
-.day-head {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 40px;
-}
-
-.day-lock {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 5px 10px;
-    border: 1px solid #d7dde7;
-    border-radius: 999px;
-    background: #fff;
-    cursor: pointer;
-    color: #1f2937;
-    transition: border-color .2s ease, box-shadow .2s ease;
-}
-
-.day-lock:hover {
-    border-color: #93a9c8;
-    box-shadow: 0 0 0 2px rgba(31, 79, 143, 0.12);
-}
-
-.day-lock-check {
-    position: absolute;
-    opacity: 0;
-    width: 1px;
-    height: 1px;
-    pointer-events: none;
-}
-
-.lock-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #edf2f8;
-    color: #4b5563;
-    font-size: 11px;
-}
-
-.day-lock.active {
-    border-color: #e8b4b4;
-    background: #fff6f6;
-}
-
-#tbodyHorario tr.day-blocked .lock-icon {
-    background: #fee2e2;
-    color: #b91c1c;
-}
-
-.day-name {
-    display: inline-block;
-    font-size: 13px;
-    font-weight: 700;
-}
-
-.horario-tools {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 6px;
-}
-
-.horario-repeat {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #374151;
-}
-
-.horario-help {
-    border: 0;
-    background: transparent;
-    color: #6b7280;
-    padding: 0;
-    line-height: 1;
-    cursor: pointer;
-}
-
-.horario-help i {
-    font-size: 16px;
-}
-
-/* SELECT */
-.swal-input-modern select {
-    cursor: pointer;
-}
-
-/* GENERO FULL WIDTH */
-.swal-full {
-    margin-top: 18px;
-}
-
-/* RESPONSIVE */
-@media (max-width: 600px) {
-    .swal-grid-2 {
-        grid-template-columns: 1fr;
-    }
-}
-</style>
 <div class="page">
     <?php include __DIR__ . "/menu_lateral.php"; ?>
     <!-- Menu lateral -->
-    <header class="header">
-        <div class="brand">
-            <div class="logo">
-                <img src="imagenes/logo_2.jpg" alt="Logo" onerror="this.style.display='none'">
-            </div>
-            <div class="titles">
-                <h1>Calculadora de Horas Cronológicas</h1>
-                <!-- <p>Distribución semanal (mañana / tarde) y resumen de totales</p> -->
-                <!-- Usuario logueado -->
-                <div class="user-info">
-                    <i class="bi bi-person-circle"></i>
-                    <span><?= htmlspecialchars($_SESSION["nombre_completo"]) ?></span>
-                    <span class="sep">•</span>
-                    <span><?= htmlspecialchars($_SESSION["nom_colegio"]) ?></span>
-                </div>
-            </div>
-        </div>
-
-        <div class="meta">
-            <div class="chip">
-                <span class="label">Fecha</span>
-                <span class="value" id="uiFecha">--</span>
-            </div>
-            <div class="chip">
-                <span class="label">Hora</span>
-                <span class="value" id="uiHora">--</span>
-            </div>
-        </div>
-    </header>
+    <?php $headerTitle = "Calculadora de Horas Pedagógicas y Cronológicas"; ?>
+    <?php include __DIR__ . "/header.php"; ?>
 
 
     <main class="content">
         <!-- TABLA -->
         <section class="card">
-            <div class="card-head">
-                <h2>Horario semanal</h2>
-                <small>Selecciona hora de inicio y término por jornada</small>
-                <div class="horario-tools">
-                    <label class="horario-repeat">
-                        <input type="checkbox" id="chkAutoRepeatDown">
-                        Repetir hacia abajo
-                    </label>
-                    <button type="button" class="horario-help" id="btnAutoRepeatHelp"
-                        aria-label="Ayuda repetir hacia abajo" title="Cómo funciona">
-                        <i class="bi bi-info-circle"></i>
-                    </button>
+            <div class="card-head card-head-balanced">
+                <div class="card-head-main">
+                    <h2>Horario semanal</h2>
+                    <small>Selecciona hora de inicio y término por jornada</small>
+                </div>
+                <div class="card-head-side">
+                    <div class="horario-tools">
+                    </div>
                 </div>
             </div>
 
@@ -281,7 +119,15 @@ function minutosAHHMM($totalMin){
                         <tr>
                             <th rowspan="2">Día</th>
                             <th colspan="2">Mañana</th>
-                            <th colspan="2">Tarde</th>
+                            <th colspan="2">
+                                <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
+                                    <span>Tarde</span>
+                                    <!-- <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;cursor:pointer;">
+                                        <input type="checkbox" id="repeatScheduleDownToggle" aria-label="Repetir horario hacia abajo">
+                                        <span>Repetir hacia abajo</span>
+                                    </label> -->
+                                </div>
+                            </th>
                         </tr>
                         <tr>
                             <th>Inicio</th>
@@ -303,13 +149,22 @@ function minutosAHHMM($totalMin){
             <div id="horarioIgualMsg" class="horario-equal-msg is-hidden" role="status" aria-live="polite">
                 Advertencia: hay bloques con hora de inicio y término iguales. Revisa posible error de tipeo.
             </div>
+            <div id="horarioDiasBloqueadosMsg" class="horario-equal-msg is-hidden" role="status" aria-live="polite"></div>
+            <div id="horasLectivasMsg" class="horas-lectivas-msg is-hidden" role="status" aria-live="polite"></div>
         </section>
 
         <!-- RESUMEN -->
         <aside class="card">
-            <div class="card-head">
-                <h2>Resumen</h2>
-                <small>Horas pedagógicas y cronológicas</small>
+            <div class="card-head card-head-balanced">
+                <div class="card-head-main">
+                    <h2>Resumen</h2>
+                    <!-- <small>Horas pedagógicas y cronológicas</small> -->
+                </div>
+                <div class="card-head-side">
+                    <div id="empleadoSeleccionadoInfo" class="empleado-seleccionado-info">
+                        Sin empleado seleccionado
+                    </div>
+                </div>
             </div>
 
             <div class="summary">
@@ -320,7 +175,7 @@ function minutosAHHMM($totalMin){
                             <div class="name">Jornada ordinaria</div>
                             <div class="hint">Total semanal</div>
                         </div>
-                        <div class="box"><small>Pedagógicas</small><span id="sumJornadaPed">--:--</span> </div>
+                        <div class="box"><small>Pedagógicas</small><span id="sumJornadaPed">0</span> </div>
                         <div class="box"><small>Cronológicas</small><span id="sumJornadaCro">00:00</span></div>
                     </div>
 
@@ -381,21 +236,20 @@ function minutosAHHMM($totalMin){
                             <div class="name">Colación</div>
                             <!-- <div class="hint">Descuento diario</div> -->
                         </div>
-                        <div class="box"><small>Minutos</small><span id="sumColacionMin">00</span></div>
-                        <div class="box">
-                            <small>Horas</small>
-                            <select id="sumColacionSelect" class="sum-input" aria-label="Colación diaria en horas">
+                        <!-- <div class="box"><small>Minutos</small><span id="sumColacionMin">0</span></div> -->
+                        <div class="box" style="width:200%;">
+                            <small>Minutos</small>
+                            <select id="sumColacionSelect" class="sum-input" aria-label="Colación diaria en minutos">
                                 <option value="" selected disabled>Selecciona...</option>
                                 <?php foreach ($colaciones as $col): ?>
                                     <?php
                                         $idCol = (int)($col['id_colacion'] ?? 0);
                                         $min = (int)($col['minutos'] ?? 0);
-                                        $hora = (string)($col['hora'] ?? minutosAHHMM($min));
                                     ?>
                                     <option
                                         value="<?= $idCol ?>"
                                         data-minutos="<?= $min ?>">
-                                        <?= htmlspecialchars($hora, ENT_QUOTES) ?>
+                                        <?= htmlspecialchars((string)$min, ENT_QUOTES) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -418,7 +272,7 @@ function minutosAHHMM($totalMin){
     <div class="panel-head-top">
       <div class="panel-title">
         <span class="dot"></span>
-        Empleados
+        Funcionarios
       </div>
 
       <div class="panel-head-right">
@@ -441,7 +295,7 @@ function minutosAHHMM($totalMin){
 
         <button type="button" class="btn-mini btn-excel" onclick="descargarExcel()">
           <i class="bi bi-file-earmark-excel-fill"></i>
-          Excel333
+          Excel
         </button>
       </div>
     </div>
@@ -455,6 +309,9 @@ function minutosAHHMM($totalMin){
           <th class="sortable" data-type="number">N° <i class="bi bi-arrow-down-up sort-ico"></i></th>
           <th class="sortable" data-type="text">RUN <i class="bi bi-arrow-down-up sort-ico"></i></th>
           <th class="sortable" data-type="text">Nombre - Apellidos <i class="bi bi-arrow-down-up sort-ico"></i></th>
+          <?php if ($mostrarColumnaColegio): ?>
+          <th class="sortable" data-type="text">Colegio <i class="bi bi-arrow-down-up sort-ico"></i></th>
+          <?php endif; ?>
 
           <th class="sortable" data-type="time">
             <span class="th-flex">
@@ -491,12 +348,32 @@ function minutosAHHMM($totalMin){
       <tbody>
         <?php $contador = 1; foreach($empleados as $e):
 
-          $nombre = trim($e['nombres'].' '.$e['apellido_paterno'].' '.$e['apellido_materno']);
+          $nombresEmp = trim((string)($e['nombres'] ?? ''));
+          $apPatEmp = trim((string)($e['apellido_paterno'] ?? ''));
+          $apMatEmp = trim((string)($e['apellido_materno'] ?? ''));
+          $runEmp = trim((string)($e['run'] ?? ''));
+          $generoEmp = trim((string)($e['genero'] ?? ''));
+          $idColegioEmp = (int)($e['id_colegio'] ?? 0);
+          $nomColegioEmp = trim((string)($e['nco_colegio'] ?? ($e['nom_colegio'] ?? '')));
+          $logoColegioRel = "";
+          $logoColegioExiste = false;
+          if ($idColegioEmp > 0) {
+            foreach (["png", "jpg", "jpeg"] as $extLogo) {
+              $logoRelTmp = "imagenes/colegios/colegio_" . $idColegioEmp . "." . $extLogo;
+              $logoAbsTmp = __DIR__ . "/" . $logoRelTmp;
+              if (is_file($logoAbsTmp)) {
+                $logoColegioRel = $logoRelTmp;
+                $logoColegioExiste = true;
+                break;
+              }
+            }
+          }
+          $nombre = trim($nombresEmp.' '.$apPatEmp.' '.$apMatEmp);
           $idEmpleado  = (int)$e['id_empleado'];
           $idContrato  = (int)($e['id_contrato'] ?? 0);
 
-          $jornada = (int)($e['horas_semanales_cron'] ?? 0);
-          $jornadaTxt = str_pad($jornada, 2, '0', STR_PAD_LEFT) . ':00';
+          $jornadaMin = (int)($e['horas_semanales_cron'] ?? 0);
+          $jornadaTxt = minutosAHHMM($jornadaMin);
 
           $lectivasTxt   = isset($e['horas_lectivas_hhmm']) ? $e['horas_lectivas_hhmm'] : '00:00';
           $noLectivasTxt = isset($e['horas_no_lectivas_hhmm']) ? $e['horas_no_lectivas_hhmm'] : '00:00';
@@ -506,17 +383,33 @@ function minutosAHHMM($totalMin){
 
           $obs = trim((string)($e['observacion'] ?? ''));
         ?>
-        <tr data-filter="<?= htmlspecialchars(mb_strtolower($contador.' '.$e['run'].' '.$nombre.' '.$jornadaTxt.' '.$colacionTxt.' '.$noLectivasTxt.' '.$lectivasTxt), ENT_QUOTES) ?>">
+        <tr data-filter="<?= htmlspecialchars(mb_strtolower($contador.' '.$runEmp.' '.$nombre.' '.$nomColegioEmp.' '.$jornadaTxt.' '.$colacionTxt.' '.$noLectivasTxt.' '.$lectivasTxt), ENT_QUOTES) ?>">
 
           <td class="cell-num" data-col="N°" data-value="<?= $contador ?>"><?= $contador ?></td>
 
-          <td class="cell-run" data-col="RUN" data-value="<?= htmlspecialchars($e['run'], ENT_QUOTES) ?>">
-            <?= htmlspecialchars($e['run']) ?>
+          <td class="cell-run" data-col="RUN" data-value="<?= htmlspecialchars($runEmp, ENT_QUOTES) ?>">
+            <?= htmlspecialchars($runEmp) ?>
           </td>
 
           <td class="cell-nombre" data-col="Nombre" data-value="<?= htmlspecialchars($nombre, ENT_QUOTES) ?>">
             <?= htmlspecialchars($nombre) ?>
           </td>
+          <?php if ($mostrarColumnaColegio): ?>
+          <td class="cell-colegio" data-col="Colegio" data-value="<?= htmlspecialchars($nomColegioEmp, ENT_QUOTES) ?>">
+            <div class="cell-colegio-wrap" title="<?= htmlspecialchars($nomColegioEmp !== '' ? $nomColegioEmp : ('Colegio ID ' . $idColegioEmp), ENT_QUOTES) ?>">
+              <?php if ($logoColegioExiste): ?>
+              <img
+                src="<?= htmlspecialchars($logoColegioRel, ENT_QUOTES) ?>"
+                alt="<?= htmlspecialchars($nomColegioEmp !== '' ? $nomColegioEmp : ('Colegio ' . $idColegioEmp), ENT_QUOTES) ?>"
+                class="colegio-avatar"
+                loading="lazy">
+              <?php else: ?>
+              <span class="colegio-avatar colegio-avatar-fallback"><?= $idColegioEmp > 0 ? $idColegioEmp : '?' ?></span>
+              <?php endif; ?>
+              <span class="colegio-nombre"><?= htmlspecialchars($nomColegioEmp !== '' ? $nomColegioEmp : ('Colegio ' . $idColegioEmp)) ?></span>
+            </div>
+          </td>
+          <?php endif; ?>
 
           <td class="cell-center" data-col="Jornada Ordinaria" data-type="time" data-value="<?= htmlspecialchars($jornadaTxt, ENT_QUOTES) ?>">
             <div class="cell-copy">
@@ -561,7 +454,20 @@ function minutosAHHMM($totalMin){
           <td class="cell-opciones" data-col="Opciones" data-value="opciones">
             <div class="cell-actions">
               <button type="button" class="btn-table-icon" title="Cargar horario"
-                onclick="seleccionarEmpleado(<?= $idEmpleado ?>, <?= $idContrato ?>)">
+                data-id-empleado="<?= $idEmpleado ?>"
+                data-id-contrato="<?= $idContrato ?>"
+                data-empleado-nombre="<?= htmlspecialchars($nombre, ENT_QUOTES) ?>"
+                data-empleado-nombres="<?= htmlspecialchars($nombresEmp, ENT_QUOTES) ?>"
+                data-empleado-ap-paterno="<?= htmlspecialchars($apPatEmp, ENT_QUOTES) ?>"
+                data-empleado-ap-materno="<?= htmlspecialchars($apMatEmp, ENT_QUOTES) ?>"
+                data-empleado-genero="<?= htmlspecialchars($generoEmp, ENT_QUOTES) ?>"
+                data-empleado-observacion="<?= htmlspecialchars($obs, ENT_QUOTES) ?>"
+                data-empleado-run="<?= htmlspecialchars($runEmp, ENT_QUOTES) ?>"
+                data-jornada-cro="<?= htmlspecialchars($jornadaTxt, ENT_QUOTES) ?>"
+                data-colacion-min="<?= (int)$colacionMin ?>"
+                data-lectivas-cro="<?= htmlspecialchars($lectivasTxt, ENT_QUOTES) ?>"
+                data-nolectivas-cro="<?= htmlspecialchars($noLectivasTxt, ENT_QUOTES) ?>"
+                onclick="seleccionarEmpleado(event, this, <?= $idEmpleado ?>, <?= $idContrato ?>)">
                 <i class="bi bi-upload"></i>
               </button>
 
@@ -571,7 +477,7 @@ function minutosAHHMM($totalMin){
               </button>
 
               <button type="button" class="btn-table-icon" title="Observación"
-                onclick="verObservacion(<?= $idEmpleado ?>, '<?= htmlspecialchars($nombre, ENT_QUOTES) ?>', '<?= htmlspecialchars($obs, ENT_QUOTES) ?>')">
+                onclick="verObservacion(<?= $idEmpleado ?>, '<?= htmlspecialchars($nombre, ENT_QUOTES) ?>')">
                 <i class="bi bi-file-text"></i>
               </button>
             </div>
@@ -588,8 +494,242 @@ function minutosAHHMM($totalMin){
 
 </div>
 <script>
-function verDetalleHorario(idEmpleado, idContrato) {
+function normalizarDiaCodigo(codigo) {
+    const txt = String(codigo || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
 
+    if (txt.startsWith("lun")) return "lun";
+    if (txt.startsWith("mar")) return "mar";
+    if (txt.startsWith("mie")) return "mie";
+    if (txt.startsWith("jue")) return "jue";
+    if (txt.startsWith("vie")) return "vie";
+    return "";
+}
+
+function parseHHMMtoPedHours(hhmm) {
+    const m = String(hhmm || "00:00").match(/^(\d{1,3}):(\d{2})$/);
+    if (!m) return "0";
+    const totalMin = (parseInt(m[1], 10) || 0) * 60 + (parseInt(m[2], 10) || 0);
+    const ped = totalMin / 40;
+    return Number.isInteger(ped) ? String(ped) : ped.toFixed(2).replace(/\.?0+$/, "");
+}
+
+function updateHorarioDiasBloqueadosMsg(dayLabels) {
+    const msgEl = document.getElementById("horarioDiasBloqueadosMsg");
+    if (!msgEl) return;
+
+    const dias = Array.isArray(dayLabels) ? dayLabels.filter(Boolean) : [];
+    if (!dias.length) {
+        msgEl.classList.add("is-hidden");
+        msgEl.textContent = "";
+        return;
+    }
+
+    const plural = dias.length > 1;
+    msgEl.textContent = plural
+        ? `Advertencia: los días ${dias.join(", ")} no tienen horario asignado y fueron marcados como bloqueados.`
+        : `Advertencia: el día ${dias[0]} no tiene horario asignado y fue marcado como bloqueado.`;
+    msgEl.classList.remove("is-hidden");
+}
+
+function setAccionEmpleadoModo(isModificar) {
+    const btn = document.getElementById("btnGuardar");
+    if (!btn) return;
+    btn.textContent = isModificar ? "Modificar" : "Agregar";
+    btn.dataset.modo = isModificar ? "modificar" : "agregar";
+}
+
+function seleccionarEmpleado(ev, triggerBtn, idEmpleado, idContrato) {
+    if (ev && typeof ev.preventDefault === "function") ev.preventDefault();
+    if (ev && typeof ev.stopPropagation === "function") ev.stopPropagation();
+
+    const empleadoId = Number(idEmpleado) || 0;
+    const contratoId = Number(idContrato) || 0;
+    if (empleadoId <= 0 && contratoId <= 0) {
+        Swal.fire("Error", "No se pudo identificar al empleado/contrato.", "error");
+        return;
+    }
+
+    const nombre = triggerBtn?.dataset?.empleadoNombre || "Empleado";
+    const nombres = triggerBtn?.dataset?.empleadoNombres || "";
+    const apPaterno = triggerBtn?.dataset?.empleadoApPaterno || "";
+    const apMaterno = triggerBtn?.dataset?.empleadoApMaterno || "";
+    const genero = triggerBtn?.dataset?.empleadoGenero || "";
+    const observacion = triggerBtn?.dataset?.empleadoObservacion || "";
+    const run = triggerBtn?.dataset?.empleadoRun || "-";
+    const jornadaCro = triggerBtn?.dataset?.jornadaCro || "00:00";
+    const lectivasCro = triggerBtn?.dataset?.lectivasCro || "00:00";
+    const noLectivasCro = triggerBtn?.dataset?.nolectivasCro || "00:00";
+    const colacionMin = parseInt(triggerBtn?.dataset?.colacionMin || "0", 10) || 0;
+
+    const infoEl = document.getElementById("empleadoSeleccionadoInfo");
+    if (infoEl) {
+        infoEl.textContent = `${nombre} | RUN: ${run}`;
+        infoEl.title = `${nombre} | RUN: ${run}`;
+    }
+    setAccionEmpleadoModo(true);
+
+    window.empleadoSeleccionadoPrefill = {
+        id_empleado: empleadoId,
+        id_contrato: contratoId,
+        nombres,
+        ap_paterno: apPaterno,
+        ap_materno: apMaterno,
+        run,
+        genero,
+        observacion
+    };
+
+    const selectColacion = document.getElementById("sumColacionSelect");
+    if (selectColacion) {
+        const option = Array.from(selectColacion.options).find(opt => {
+            const min = parseInt(opt.getAttribute("data-minutos") || "0", 10) || 0;
+            return min === colacionMin;
+        });
+        if (option) {
+            selectColacion.value = option.value;
+        } else {
+            selectColacion.value = "";
+        }
+        selectColacion.dispatchEvent(new Event("change", {
+            bubbles: true
+        }));
+    }
+
+    const elJornadaCro = document.getElementById("sumJornadaCro");
+    const elLectivasCro = document.getElementById("sumLectivasCro");
+    const elNoLectivasCro = document.getElementById("sumNoLectivasCro");
+    const elLectivasPed = document.getElementById("sumLectivasPed");
+    const elNoLectivasPed = document.getElementById("sumNoLectivasPed");
+
+    if (elJornadaCro) elJornadaCro.textContent = jornadaCro;
+    if (elLectivasCro) elLectivasCro.value = lectivasCro;
+    if (elNoLectivasCro) elNoLectivasCro.value = noLectivasCro;
+    if (elLectivasPed) elLectivasPed.value = parseHHMMtoPedHours(lectivasCro);
+    if (elNoLectivasPed) elNoLectivasPed.value = parseHHMMtoPedHours(noLectivasCro);
+    if (typeof window.recalcularLectivas === "function") window.recalcularLectivas();
+    if (typeof window.recalcularNoLectivas === "function") window.recalcularNoLectivas();
+    if (typeof window.updateHorasLectivasUI === "function") window.updateHorasLectivasUI();
+    requestAnimationFrame(() => window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    }));
+
+    const tbody = document.getElementById("tbodyHorario");
+    if (!tbody) return;
+    updateHorarioDiasBloqueadosMsg([]);
+
+    document.querySelectorAll(".day-lock-check").forEach(check => {
+        if (!check.checked) return;
+        check.checked = false;
+        check.dispatchEvent(new Event("change", {
+            bubbles: true
+        }));
+    });
+
+    tbody.querySelectorAll("select").forEach(sel => {
+        sel.disabled = false;
+        sel.value = "00";
+    });
+    tbody.querySelectorAll("tr").forEach(tr => tr.classList.remove("day-blocked"));
+
+    const setTime = (prefix, bloque, tipo, value) => {
+        const safe = String(value || "").substring(0, 5);
+        const m = safe.match(/^(\d{2}):(\d{2})$/);
+        const h = m ? m[1] : "00";
+        const min = m ? m[2] : "00";
+        const hSel = tbody.querySelector(`select[name="${prefix}_${bloque}_${tipo}_h"]`);
+        const mSel = tbody.querySelector(`select[name="${prefix}_${bloque}_${tipo}_m"]`);
+        if (hSel) hSel.value = h;
+        if (mSel) mSel.value = min;
+    };
+
+    const fd = new FormData();
+    fd.append("id_contrato", String(contratoId));
+    fd.append("id_empleado", String(empleadoId));
+
+    fetch("modelos/rescatar/horarios.php", {
+            method: "POST",
+            body: fd
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.ok || !Array.isArray(data.dias)) {
+                throw new Error(data.msg || "No se pudieron cargar horarios.");
+            }
+
+            data.dias.forEach(d => {
+                const prefix = normalizarDiaCodigo(d.dia_code || d.nombre || d.dia);
+                if (!prefix) return;
+                setTime(prefix, "man", "ini", d.man_ini);
+                setTime(prefix, "man", "fin", d.man_fin);
+                setTime(prefix, "tar", "ini", d.tar_ini);
+                setTime(prefix, "tar", "fin", d.tar_fin);
+            });
+
+            const diasBloqueados = [];
+            tbody.querySelectorAll("tr").forEach(tr => {
+                const selects = Array.from(tr.querySelectorAll("select"));
+                const todosEnCero = selects.length > 0 && selects.every(sel => sel.value === "00");
+                const lockCheck = tr.querySelector(".day-lock-check");
+                const dayName = tr.querySelector(".day-name")?.textContent?.trim() || "";
+
+                if (!lockCheck) return;
+
+                if (todosEnCero) {
+                    if (!lockCheck.checked) {
+                        lockCheck.checked = true;
+                        lockCheck.dispatchEvent(new Event("change", {
+                            bubbles: true
+                        }));
+                    }
+                    if (dayName) diasBloqueados.push(dayName);
+                    return;
+                }
+
+                if (lockCheck.checked) {
+                    lockCheck.checked = false;
+                    lockCheck.dispatchEvent(new Event("change", {
+                        bubbles: true
+                    }));
+                }
+            });
+
+            updateHorarioDiasBloqueadosMsg(diasBloqueados);
+
+            tbody.dispatchEvent(new Event("change", {
+                bubbles: true
+            }));
+        })
+        .catch(() => {
+            Swal.fire("Error", "No se pudo cargar el horario del empleado seleccionado.", "error");
+        });
+}
+
+function restaurarEmpleadoSeleccionadoPendiente() {
+    const empleadoId = Number(sessionStorage.getItem("empleadoSeleccionadoId") || "0");
+    if (empleadoId <= 0) return;
+
+    const contratoId = Number(sessionStorage.getItem("empleadoSeleccionadoContratoId") || "0");
+    const triggerBtn = document.querySelector(
+        `.btn-table-icon[title="Cargar horario"][data-id-empleado="${empleadoId}"]`
+    );
+
+    sessionStorage.removeItem("empleadoSeleccionadoId");
+    sessionStorage.removeItem("empleadoSeleccionadoContratoId");
+
+    if (!triggerBtn) return;
+
+    const contratoFinal = Number(triggerBtn.dataset?.idContrato || contratoId || 0);
+    seleccionarEmpleado(null, triggerBtn, empleadoId, contratoFinal);
+}
+
+function verDetalleHorario(idEmpleado, idContrato) {
+    const empleadoId = Number(idEmpleado) || 0;
+    const contratoId = Number(idContrato) || 0;
     const hhmm = (t) => (!t || t === '00:00:00') ? '—' : t.substring(0, 5);
 
     const buildTable = (dias) => {
@@ -626,24 +766,26 @@ function verDetalleHorario(idEmpleado, idContrato) {
 
     Swal.fire({
         title: 'Detalle de horario',
+        showCloseButton: true,
         html: `
       <div style="display:flex;align-items:center;gap:10px;justify-content:center;padding:10px 0;">
         <div class="spinner-border" role="status" aria-hidden="true"></div>
       </div>
       <div id="swalHorarioDetalle"></div>
     `,
-        showCancelButton: true,
+        showDenyButton: true,
         confirmButtonText: 'Cerrar',
-        cancelButtonText: 'Descargar',
+        denyButtonText: 'Descargar PDF',
         width: '80%',
         customClass: {
             popup: 'swal-seduc',
             confirmButton: 'btn-seduc btn-seduc-primary',
-            cancelButton: 'btn-seduc btn-seduc-ghost'
+            denyButton: 'btn-seduc btn-seduc-ghost'
         },
         didOpen: () => {
             const fd = new FormData();
-            fd.append('id_contrato', idContrato);
+            fd.append('id_contrato', String(contratoId));
+            fd.append('id_empleado', String(empleadoId));
 
             fetch('modelos/rescatar/horarios.php', {
                     method: 'POST',
@@ -665,16 +807,29 @@ function verDetalleHorario(idEmpleado, idContrato) {
                 });
         }
     }).then((result) => {
-        // Si presiona "Descargar" (cancel)
-        if (result.dismiss === Swal.DismissReason.cancel) {
-            descargarHorario(idContrato);
+        // Si presiona "Descargar PDF"
+        if (result.isDenied) {
+            descargarHorario(contratoId);
         }
     });
 }
 
 function descargarHorario(idContrato) {
-    //  Excel por contrato
-    window.location.href = 'descarga/horario_empleado.php?id_contrato=' + idContrato;
+    const contrato = Number(idContrato) || 0;
+    if (contrato <= 0) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo identificar el contrato para descargar el PDF.',
+            showCloseButton: true,
+            customClass: {
+                popup: 'swal-seduc',
+                confirmButton: 'btn-seduc btn-seduc-primary'
+            }
+        });
+        return;
+    }
+    window.location.assign('descarga/horario_empleado.php?id_contrato=' + encodeURIComponent(contrato));
 
 }
 
@@ -686,6 +841,7 @@ function copiarDato(texto) {
             text: texto,
             timer: 900,
             showConfirmButton: false,
+            showCloseButton: true,
             customClass: {
                 popup: 'swal-seduc',
                 confirmButton: 'btn-seduc btn-seduc-primary',
@@ -695,19 +851,76 @@ function copiarDato(texto) {
     });
 }
 
-function verObservacion(idEmpleado, nombre, observacion) {
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function verObservacion(idEmpleado, nombre) {
+    const empleadoId = Number(idEmpleado) || 0;
+    if (empleadoId <= 0) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo identificar al empleado.',
+            showCloseButton: true,
+            customClass: {
+                popup: 'swal-seduc',
+                confirmButton: 'btn-seduc btn-seduc-primary'
+            }
+        });
+        return;
+    }
+
     Swal.fire({
         title: 'Observación',
+        showCloseButton: true,
         html: `
             <div style="text-align: left;">
-                <p style="color: #6b7280; font-size: 14px; margin-bottom: 12px;"><strong>${nombre}</strong></p>
-                <div style="width: 100%; min-height: 150px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; background: #f9fafb; font-family: inherit; font-size: 13px; line-height: 1.5; word-wrap: break-word; white-space: pre-wrap;">${observacion || '<span style="color: #9ca3af;">Sin observación</span>'}</div>
+                <p style="color: #6b7280; font-size: 14px; margin-bottom: 12px;"><strong>${escapeHtml(nombre)}</strong></p>
+                <div id="swalObservacionContenido" style="width: 100%; min-height: 150px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; background: #f9fafb; font-family: inherit; font-size: 13px; line-height: 1.5; word-wrap: break-word; white-space: pre-wrap; display:flex; align-items:center; justify-content:center;">
+                    <div class="spinner-border" role="status" aria-hidden="true"></div>
+                </div>
             </div>
         `,
         confirmButtonText: 'Cerrar',
         customClass: {
             popup: 'swal-seduc',
             confirmButton: 'btn-seduc btn-seduc-primary'
+        },
+        didOpen: () => {
+            const fd = new FormData();
+            fd.append('id_empleado', String(empleadoId));
+
+            fetch('rescatarobservacionFuncionario.php', {
+                    method: 'POST',
+                    body: fd
+                })
+                .then(r => r.json())
+                .then(data => {
+                    const el = document.getElementById('swalObservacionContenido');
+                    if (!el) return;
+
+                    if (!data.ok) {
+                        el.innerHTML = '<span style="color: #dc2626;">No se pudo cargar la observación.</span>';
+                        return;
+                    }
+
+                    const observacion = String(data.observacion || '').trim();
+                    el.style.display = 'block';
+                    el.innerHTML = observacion ?
+                        escapeHtml(observacion).replace(/\n/g, '<br>') :
+                        '<span style="color: #9ca3af;">Sin observación</span>';
+                })
+                .catch(() => {
+                    const el = document.getElementById('swalObservacionContenido');
+                    if (!el) return;
+                    el.innerHTML = '<span style="color: #dc2626;">Error al cargar la observación.</span>';
+                });
         }
     });
 }
@@ -720,6 +933,7 @@ function copiarDato(texto) {
             text: texto,
             timer: 900,
             showConfirmButton: false,
+            showCloseButton: true,
             customClass: {
                 popup: 'swal-seduc',
                 confirmButton: 'btn-seduc btn-seduc-primary',
@@ -798,6 +1012,7 @@ function showHorarioWarning(message) {
             icon: "warning",
             title: "Horario inválido",
             text: message,
+            showCloseButton: true,
             customClass: {
                 popup: 'swal-seduc',
                 confirmButton: 'btn-seduc btn-seduc-primary'
@@ -837,6 +1052,70 @@ function timePicker(prefix, bloque, tipo) { //arma el “control” HH : MM
     wrap.appendChild(box);
 
     return wrap;
+}
+
+function getRowTimeValue(tr, prefix, bloque, tipo) {
+    const selH = tr.querySelector(`select[name="${prefix}_${bloque}_${tipo}_h"]`);
+    const selM = tr.querySelector(`select[name="${prefix}_${bloque}_${tipo}_m"]`);
+    return {
+        hh: selH ? selH.value : "00",
+        mm: selM ? selM.value : "00"
+    };
+}
+
+function isRepeatScheduleDownEnabled() {
+    const toggle = document.getElementById("repeatScheduleDownToggle");
+    return !!toggle?.checked;
+}
+
+function setRowTimeValue(tr, prefix, bloque, tipo, hh, mm) {
+    const selH = tr.querySelector(`select[name="${prefix}_${bloque}_${tipo}_h"]`);
+    const selM = tr.querySelector(`select[name="${prefix}_${bloque}_${tipo}_m"]`);
+    if (selH) selH.value = String(hh || "00").padStart(2, "0");
+    if (selM) selM.value = String(mm || "00").padStart(2, "0");
+}
+
+function copiarHorarioHaciaAbajo(prefixOrigen) {
+    if (window.__copiandoHorarioHaciaAbajo) return;
+
+    const filas = Array.from(document.querySelectorAll("#tbodyHorario tr"));
+    const idxOrigen = filas.findIndex((tr) => tr.dataset.dayPrefix === prefixOrigen);
+    if (idxOrigen < 0) return;
+
+    const filaOrigen = filas[idxOrigen];
+    const lockOrigen = filaOrigen.querySelector(".day-lock-check");
+    const origenBloqueado = !!lockOrigen?.checked;
+
+    const horarioOrigen = {
+        manIni: getRowTimeValue(filaOrigen, prefixOrigen, "man", "ini"),
+        manFin: getRowTimeValue(filaOrigen, prefixOrigen, "man", "fin"),
+        tarIni: getRowTimeValue(filaOrigen, prefixOrigen, "tar", "ini"),
+        tarFin: getRowTimeValue(filaOrigen, prefixOrigen, "tar", "fin")
+    };
+
+    window.__copiandoHorarioHaciaAbajo = true;
+    try {
+        for (let i = idxOrigen + 1; i < filas.length; i++) {
+            const filaDestino = filas[i];
+            const prefixDestino = filaDestino.dataset.dayPrefix || "";
+            if (!prefixDestino) continue;
+
+            const lockDestino = filaDestino.querySelector(".day-lock-check");
+            if (lockDestino?.checked !== origenBloqueado) {
+                lockDestino.checked = origenBloqueado;
+                lockDestino.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+
+            setRowTimeValue(filaDestino, prefixDestino, "man", "ini", horarioOrigen.manIni.hh, horarioOrigen.manIni.mm);
+            setRowTimeValue(filaDestino, prefixDestino, "man", "fin", horarioOrigen.manFin.hh, horarioOrigen.manFin.mm);
+            setRowTimeValue(filaDestino, prefixDestino, "tar", "ini", horarioOrigen.tarIni.hh, horarioOrigen.tarIni.mm);
+            setRowTimeValue(filaDestino, prefixDestino, "tar", "fin", horarioOrigen.tarFin.hh, horarioOrigen.tarFin.mm);
+        }
+    } finally {
+        window.__copiandoHorarioHaciaAbajo = false;
+    }
+
+    document.getElementById("tbodyHorario")?.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
 function buildRow(dia) { // arma una fila completa del día (mañana ini/fin, tarde ini/fin).
@@ -915,9 +1194,6 @@ function buildRow(dia) { // arma una fila completa del día (mañana ini/fin, ta
                 finH.value = iniH.value;
                 finM.value = iniM.value;
                 refreshTerminoOptions();
-                if (source === "termino") {
-                    showHorarioWarning(`La hora de término de la jornada ${bloqueLabel} no puede ser menor que la hora de inicio.`);
-                }
                 return;
             }
 
@@ -1036,8 +1312,19 @@ function buildRow(dia) { // arma una fila completa del día (mañana ini/fin, ta
             refreshLockUi(this.checked);
             // dispara recálculo general
             tr.dispatchEvent(new Event("change", { bubbles: true }));
+            if (isRepeatScheduleDownEnabled()) {
+                copiarHorarioHaciaAbajo(dia.prefix);
+            }
         });
     }
+
+    tr.querySelectorAll("select").forEach((sel) => {
+        sel.addEventListener("change", function() {
+            if (window.__copiandoHorarioHaciaAbajo) return;
+            if (!isRepeatScheduleDownEnabled()) return;
+            copiarHorarioHaciaAbajo(dia.prefix);
+        });
+    });
 
     return tr;
 }
@@ -1090,10 +1377,47 @@ function init() {
     document.getElementById("btnLimpiar").addEventListener("click", () => {
         document.querySelectorAll("#tbodyHorario select").forEach(s => s.value = "00");
         document.querySelectorAll(".day-lock-check").forEach(c => c.checked = false);
+        const repeatToggle = document.getElementById("repeatScheduleDownToggle");
+        if (repeatToggle) repeatToggle.checked = false;
         document.querySelectorAll("#tbodyHorario tr").forEach(tr => {
             tr.classList.remove("day-blocked");
             tr.querySelectorAll("select").forEach(s => s.disabled = false);
         });
+
+        const sumJornadaPed = document.getElementById("sumJornadaPed");
+        const sumJornadaCro = document.getElementById("sumJornadaCro");
+        const sumLectivasPed = document.getElementById("sumLectivasPed");
+        const sumLectivasCro = document.getElementById("sumLectivasCro");
+        const sumNoLectivasPed = document.getElementById("sumNoLectivasPed");
+        const sumNoLectivasCro = document.getElementById("sumNoLectivasCro");
+        const sumColacionMin = document.getElementById("sumColacionMin");
+        const sumColacionSelect = document.getElementById("sumColacionSelect");
+
+        if (sumJornadaPed) sumJornadaPed.textContent = "0";
+        if (sumJornadaCro) sumJornadaCro.textContent = "00:00";
+        if (sumLectivasPed) sumLectivasPed.value = "0";
+        if (sumLectivasCro) sumLectivasCro.value = "00:00";
+        if (sumNoLectivasPed) sumNoLectivasPed.value = "0";
+        if (sumNoLectivasCro) sumNoLectivasCro.value = "00:00";
+        if (sumColacionMin) sumColacionMin.textContent = "0";
+        if (sumColacionSelect) sumColacionSelect.value = "";
+        if (typeof window.updateHorasLectivasUI === "function") {
+            window.updateHorasLectivasUI();
+        }
+        updateHorarioDiasBloqueadosMsg([]);
+
+        window.empleadoSeleccionadoPrefill = null;
+        const infoEl = document.getElementById("empleadoSeleccionadoInfo");
+        if (infoEl) {
+            infoEl.textContent = "Sin empleado seleccionado";
+            infoEl.title = "Sin empleado seleccionado";
+        }
+        setAccionEmpleadoModo(false);
+        if (sumColacionSelect) {
+            sumColacionSelect.dispatchEvent(new Event("change", {
+                bubbles: true
+            }));
+        }
         document.getElementById("tbodyHorario").dispatchEvent(new Event("change", {
             bubbles: true
         }));
@@ -1117,42 +1441,16 @@ init();
 <!--calculo de horas Cronologicas-->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const chkAutoRepeat = document.getElementById("chkAutoRepeatDown");
-    const btnAutoRepeatHelp = document.getElementById("btnAutoRepeatHelp");
-
-    // 1) Auto-fill (si ya lo estás usando)
-    if (window.bindAutoFillHorario) {
-        bindAutoFillHorario({
-            tbodySelector: "#tbodyHorario",
-            dayPrefixes: ["lun", "mar", "mie", "jue", "vie"],
-            onlyIfEmpty: false,
-            isEnabled: () => !!(chkAutoRepeat && chkAutoRepeat.checked)
-        });
-    }
-
-    // 2) Re-cálculo jornada + resumen
+    // 1) Re-cálculo jornada + resumen
     bindRecalculoHorario({
         tbodySelector: "#tbodyHorario",
         dayPrefixes: ["lun", "mar", "mie", "jue", "vie"]
     });
 
-    // 3) Colación fija seleccionada desde BD
+    // 2) Colación fija seleccionada desde BD
     bindColacionFija();
 
-    if (btnAutoRepeatHelp) {
-        btnAutoRepeatHelp.addEventListener("click", function() {
-            Swal.fire({
-                icon: "info",
-                title: "Repetir hacia abajo",
-                text: "Si activas este check, al cambiar una hora en un día se copia a los días siguientes en la misma columna. Si está desactivado, no se repite nada.",
-                customClass: {
-                    popup: 'swal-seduc',
-                    confirmButton: 'btn-seduc btn-seduc-primary'
-                }
-            });
-        });
-    }
-
+    restaurarEmpleadoSeleccionadoPendiente();
 });
 </script>
 
@@ -1258,6 +1556,26 @@ document.addEventListener("click", function(e) {
         return td.getAttribute('data-value') || td.textContent.trim();
     }
 
+    function renumerarFilas() {
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        let correlativo = 1;
+
+        rows.forEach(tr => {
+            const td = tr.children[0];
+            if (!td) return;
+
+            if (tr.style.display === 'none') {
+                td.textContent = '';
+                td.setAttribute('data-value', '');
+                return;
+            }
+
+            const numero = String(correlativo++);
+            td.textContent = numero;
+            td.setAttribute('data-value', numero);
+        });
+    }
+
     function compare(a, b, type) {
         if (type === 'number') {
             return (parseFloat(a) || 0) - (parseFloat(b) || 0);
@@ -1281,6 +1599,7 @@ document.addEventListener("click", function(e) {
             const hay = normalize(tr.getAttribute('data-filter') || tr.textContent);
             tr.style.display = (q === '' || hay.includes(q)) ? '' : 'none';
         });
+        renumerarFilas();
     }
 
     function applySort(thIndex, type) {
@@ -1313,6 +1632,7 @@ document.addEventListener("click", function(e) {
 
         // reinsert (manteniendo filas ocultas al final sin tocar)
         visibleRows.forEach(r => tbody.appendChild(r));
+        renumerarFilas();
     }
 
     // ---- Search events
