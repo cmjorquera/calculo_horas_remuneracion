@@ -1543,6 +1543,32 @@ select.sum-input{
   flex-wrap:wrap;
 }
 
+.emp-colegio-filter{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  border:1px solid rgba(0,0,0,.12);
+  border-radius:12px;
+  background:#fff;
+  min-width: 250px;
+}
+.emp-colegio-filter i{
+  color: var(--inst-blue);
+  opacity:.8;
+}
+.emp-colegio-filter select{
+  width:100%;
+  min-width:0;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:#111827;
+  font-size:14px;
+  text-align:left;
+  padding:0;
+}
+
 /* buscador estilo limpio */
 .emp-search{
   display:flex;
@@ -1588,6 +1614,15 @@ select.sum-input{
   align-items:center;
   justify-content:center;
   gap:6px;
+}
+
+#empTable .emp-empty-cell{
+  padding: 22px 14px !important;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 800;
+  background: #fff !important;
 }
 
 /* zebra por celdas (evita conflicto global) */

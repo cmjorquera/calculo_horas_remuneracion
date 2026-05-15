@@ -28,10 +28,12 @@ $dias = $funciones->obtenerDiasSemana(true); // lunes a viernes
 $colaciones = $funciones->obtenerOpcionesColacion();
 $idUsuarioSesion = (int)($_SESSION["id_usuario"] ?? 0);
 $esSuperAdminOperativo = $funciones->usuarioTieneRol($idUsuarioSesion, 1);
-$verTodosColegios = $esSuperAdminOperativo;
+$esColegioGlobalSesion = ((int)($_SESSION["id_colegio"] ?? 0) === 15);
+$verTodosColegios = $esSuperAdminOperativo || $esColegioGlobalSesion;
 $empleados = $funciones->obtenerEmpleadosConResumen($_SESSION["id_colegio"], $verTodosColegios);
-$mostrarColumnaColegio = $esSuperAdminOperativo;
-$colegios = $verTodosColegios ? $funciones->obtenerColegios() : [];
+$mostrarColumnaColegio = $verTodosColegios;
+$mostrarFiltroColegio = $verTodosColegios;
+$colegios = $verTodosColegios ? $funciones->obtenerColegios(true) : [];
 $colegiosLogoMap = [];
 
 foreach ($colegios as $colegio) {
@@ -89,7 +91,7 @@ foreach ($colegios as $colegio) {
 <script src="js/funciones.js"></script>
 <script src="js/button.js"></script>
 <script src="js/guardar_empleado.js?v=<?= filemtime(__DIR__ . '/js/guardar_empleado.js') ?>"></script>
-<script src="js/tabla_dinamicas.js"></script>
+<script src="js/tabla_dinamicas.js?v=<?= filemtime(__DIR__ . '/js/tabla_dinamicas.js') ?>"></script>
 <script src="js/horas_cronologicas.js?v=<?= filemtime(__DIR__ . '/js/horas_cronologicas.js') ?>"></script>
 
 <div class="page">
@@ -285,6 +287,28 @@ foreach ($colegios as $colegio) {
 
     <div class="panel-head-actions">
       <div class="acciones-empleado">
+        <?php if ($mostrarFiltroColegio): ?>
+        <label class="emp-colegio-filter" for="empColegioFilter">
+          <i class="bi bi-building"></i>
+          <select id="empColegioFilter" aria-label="Filtrar funcionarios por colegio">
+            <option value="">Todos los colegios</option>
+            <?php foreach ($colegios as $colegioFiltro): ?>
+              <?php
+                $idColegioFiltro = (int)($colegioFiltro["id_colegio"] ?? 0);
+                $nombreColegioFiltro = trim((string)($colegioFiltro["nco_colegio"] ?? ""));
+                if ($nombreColegioFiltro === "") {
+                    $nombreColegioFiltro = trim((string)($colegioFiltro["nom_colegio"] ?? ""));
+                }
+                if ($idColegioFiltro <= 0 || $nombreColegioFiltro === "") {
+                    continue;
+                }
+              ?>
+              <option value="<?= $idColegioFiltro ?>"><?= htmlspecialchars($nombreColegioFiltro) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <?php endif; ?>
+
         <div class="emp-search">
           <i class="bi bi-search"></i>
           <input id="empSearch" type="text" placeholder="Buscar por RUN, nombre, horas..." autocomplete="off">
@@ -383,7 +407,7 @@ foreach ($colegios as $colegio) {
 
           $obs = trim((string)($e['observacion'] ?? ''));
         ?>
-        <tr data-filter="<?= htmlspecialchars(mb_strtolower($contador.' '.$runEmp.' '.$nombre.' '.$nomColegioEmp.' '.$jornadaTxt.' '.$colacionTxt.' '.$noLectivasTxt.' '.$lectivasTxt), ENT_QUOTES) ?>">
+        <tr data-colegio-id="<?= $idColegioEmp ?>" data-filter="<?= htmlspecialchars(mb_strtolower($contador.' '.$runEmp.' '.$nombre.' '.$nomColegioEmp.' '.$jornadaTxt.' '.$colacionTxt.' '.$noLectivasTxt.' '.$lectivasTxt), ENT_QUOTES) ?>">
 
           <td class="cell-num" data-col="N°" data-value="<?= $contador ?>"><?= $contador ?></td>
 

@@ -1,11 +1,14 @@
 (function(){
+  function initTablaDinamica(){
   const table = document.getElementById('empTable');
   if(!table) return;
 
   const tbody = table.querySelector('tbody');
   const search = document.getElementById('empSearch');
   const clearBtn = document.getElementById('empClear');
+  const colegioFilter = document.getElementById('empColegioFilter');
   const ths = Array.from(table.querySelectorAll('thead th.sortable'));
+  const columnCount = table.querySelectorAll('thead tr:last-child th').length;
 
   let sortState = { index: -1, dir: 'asc', type: 'text' };
 
@@ -82,18 +85,55 @@
   }
 
   function applyFilter(){
-    const q = normalize(search.value.trim());
-    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const q = normalize(search?.value?.trim() || '');
+    const colegioId = colegioFilter?.value || '';
+    const rows = Array.from(tbody.querySelectorAll('tr:not(.emp-empty-row)'));
     rows.forEach(tr=>{
       const hay = normalize(tr.getAttribute('data-filter') || tr.textContent);
-      tr.style.display = (q === '' || hay.includes(q)) ? '' : 'none';
+      const coincideTexto = q === '' || hay.includes(q);
+      const coincideColegio = colegioId === '' || tr.getAttribute('data-colegio-id') === colegioId;
+      tr.style.display = (coincideTexto && coincideColegio) ? '' : 'none';
     });
+    if (sortState.index >= 0) {
+      reorderCurrentVisibleRows();
+    }
+    updateEmptyRow();
+  }
+
+  function reorderCurrentVisibleRows(){
+    const rows = Array.from(tbody.querySelectorAll('tr:not(.emp-empty-row)'));
+    const visibleRows = rows.filter(r => r.style.display !== 'none');
+
+    visibleRows.sort((r1, r2)=>{
+      const v1 = getCellValue(r1, sortState.index);
+      const v2 = getCellValue(r2, sortState.index);
+      const c = compare(v1, v2, sortState.type);
+      return sortState.dir === 'asc' ? c : -c;
+    });
+
+    visibleRows.forEach(r => tbody.appendChild(r));
+  }
+
+  function updateEmptyRow(){
+    const rows = Array.from(tbody.querySelectorAll('tr:not(.emp-empty-row)'));
+    const visibleCount = rows.filter(r => r.style.display !== 'none').length;
+    let emptyRow = tbody.querySelector('.emp-empty-row');
+
+    if (visibleCount > 0) {
+      emptyRow?.remove();
+      return;
+    }
+
+    if (!emptyRow) {
+      emptyRow = document.createElement('tr');
+      emptyRow.className = 'emp-empty-row';
+      emptyRow.innerHTML = `<td class="emp-empty-cell" colspan="${columnCount}">Sin funcionarios</td>`;
+    }
+
+    tbody.appendChild(emptyRow);
   }
 
   function applySort(thIndex, type){
-    const rows = Array.from(tbody.querySelectorAll('tr'));
-    const visibleRows = rows.filter(r => r.style.display !== 'none');
-
     // toggle dir
     if(sortState.index === thIndex){
       sortState.dir = (sortState.dir === 'asc') ? 'desc' : 'asc';
@@ -111,23 +151,16 @@
       }
     });
 
-    visibleRows.sort((r1, r2)=>{
-      const v1 = getCellValue(r1, thIndex);
-      const v2 = getCellValue(r2, thIndex);
-      const c = compare(v1, v2, sortState.type);
-      return sortState.dir === 'asc' ? c : -c;
-    });
-
-    // reinsert (manteniendo filas ocultas al final sin tocar)
-    visibleRows.forEach(r => tbody.appendChild(r));
+    reorderCurrentVisibleRows();
   }
 
   // ---- Search events
   search?.addEventListener('input', applyFilter);
+  colegioFilter?.addEventListener('change', applyFilter);
   clearBtn?.addEventListener('click', ()=>{
-    search.value = '';
+    if (search) search.value = '';
     applyFilter();
-    search.focus();
+    search?.focus();
   });
 
   // ---- Sort events
@@ -163,5 +196,13 @@
 
   // ---- Default sort (opcional): por N°
   applySort(0, 'number');
+  updateEmptyRow();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTablaDinamica);
+  } else {
+    initTablaDinamica();
+  }
 
 })();

@@ -234,14 +234,30 @@ $sql = "
         return $roles;
     }
 
-    public function obtenerColegios()
+    public function obtenerColegios($soloActivos = false)
     {
+        $whereActivo = "";
+        if ($soloActivos) {
+            $resHasActivo = $this->db->consulta("
+                SELECT COUNT(*) AS t
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = 'colegio'
+                  AND COLUMN_NAME = 'activo'
+            ");
+            $hasActivo = (int)($this->db->fetch_assoc($resHasActivo)["t"] ?? 0) > 0;
+            if ($hasActivo) {
+                $whereActivo = "WHERE activo = 1";
+            }
+        }
+
         $sql = "
             SELECT
                 id_colegio,
                 nom_colegio,
                 nco_colegio
             FROM colegio
+            {$whereActivo}
             ORDER BY COALESCE(NULLIF(nco_colegio, ''), nom_colegio) ASC, id_colegio ASC
         ";
 
