@@ -9,12 +9,15 @@ if (!isset($_SESSION["id_usuario"])) {
 require_once __DIR__ . "/../vendor/autoload.php";
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\NamedRange;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 $spreadsheet = new Spreadsheet();
 $sheet = $spreadsheet->getActiveSheet();
@@ -48,12 +51,6 @@ $headers = [
     'Salida AM Viernes',
     'Entrada PM Viernes',
     'Salida PM Viernes',
-    'Total Horas Cronológicas',
-    'Minutos Colación',
-    'Horas Pedagógicas Lectivas',
-    'Horas Cronológicas Lectivas',
-    'Horas Pedagógicas No Lectivas',
-    'Horas Cronológicas No Lectivas',
 ];
 
 $sheet->fromArray($headers, null, 'A1');
@@ -113,12 +110,6 @@ $widths = [
     'Y' => 21,
     'Z' => 23,
     'AA' => 21,
-    'AB' => 29,
-    'AC' => 20,
-    'AD' => 33,
-    'AE' => 33,
-    'AF' => 36,
-    'AG' => 37,
 ];
 
 foreach ($widths as $column => $width) {
@@ -138,13 +129,6 @@ $sheet->getStyle('A2:' . $lastColumn . '500')->applyFromArray([
     ],
 ]);
 
-$sheet->getStyle('H2:' . $lastColumn . '500')->applyFromArray([
-    'fill' => [
-        'fillType' => Fill::FILL_SOLID,
-        'startColor' => ['rgb' => 'DDEBF7'],
-    ],
-]);
-
 $validation = $sheet->getCell('E2')->getDataValidation();
 $validation->setType(DataValidation::TYPE_LIST);
 $validation->setErrorStyle(DataValidation::STYLE_STOP);
@@ -159,15 +143,31 @@ for ($row = 2; $row <= 500; $row++) {
     $sheet->getCell('E' . $row)->setDataValidation(clone $validation);
 }
 
+$timeOptionsSheet = $spreadsheet->createSheet();
+$timeOptionsSheet->setTitle('Opciones');
+$timeOptionRow = 1;
+for ($hour = 0; $hour <= 23; $hour++) {
+    for ($minute = 0; $minute <= 55; $minute += 5) {
+        $timeOptionsSheet->setCellValueExplicit(
+            'A' . $timeOptionRow,
+            sprintf('%02d:%02d', $hour, $minute),
+            DataType::TYPE_STRING
+        );
+        $timeOptionRow++;
+    }
+}
+$timeOptionsSheet->setSheetState(Worksheet::SHEETSTATE_HIDDEN);
+$spreadsheet->addNamedRange(new NamedRange('ListaHoras', $timeOptionsSheet, '$A$1:$A$' . ($timeOptionRow - 1)));
+
 $timeValidation = $sheet->getCell('H2')->getDataValidation();
-$timeValidation->setType(DataValidation::TYPE_TIME);
+$timeValidation->setType(DataValidation::TYPE_LIST);
 $timeValidation->setErrorStyle(DataValidation::STYLE_STOP);
 $timeValidation->setAllowBlank(true);
+$timeValidation->setShowDropDown(true);
 $timeValidation->setShowErrorMessage(true);
 $timeValidation->setErrorTitle('Hora inválida');
-$timeValidation->setError('Ingresa la hora con formato HH:MM, por ejemplo 08:30.');
-$timeValidation->setFormula1('TIME(0,0,0)');
-$timeValidation->setFormula2('TIME(23,59,0)');
+$timeValidation->setError('Selecciona una hora de la lista.');
+$timeValidation->setFormula1('=ListaHoras');
 
 $firstTimeColumn = Coordinate::columnIndexFromString('H');
 $lastTimeColumn = Coordinate::columnIndexFromString('AA');
@@ -186,7 +186,7 @@ $instructionSheet->fromArray([
     ['2. Completa una fila por funcionario.'],
     ['3. RUN, Nombre y Apellido paterno son obligatorios.'],
     ['4. Genero acepta Masculino, Femenino u Otro.'],
-    ['5. Completa las columnas azules con horarios en formato HH:MM y los totales de jornada.'],
+    ['5. Completa las columnas de horario seleccionando horas en formato HH:MM. Los totales los calcula el sistema.'],
     ['6. Guarda el archivo como .xlsx antes de cargarlo al sistema.'],
 ], null, 'A1');
 $instructionSheet->getColumnDimension('A')->setWidth(90);

@@ -184,7 +184,7 @@ $menuLateralPath = __DIR__ . "/menu_lateral.php";
                 <h2 class="carga-title">Carga masiva</h2>
                 <p class="carga-subtitle">
                     Descarga la plantilla, completa una fila por funcionario y conserva los encabezados tal como vienen.
-                    La plantilla incluye los datos base, los horarios de lunes a viernes y los totales necesarios para la carga.
+                    La plantilla incluye los datos base y los horarios de lunes a viernes. Los totales se calculan en el sistema.
                 </p>
             </div>
             <a class="carga-action" href="descarga/plantilla_carga_masiva.php">
@@ -218,9 +218,6 @@ $menuLateralPath = __DIR__ . "/menu_lateral.php";
                         <tr><td>F</td><td>Telefono</td><td>Opcional</td></tr>
                         <tr><td>G</td><td>Observacion</td><td>Opcional</td></tr>
                         <tr><td>H:AA</td><td>Entradas y salidas</td><td>Formato HH:MM</td></tr>
-                        <tr><td>AB</td><td>Total Horas Cronológicas</td><td>Formato HH:MM</td></tr>
-                        <tr><td>AC</td><td>Minutos Colación</td><td>Número en minutos</td></tr>
-                        <tr><td>AD:AG</td><td>Horas lectivas y no lectivas</td><td>Pedagógicas y cronológicas</td></tr>
                     </tbody>
                 </table>
             </section>
@@ -235,9 +232,9 @@ $menuLateralPath = __DIR__ . "/menu_lateral.php";
                 <ol class="carga-steps">
                     <li>Descarga la plantilla Excel desde el botón superior.</li>
                     <li>Completa una fila por funcionario, sin cambiar el nombre ni el orden de las columnas.</li>
-                    <li>Usa las columnas azules para registrar las entradas, salidas y totales del horario.</li>
+                    <li>Usa las columnas de horario para registrar las entradas y salidas.</li>
                     <li>Guarda el archivo en formato .xlsx.</li>
-                    <li>Carga el archivo para que el sistema lea todos los datos de la fila.</li>
+                    <li>Carga el archivo para que el sistema lea los horarios y calcule los totales.</li>
                 </ol>
                 <div class="note-box">
                     <div class="note-item">
@@ -251,7 +248,7 @@ $menuLateralPath = __DIR__ . "/menu_lateral.php";
                         <i class="bi bi-person-lines-fill"></i>
                         <div>
                             <strong>Datos del funcionario</strong>
-                            <span>La fila reúne la información personal, jornada, colación y distribución semanal.</span>
+                            <span>La fila reúne la información personal y la distribución semanal del horario.</span>
                         </div>
                     </div>
                 </div>
