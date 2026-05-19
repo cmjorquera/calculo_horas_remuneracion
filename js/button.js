@@ -1,5 +1,32 @@
 function descargarExcel() {
-  window.location.href = "descarga/empleados_excel.php";
+  const colegioFilter = document.getElementById("empColegioFilter");
+  const visibleRows = Array.from(document.querySelectorAll("#empTable tbody tr:not(.emp-empty-row)"))
+    .filter((tr) => tr.style.display !== "none");
+
+  if (visibleRows.length === 0) {
+    if (typeof Swal !== "undefined") {
+      Swal.fire({
+        icon: "info",
+        title: "Sin funcionarios para descargar",
+        text: "El filtro actual no tiene funcionarios disponibles.",
+        showCloseButton: true,
+        customClass: {
+          popup: "swal-seduc"
+        }
+      });
+    } else {
+      alert("Sin funcionarios para descargar.");
+    }
+    return;
+  }
+
+  const params = new URLSearchParams();
+  if (colegioFilter?.value) {
+    params.set("id_colegio", colegioFilter.value);
+  }
+
+  const query = params.toString();
+  window.location.href = "descarga/empleados_excell.php" + (query ? `?${query}` : "");
 }
 
 
