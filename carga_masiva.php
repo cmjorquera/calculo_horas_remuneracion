@@ -184,7 +184,7 @@ $menuLateralPath = __DIR__ . "/menu_lateral.php";
                 <h2 class="carga-title">Carga masiva</h2>
                 <p class="carga-subtitle">
                     Descarga la plantilla, completa una fila por funcionario y conserva los encabezados tal como vienen.
-                    En esta primera etapa la plantilla prepara los datos base del funcionario para avanzar luego con los horarios.
+                    La plantilla incluye los datos base, los horarios de lunes a viernes y los totales necesarios para la carga.
                 </p>
             </div>
             <a class="carga-action" href="descarga/plantilla_carga_masiva.php">
@@ -217,6 +217,10 @@ $menuLateralPath = __DIR__ . "/menu_lateral.php";
                         <tr><td>E</td><td>Genero</td><td>Masculino, Femenino u Otro</td></tr>
                         <tr><td>F</td><td>Telefono</td><td>Opcional</td></tr>
                         <tr><td>G</td><td>Observacion</td><td>Opcional</td></tr>
+                        <tr><td>H:AA</td><td>Entradas y salidas</td><td>Formato HH:MM</td></tr>
+                        <tr><td>AB</td><td>Total Horas Cronológicas</td><td>Formato HH:MM</td></tr>
+                        <tr><td>AC</td><td>Minutos Colación</td><td>Número en minutos</td></tr>
+                        <tr><td>AD:AG</td><td>Horas lectivas y no lectivas</td><td>Pedagógicas y cronológicas</td></tr>
                     </tbody>
                 </table>
             </section>
@@ -231,8 +235,9 @@ $menuLateralPath = __DIR__ . "/menu_lateral.php";
                 <ol class="carga-steps">
                     <li>Descarga la plantilla Excel desde el botón superior.</li>
                     <li>Completa una fila por funcionario, sin cambiar el nombre ni el orden de las columnas.</li>
+                    <li>Usa las columnas azules para registrar las entradas, salidas y totales del horario.</li>
                     <li>Guarda el archivo en formato .xlsx.</li>
-                    <li>En la siguiente etapa se agregará la carga del archivo y la validación de cada fila.</li>
+                    <li>Carga el archivo para que el sistema lea todos los datos de la fila.</li>
                 </ol>
                 <div class="note-box">
                     <div class="note-item">
@@ -246,7 +251,7 @@ $menuLateralPath = __DIR__ . "/menu_lateral.php";
                         <i class="bi bi-person-lines-fill"></i>
                         <div>
                             <strong>Datos del funcionario</strong>
-                            <span>Esta plantilla parte con la información personal; el horario se suma después sobre esta base.</span>
+                            <span>La fila reúne la información personal, jornada, colación y distribución semanal.</span>
                         </div>
                     </div>
                 </div>

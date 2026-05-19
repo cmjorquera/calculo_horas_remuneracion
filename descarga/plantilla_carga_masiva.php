@@ -11,6 +11,7 @@ require_once __DIR__ . "/../vendor/autoload.php";
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -27,13 +28,40 @@ $headers = [
     'Genero',
     'Telefono',
     'Observacion',
+    'Entrada AM Lunes',
+    'Salida AM Lunes',
+    'Entrada PM Lunes',
+    'Salida PM Lunes',
+    'Entrada AM Martes',
+    'Salida AM Martes',
+    'Entrada PM Martes',
+    'Salida PM Martes',
+    'Entrada AM Miércoles',
+    'Salida AM Miércoles',
+    'Entrada PM Miércoles',
+    'Salida PM Miércoles',
+    'Entrada AM Jueves',
+    'Salida AM Jueves',
+    'Entrada PM Jueves',
+    'Salida PM Jueves',
+    'Entrada AM Viernes',
+    'Salida AM Viernes',
+    'Entrada PM Viernes',
+    'Salida PM Viernes',
+    'Total Horas Cronológicas',
+    'Minutos Colación',
+    'Horas Pedagógicas Lectivas',
+    'Horas Cronológicas Lectivas',
+    'Horas Pedagógicas No Lectivas',
+    'Horas Cronológicas No Lectivas',
 ];
 
 $sheet->fromArray($headers, null, 'A1');
 $sheet->freezePane('A2');
-$sheet->setAutoFilter('A1:G1');
+$lastColumn = Coordinate::stringFromColumnIndex(count($headers));
+$sheet->setAutoFilter('A1:' . $lastColumn . '1');
 
-$sheet->getStyle('A1:G1')->applyFromArray([
+$sheet->getStyle('A1:' . $lastColumn . '1')->applyFromArray([
     'font' => [
         'bold' => true,
         'color' => ['rgb' => 'FFFFFF'],
@@ -54,6 +82,7 @@ $sheet->getStyle('A1:G1')->applyFromArray([
     ],
 ]);
 
+$sheet->getStyle('H1:' . $lastColumn . '1')->getFill()->getStartColor()->setRGB('0070C0');
 $sheet->getRowDimension(1)->setRowHeight(24);
 
 $widths = [
@@ -64,13 +93,39 @@ $widths = [
     'E' => 16,
     'F' => 18,
     'G' => 42,
+    'H' => 21,
+    'I' => 19,
+    'J' => 21,
+    'K' => 19,
+    'L' => 22,
+    'M' => 20,
+    'N' => 22,
+    'O' => 20,
+    'P' => 25,
+    'Q' => 23,
+    'R' => 25,
+    'S' => 23,
+    'T' => 22,
+    'U' => 20,
+    'V' => 22,
+    'W' => 20,
+    'X' => 23,
+    'Y' => 21,
+    'Z' => 23,
+    'AA' => 21,
+    'AB' => 29,
+    'AC' => 20,
+    'AD' => 33,
+    'AE' => 33,
+    'AF' => 36,
+    'AG' => 37,
 ];
 
 foreach ($widths as $column => $width) {
     $sheet->getColumnDimension($column)->setWidth($width);
 }
 
-$sheet->getStyle('A2:G500')->applyFromArray([
+$sheet->getStyle('A2:' . $lastColumn . '500')->applyFromArray([
     'borders' => [
         'allBorders' => [
             'borderStyle' => Border::BORDER_THIN,
@@ -80,6 +135,13 @@ $sheet->getStyle('A2:G500')->applyFromArray([
     'alignment' => [
         'vertical' => Alignment::VERTICAL_CENTER,
         'wrapText' => true,
+    ],
+]);
+
+$sheet->getStyle('H2:' . $lastColumn . '500')->applyFromArray([
+    'fill' => [
+        'fillType' => Fill::FILL_SOLID,
+        'startColor' => ['rgb' => 'DDEBF7'],
     ],
 ]);
 
@@ -97,6 +159,25 @@ for ($row = 2; $row <= 500; $row++) {
     $sheet->getCell('E' . $row)->setDataValidation(clone $validation);
 }
 
+$timeValidation = $sheet->getCell('H2')->getDataValidation();
+$timeValidation->setType(DataValidation::TYPE_TIME);
+$timeValidation->setErrorStyle(DataValidation::STYLE_STOP);
+$timeValidation->setAllowBlank(true);
+$timeValidation->setShowErrorMessage(true);
+$timeValidation->setErrorTitle('Hora inválida');
+$timeValidation->setError('Ingresa la hora con formato HH:MM, por ejemplo 08:30.');
+$timeValidation->setFormula1('TIME(0,0,0)');
+$timeValidation->setFormula2('TIME(23,59,0)');
+
+$firstTimeColumn = Coordinate::columnIndexFromString('H');
+$lastTimeColumn = Coordinate::columnIndexFromString('AA');
+for ($columnIndex = $firstTimeColumn; $columnIndex <= $lastTimeColumn; $columnIndex++) {
+    $column = Coordinate::stringFromColumnIndex($columnIndex);
+    for ($row = 2; $row <= 500; $row++) {
+        $sheet->getCell($column . $row)->setDataValidation(clone $timeValidation);
+    }
+}
+
 $instructionSheet = $spreadsheet->createSheet();
 $instructionSheet->setTitle('Instrucciones');
 $instructionSheet->fromArray([
@@ -105,7 +186,8 @@ $instructionSheet->fromArray([
     ['2. Completa una fila por funcionario.'],
     ['3. RUN, Nombre y Apellido paterno son obligatorios.'],
     ['4. Genero acepta Masculino, Femenino u Otro.'],
-    ['5. Guarda el archivo como .xlsx antes de cargarlo al sistema.'],
+    ['5. Completa las columnas azules con horarios en formato HH:MM y los totales de jornada.'],
+    ['6. Guarda el archivo como .xlsx antes de cargarlo al sistema.'],
 ], null, 'A1');
 $instructionSheet->getColumnDimension('A')->setWidth(90);
 $instructionSheet->getStyle('A1')->applyFromArray([
@@ -115,7 +197,7 @@ $instructionSheet->getStyle('A1')->applyFromArray([
         'color' => ['rgb' => '004E8C'],
     ],
 ]);
-$instructionSheet->getStyle('A2:A6')->getAlignment()->setWrapText(true);
+$instructionSheet->getStyle('A2:A7')->getAlignment()->setWrapText(true);
 
 $spreadsheet->setActiveSheetIndex(0);
 
